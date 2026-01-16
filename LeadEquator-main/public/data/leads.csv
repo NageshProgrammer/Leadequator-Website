@@ -1,0 +1,11 @@
+_id,leadId,name,company,platform,intent,status,value,source,createdAt
+1,LEAD-001,Rahul Sharma,Acme Corp,LinkedIn,80,Contacted,120000,LinkedIn,2025-01-01T10:00:00Z
+2,LEAD-002,Priya Mehta,FinTech Labs,Website,70,Qualified,95000,Website,2025-01-02T11:30:00Z
+3,LEAD-003,Arjun Rao,SaaSify,Cold Email,90,Demo Scheduled,150000,Email,2025-01-03T09:15:00Z
+4,LEAD-004,Neha Joshi,CloudNova,LinkedIn,65,New,60000,LinkedIn,2025-01-04T14:45:00Z
+5,LEAD-005,Kunal Deshmukh,RetailX,Referral,85,Negotiating,180000,Referral,2025-01-05T16:20:00Z
+6,LEAD-006,Riya Patel,HealthTech Pro,Website,75,Contacted,70000,Website,2025-01-06T10:10:00Z
+7,LEAD-007,Siddharth Kulkarni,AI Works,Cold Email,88,Qualified,140000,Email,2025-01-07T12:00:00Z
+8,LEAD-008,Anjali Singh,EduSmart,LinkedIn,92,Demo Scheduled,200000,LinkedIn,2025-01-08T15:30:00Z
+9,LEAD-009,Mohit Jain,FinServe,Website,60,New,50000,Website,2025-01-09T09:40:00Z
+10,LEAD-010,Pooja Nair,LogistiQ,Referral,95,Closed Won,250000,Referral,2025-01-10T18:00:00Z
