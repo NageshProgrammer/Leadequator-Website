@@ -64,7 +64,7 @@ const Onboarding = () => {
 
     const loadProgress = async () => {
       const res = await fetch(
-        `http://localhost:4000/api/onboarding/progress?userId=${user.id}`
+        `${import.meta.env.VITE_API_BASE_URL}/api/onboarding/progress?userId=${user.id}`,
       );
 
       const data = await res.json();
@@ -102,11 +102,15 @@ const Onboarding = () => {
   // ======================
   const updateProgress = async (step: number) => {
     if (!user) return;
-    await fetch("http://localhost:4000/api/onboarding/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id, currentStep: step }),
-    });
+
+    await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/onboarding/progress`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, currentStep: step }),
+      },
+    );
   };
 
   const handleNext = async () => {
@@ -133,7 +137,7 @@ const Onboarding = () => {
     setSaving(true);
 
     try {
-      const res = await fetch("http://localhost:4000/api/onboarding", {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/onboarding`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

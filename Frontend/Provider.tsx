@@ -9,7 +9,7 @@ function Provider({ children }: { children: React.ReactNode }) {
 
     const syncUser = async () => {
       try {
-        await fetch("http://localhost:4000/api/users/sync", {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/sync`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
