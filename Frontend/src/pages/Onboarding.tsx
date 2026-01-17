@@ -68,7 +68,7 @@ const Onboarding = () => {
     const loadProgress = async () => {
       try {
         const res = await fetch(
-          `${API_BASE}/api/onboarding/progress?userId=${user.id}`
+          `${API_BASE}/api/onboarding/progress?userId=${user.id}`,
         );
 
         if (!res.ok) throw new Error("Failed to load progress");
@@ -150,20 +150,27 @@ const Onboarding = () => {
     setSaving(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/onboarding/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          companyData,
-          industryData,
-          targetData,
-          keywords: keywordsData.keywords,
-          platforms: platformsData,
-        }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/onboarding`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            companyData,
+            industryData,
+            targetData,
+            keywordsData,
+            platformsData,
+          }),
+        },
+      );
 
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(text);
+        throw new Error("Save failed");
+      }
 
       setIsComplete(true);
     } catch (err) {
