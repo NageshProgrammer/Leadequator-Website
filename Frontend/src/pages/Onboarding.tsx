@@ -12,6 +12,9 @@ import StepTargetMarket from "@/components/onboarding/StepTargetMarket";
 import StepKeywords from "@/components/onboarding/StepKeywords";
 import StepPlatforms from "@/components/onboarding/StepPlatforms";
 
+// ✅ API base from env
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 const Onboarding = () => {
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
@@ -63,16 +66,22 @@ const Onboarding = () => {
     if (!isLoaded || !user) return;
 
     const loadProgress = async () => {
-      const res = await fetch(
-        `http://localhost:4000/api/onboarding/progress?userId=${user.id}`
-      );
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/onboarding/progress?userId=${user.id}`
+        );
 
-      const data = await res.json();
+        if (!res.ok) throw new Error("Failed to load progress");
 
-      if (data?.completed) {
-        navigate("/dashboard");
-      } else if (data?.currentStep) {
-        setCurrentStep(data.currentStep);
+        const data = await res.json();
+
+        if (data?.completed) {
+          navigate("/dashboard");
+        } else if (data?.currentStep) {
+          setCurrentStep(data.currentStep);
+        }
+      } catch (err) {
+        console.error("Load progress error:", err);
       }
     };
 
@@ -102,11 +111,19 @@ const Onboarding = () => {
   // ======================
   const updateProgress = async (step: number) => {
     if (!user) return;
-    await fetch("http://localhost:4000/api/onboarding/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id, currentStep: step }),
-    });
+
+    try {
+      await fetch(`${API_BASE}/api/onboarding/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          currentStep: step,
+        }),
+      });
+    } catch (err) {
+      console.error("Update progress error:", err);
+    }
   };
 
   const handleNext = async () => {
@@ -133,7 +150,7 @@ const Onboarding = () => {
     setSaving(true);
 
     try {
-      const res = await fetch("https://api.leadequator.live", {
+      const res = await fetch(`${API_BASE}/api/onboarding/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,8 +158,8 @@ const Onboarding = () => {
           companyData,
           industryData,
           targetData,
-          keywordsData,
-          platformsData,
+          keywords: keywordsData.keywords,
+          platforms: platformsData,
         }),
       });
 
@@ -150,7 +167,8 @@ const Onboarding = () => {
 
       setIsComplete(true);
     } catch (err) {
-      console.error(err);
+      console.error("Finish onboarding error:", err);
+      alert("Failed to save onboarding. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -164,11 +182,7 @@ const Onboarding = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-3">
-            <img
-              src="/leadequator_logo.png"
-              alt="Leadequator"
-              className="h-10"
-            />
+            <img src="/leadequator_logo.png" className="h-10" />
             <span className="text-xl font-bold">Leadequator</span>
           </Link>
         </div>
@@ -189,6 +203,7 @@ const Onboarding = () => {
                   onNext={handleNext}
                 />
               )}
+
               {currentStep === 2 && (
                 <StepIndustry
                   data={industryData}
@@ -197,6 +212,7 @@ const Onboarding = () => {
                   onBack={handleBack}
                 />
               )}
+
               {currentStep === 3 && (
                 <StepTargetMarket
                   data={targetData}
@@ -205,6 +221,7 @@ const Onboarding = () => {
                   onBack={handleBack}
                 />
               )}
+
               {currentStep === 4 && (
                 <StepKeywords
                   data={keywordsData}
@@ -214,6 +231,7 @@ const Onboarding = () => {
                   industry={industryData.industry}
                 />
               )}
+
               {currentStep === 5 && (
                 <StepPlatforms
                   data={platformsData}

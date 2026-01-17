@@ -11,18 +11,44 @@ import {
   buyerKeywords,
   platformsToMonitor,
   usersTable,
-} from "./config/schema"; // ✅ FIXED PATH
+} from "./config/schema";
 
 const app = express();
-app.use(cors());
+
+/* =========================
+   ✅ CORS CONFIG (FIXED)
+   ========================= */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://leadequator.live",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-// --------------------
-// Load progress
-// --------------------
+/* =========================
+   HEALTH CHECK (OPTIONAL)
+   ========================= */
+app.get("/health", (_, res) => {
+  res.json({ status: "ok" });
+});
+
+/* =========================
+   LOAD ONBOARDING PROGRESS
+   ========================= */
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
     const { userId } = req.query as { userId: string };
+
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+    }
 
     const result = await db
       .select()
@@ -32,17 +58,21 @@ app.get("/api/onboarding/progress", async (req, res) => {
 
     res.json(result[0] ?? {});
   } catch (err) {
-    console.error(err);
+    console.error("Load progress error:", err);
     res.status(500).json({ error: "Failed to load progress" });
   }
 });
 
-// --------------------
-// Update step
-// --------------------
+/* =========================
+   UPDATE CURRENT STEP
+   ========================= */
 app.post("/api/onboarding/progress", async (req, res) => {
   try {
     const { userId, currentStep } = req.body;
+
+    if (!userId || !currentStep) {
+      return res.status(400).json({ error: "Missing data" });
+    }
 
     await db
       .insert(onboardingProgress)
@@ -54,25 +84,30 @@ app.post("/api/onboarding/progress", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("Update progress error:", err);
     res.status(500).json({ error: "Failed to update progress" });
   }
 });
 
-// --------------------
-// Finish onboarding
-// --------------------
-app.post("/api/onboarding", async (req, res) => {
+/* =========================
+   COMPLETE ONBOARDING
+   ========================= */
+app.post("/api/onboarding/complete", async (req, res) => {
   try {
     const {
       userId,
       companyData,
       industryData,
       targetData,
-      keywordsData,
-      platformsData,
+      keywords,
+      platforms,
     } = req.body;
 
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    /* Company Details */
     await db
       .insert(companyDetails)
       .values({
@@ -81,15 +116,24 @@ app.post("/api/onboarding", async (req, res) => {
         websiteUrl: companyData.websiteUrl || null,
         businessEmail: companyData.businessEmail || null,
         phoneNumber: companyData.phoneNumber || null,
-        industry: industryData.industry,
+        industry: industryData.industry || null,
         industryOther: industryData.industryOther || null,
         productDescription: industryData.productDescription || null,
       })
       .onConflictDoUpdate({
         target: companyDetails.userId,
-        set: { companyName: companyData.companyName },
+        set: {
+          companyName: companyData.companyName,
+          websiteUrl: companyData.websiteUrl || null,
+          businessEmail: companyData.businessEmail || null,
+          phoneNumber: companyData.phoneNumber || null,
+          industry: industryData.industry || null,
+          industryOther: industryData.industryOther || null,
+          productDescription: industryData.productDescription || null,
+        },
       });
 
+    /* Target Market */
     await db.insert(targetMarket).values({
       userId,
       targetAudience: targetData.targetAudience,
@@ -98,26 +142,28 @@ app.post("/api/onboarding", async (req, res) => {
       businessType: targetData.businessType,
     });
 
-    // Reset keywords
+    /* Keywords */
     await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
 
-    if (keywordsData?.keywords?.length) {
+    if (keywords?.length) {
       await db.insert(buyerKeywords).values(
-        keywordsData.keywords.map((k: string) => ({
+        keywords.map((k: string) => ({
           userId,
           keyword: k,
         }))
       );
     }
 
+    /* Platforms */
     await db
       .insert(platformsToMonitor)
-      .values({ userId, ...platformsData })
+      .values({ userId, ...platforms })
       .onConflictDoUpdate({
         target: platformsToMonitor.userId,
-        set: platformsData,
+        set: platforms,
       });
 
+    /* Mark onboarding complete */
     await db
       .insert(onboardingProgress)
       .values({ userId, completed: true, currentStep: 5 })
@@ -128,14 +174,14 @@ app.post("/api/onboarding", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Onboarding error:", err);
+    console.error("Onboarding complete error:", err);
     res.status(500).json({ error: "Onboarding failed" });
   }
 });
 
-// --------------------
-// User sync
-// --------------------
+/* =========================
+   USER SYNC
+   ========================= */
 app.post("/api/users/sync", async (req, res) => {
   try {
     const { clerkId, email, name } = req.body;
@@ -166,7 +212,11 @@ app.post("/api/users/sync", async (req, res) => {
   }
 });
 
-// --------------------
-app.listen(4000, () => {
-  console.log("API running on http://localhost:4000");
+/* =========================
+   START SERVER
+   ========================= */
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`API running on http://localhost:${PORT}`);
 });
