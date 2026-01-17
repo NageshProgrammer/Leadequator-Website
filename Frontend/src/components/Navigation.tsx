@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ShimmerButton } from "./ui/shimmer-button";
-import { UserButton, useUser } from "@clerk/clerk-react";
-import leadequatorLogo from '@/assets/leadequator_logo.png'; // adjust path as needed
+import { UserButton, useUser } from "@clerk/clerk-react";// adjust path as needed
 
 
 const Navigation = () => {
@@ -37,9 +36,9 @@ const Navigation = () => {
           >
             {/* Using Bot icon as placeholder for the logo */}
             <img
-              src={leadequatorLogo}
+              src="/leadequator_logo.png"
               alt="Leadequator"
-              className="w-16 h-16 object-contain"
+              className="w-12 h-12 object-contain"
             />
 
             <span className="text-foreground">Lead</span>

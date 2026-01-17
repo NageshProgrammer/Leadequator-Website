@@ -137,6 +137,7 @@ const Onboarding = () => {
     setSaving(true);
 
     try {
+      const res = await fetch("https://api.leadequator.live", {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/onboarding`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
