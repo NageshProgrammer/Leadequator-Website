@@ -3,7 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { useUser } from "@clerk/clerk-react";
 
-import logo from "../../public/leadequator_logo.png";
+import logo from "../assets/leadequator_logo.png";
+
+<img src={logo} alt="LeadEquator" />
 
 // Components
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
