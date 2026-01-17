@@ -133,7 +133,7 @@ const Onboarding = () => {
     setSaving(true);
 
     try {
-      const res = await fetch("http://localhost:4000/api/onboarding", {
+      const res = await fetch("https://api.leadequator.live", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
