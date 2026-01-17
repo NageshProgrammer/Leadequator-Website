@@ -19,7 +19,7 @@ const Footer = () => {
             <h4 className="font-semibold mb-4 text-foreground">Product</h4>
             <ul className="space-y-2">
               <li>
-                <NavLink to="/product" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <NavLink to="/features" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Features
                 </NavLink>
               </li>
