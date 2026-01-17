@@ -1,6 +1,7 @@
-import React from 'react';
-import { ShieldCheck, CheckCircle2, Users2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { ShieldCheck, CheckCircle2, Users2 } from "lucide-react";
+import { motion } from "framer-motion";
+import leadequatorLogo from "@/assets/leadequator_logo.png"; // adjust path as needed
 
 const ConversionHero = () => {
   const features = [
@@ -26,13 +27,18 @@ const ConversionHero = () => {
       <div className="max-w-2xl w-full space-y-8 relative z-10">
         {/* Logo Section */}
         <div className="flex items-center gap-3 mb-12">
-          
-             <img src="./assets/leadequator_logo.png" alt="logo" className="w-10 h-10 object-contain" />
-          <span className="text-white text-xl font-bold tracking-tight">Leadequator</span>
+          <img
+            src={leadequatorLogo}
+            alt="Leadequator"
+            className="w-16 h-16 object-contain"
+          />
+          <span className="text-white text-xl font-bold tracking-tight">
+            Leadequator
+          </span>
         </div>
 
         {/* Headline */}
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight"
@@ -41,23 +47,24 @@ const ConversionHero = () => {
         </motion.h1>
 
         {/* Sub-headline */}
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="text-zinc-500 text-xl leading-relaxed max-w-xl"
         >
-          Join the conversations where real buyers already exist — without ads or automation risk.
+          Join the conversations where real buyers already exist — without ads
+          or automation risk.
         </motion.p>
 
         {/* Feature List */}
         <div className="space-y-5 pt-4">
           {features.map((feature, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + (index * 0.1) }}
+              transition={{ delay: 0.2 + index * 0.1 }}
               className="flex items-center gap-4 group"
             >
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 group-hover:border-amber-500/40 transition-colors">

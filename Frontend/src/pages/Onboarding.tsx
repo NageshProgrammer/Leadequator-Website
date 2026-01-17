@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { useUser } from "@clerk/clerk-react";
+import leadequatorLogo from "@/assets/leadequator_logo.png"; // adjust path as needed
 
-import logo from "../assets/leadequator_logo.png";
-
-<img src={logo} alt="LeadEquator" />
+<img
+  src={leadequatorLogo}
+  alt="Leadequator"
+  className="w-16 h-16 object-contain"
+/>;
 
 // Components
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
@@ -68,7 +71,7 @@ const Onboarding = () => {
 
     const loadProgress = async () => {
       const res = await fetch(
-        `http://localhost:4000/api/onboarding/progress?userId=${user.id}`
+        `http://localhost:4000/api/onboarding/progress?userId=${user.id}`,
       );
 
       const data = await res.json();
