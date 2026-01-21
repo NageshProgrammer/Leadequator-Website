@@ -51,7 +51,7 @@ export const DashboardLayout = () => {
         {/* Sidebar Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           {sidebarOpen && (
-            <h1 className="text-xl font-bold text-foreground">Leadequator</h1>
+            <h1 className="text-xl font-bold text-foreground m-1 mb-2">Leadequator</h1>
           )}
           <Button
             variant="ghost"
