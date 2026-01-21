@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet } from "react-router-dom";
+import { UserButton } from "@clerk/clerk-react"; // Added Clerk Import
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,18 +29,16 @@ export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const navItems = [
-    {icon : Home, label: "Home", path: "/"},
+    { icon: Home, label: "Home", path: "/" },
     { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
     { icon: Radio, label: "Monitor Stream", path: "/monitor-stream" },
     { icon: Clock, label: "Comment Timeline", path: "/comment-timeline" },
     { icon: Users, label: "Leads & Tracking", path: "/leads-pipeline" },
-    // { icon: Zap, label: "Automations", path: "/automations-builder" },
     { icon: FileText, label: "Reports", path: "/reports" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   return (
-    /* 🔥 IMPORTANT: overflow-x-visible ENABLES horizontal scrolling */
     <div className="min-h-screen bg-background flex overflow-x-visible overflow-y-hidden">
       {/* ================= SIDEBAR ================= */}
       <aside
@@ -62,8 +61,8 @@ export const DashboardLayout = () => {
           </Button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-hidden">
+        {/* Navigation - flex-1 pushes the bottom section down */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -77,6 +76,26 @@ export const DashboardLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* User Button Section (Bottom of Sidebar) */}
+        <div className="p-4 border-t border-border mt-auto">
+          <div className={`flex items-center ${sidebarOpen ? "gap-3 px-2" : "justify-center"}`}>
+            <UserButton 
+              afterSignOutUrl="/" 
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "h-9 w-9" // Slightly larger for better UX
+                }
+              }}
+            />
+            {sidebarOpen && (
+              <div className="flex flex-col overflow-hidden">
+                <p className="text-sm font-medium text-foreground truncate">My Account</p>
+                <p className="text-xs text-muted-foreground truncate">Manage Settings</p>
+              </div>
+            )}
+          </div>
+        </div>
       </aside>
 
       {/* ================= MAIN CONTENT ================= */}
@@ -119,7 +138,7 @@ export const DashboardLayout = () => {
           </div>
         </header>
 
-        {/* 🔥 THIS IS KEY: vertical scroll only, horizontal allowed */}
+        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto overflow-x-visible">
           <Outlet />
         </main>

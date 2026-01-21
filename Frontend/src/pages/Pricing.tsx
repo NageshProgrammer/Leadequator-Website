@@ -27,7 +27,7 @@ const Pricing = () => {
         "30-day pilot program",
       ],
       cta: "Request Pilot Quote",
-      path: "/sign-up", // Redirects to Sign Up as requested
+      path: "/sign-up/", // Redirects to Sign Up as requested
       highlighted: false,
     },
     {
@@ -47,7 +47,7 @@ const Pricing = () => {
         "Priority support",
       ],
       cta: "Request Scale Quote",
-      path: "/sign-up",
+      path: "/sign-up/",
       highlighted: true,
     },
     {

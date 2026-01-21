@@ -59,14 +59,12 @@ const Navigation = () => {
                 <Button className="bg-primary">Start a Free Trial</Button>
               </Link>
 
-              {/* Separate Logic for Auth */}
-              {!user ? (
+              
+              
                 <Link to="/sign-in">
                   <ShimmerButton shimmerColor="#fbbf24">Login</ShimmerButton>
                 </Link>
-              ) : (
-                <UserButton afterSignOutUrl="/" />
-              )}
+              
             </div>
           </div>
 

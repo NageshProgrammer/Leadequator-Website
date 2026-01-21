@@ -59,7 +59,7 @@ export default function App() {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Public */}
+              {/* Public Routes */}
               <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
               <Route path="/working" element={<PublicLayout><Working /></PublicLayout>} />
               <Route path="/features" element={<PublicLayout><Features /></PublicLayout>} />
@@ -75,7 +75,7 @@ export default function App() {
               <Route path="/shipping" element={<PublicLayout><ShippingPolicy /></PublicLayout>} />
               <Route path="/refund" element={<PublicLayout><RefundPolicy /></PublicLayout>} />
 
-              {/* Auth */}
+              {/* Auth - Sign In */}
               <Route
                 path="/sign-in/*"
                 element={
@@ -89,12 +89,14 @@ export default function App() {
                         path="/sign-in"
                         signUpUrl="/sign-up"
                         forceRedirectUrl="/onboarding"
+                        fallbackRedirectUrl="/onboarding"
                       />
                     </div>
                   </div>
                 }
               />
 
+              {/* Auth - Sign Up */}
               <Route
                 path="/sign-up/*"
                 element={
@@ -108,13 +110,14 @@ export default function App() {
                         path="/sign-up"
                         signInUrl="/sign-in"
                         forceRedirectUrl="/onboarding"
+                        fallbackRedirectUrl="/onboarding"
                       />
                     </div>
                   </div>
                 }
               />
 
-              {/* Protected */}
+              {/* Protected Dashboard Routes */}
               <Route element={<SignedIn><DashboardLayout /></SignedIn>}>
                 <Route path="/dashboard" element={<DashboardOverview />} />
                 <Route path="/monitor-stream" element={<MonitorStream />} />
