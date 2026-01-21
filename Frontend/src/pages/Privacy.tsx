@@ -136,7 +136,7 @@ const Privacy = () => {
               <p className="text-muted-foreground leading-relaxed">
                 For privacy-related questions or to exercise your data rights, contact our Data Protection Officer at:
               </p>
-              <p className="text-primary mt-2">privacy@leadequator.ai</p>
+              <p className="text-primary mt-2">leadequatorofficial@gmail.com</p>
             </section>
           </Card>
         </div>

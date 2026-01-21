@@ -5,7 +5,7 @@ import { ScrollProgress } from '@/components/ui/scroll-progress';
 
 const Working = () => {
   return (
-    <div className="bg-black min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
+    <div className=" min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
       <ScrollProgress className="top-[65px]" />
       {/* =========================================
           SECTION 1: FOUR STEPS TO ORGANIC GROWTH

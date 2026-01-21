@@ -70,6 +70,16 @@ const Footer = () => {
                   Terms of Service
                 </NavLink>
               </li>
+              <li>
+                <NavLink to="/shipping" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Shipping & Delivery Policy
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/refund" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Refund & Cancellation Policy
+                </NavLink>
+              </li>
             </ul>
           </div>
         </div>

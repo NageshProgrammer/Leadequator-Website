@@ -18,7 +18,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Features = () => {
   return (
-    <div className="bg-black min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
+    <div className=" min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
       <ScrollProgress className="top-[65px]" />
       {/* =========================================
           SECTION 1: CORE FEATURES
@@ -180,7 +180,7 @@ const FeatureCard = ({
   desc: string;
   tag: string;
 }) => (
-  <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-8 hover:border-amber-700 hover:scale-105 transition-all group flex flex-col items-start h-full hover:shadow-lg hover:shadow-amber-500/20 hover:cursor-default">
+  <div className="bg-zinc-800/50 border border-zinc-800 rounded-xl p-8 hover:border-amber-700 hover:scale-105 transition-all group flex flex-col items-start h-full hover:shadow-lg hover:shadow-amber-500/20 hover:cursor-default">
     <div className="p-3 bg-zinc-900 rounded-lg mb-6 group-hover:bg-amber-900 transition-colors">
       {icon}
     </div>

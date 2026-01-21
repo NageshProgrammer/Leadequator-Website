@@ -37,6 +37,8 @@ import About from "./pages/About";
 import Resources from "./pages/Resources";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import RefundPolicy from "./pages/Refund";
+import ShippingPolicy from "./pages/Shipping";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +72,8 @@ export default function App() {
               <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
               <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
               <Route path="/resources" element={<PublicLayout><Resources /></PublicLayout>} />
+              <Route path="/shipping" element={<PublicLayout><ShippingPolicy /></PublicLayout>} />
+              <Route path="/refund" element={<PublicLayout><RefundPolicy /></PublicLayout>} />
 
               {/* Auth */}
               <Route

@@ -153,7 +153,7 @@ const Terms = () => {
               <p className="text-muted-foreground leading-relaxed">
                 For questions about these terms, contact:
               </p>
-              <p className="text-primary mt-2">legal@leadequator.ai</p>
+              <p className="text-primary mt-2">leadequatorofficial@gmail.com</p>
             </section>
           </Card>
         </div>
