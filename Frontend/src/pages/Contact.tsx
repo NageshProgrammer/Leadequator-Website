@@ -122,6 +122,7 @@ const Contact = () => {
               <Mail className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-xl font-bold mb-2">Email Us</h3>
               <a href="mailto:sales@leadequator.ai" className="text-primary">
+                leadequatorofficial@gmail.com
               </a>
             </Card>
           </div>

@@ -1,18 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { ShineBorder } from "@/components/ui/shine-border";
 import { Link } from "react-router-dom";
 
 const Pricing = () => {
-  /* -------- FUNCTIONAL LOGIC ONLY -------- */
-
-  const handlePlanAction = (planName: string) => {
-    // later: route to contact form / API / modal
-    alert(`Request submitted for ${planName} plan`);
-  };
+  /* -------- FUNCTIONAL LOGIC -------- */
 
   const handlePilotCTA = () => {
+    // This logic remains for the bottom button if you prefer an alert, 
+    // but typically you'd wrap this in a Link as well.
     alert("Pilot Program request initiated");
   };
 
@@ -31,6 +27,7 @@ const Pricing = () => {
         "30-day pilot program",
       ],
       cta: "Request Pilot Quote",
+      path: "/sign-up", // Redirects to Sign Up as requested
       highlighted: false,
     },
     {
@@ -50,6 +47,7 @@ const Pricing = () => {
         "Priority support",
       ],
       cta: "Request Scale Quote",
+      path: "/onboarding",
       highlighted: true,
     },
     {
@@ -70,6 +68,7 @@ const Pricing = () => {
         "Quarterly business reviews",
       ],
       cta: "Contact Sales",
+      path: "/contact", // Redirects to Contact as requested
       highlighted: false,
     },
   ];
@@ -77,7 +76,7 @@ const Pricing = () => {
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
-
+        
         {/* Header */}
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-5xl font-bold mb-6">
@@ -94,7 +93,7 @@ const Pricing = () => {
           {plans.map((plan, index) => (
             <Card
               key={index}
-              className={`p-8 ${
+              className={`p-8 flex flex-col ${
                 plan.highlighted
                   ? "bg-gradient-to-b from-primary/10 to-background border-primary shadow-xl shadow-primary/20 scale-105"
                   : "bg-card border-border"
@@ -108,7 +107,7 @@ const Pricing = () => {
                   </span>
                 </div>
               )}
-      
+
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                 <div className="text-4xl font-bold text-primary mb-2">
@@ -119,7 +118,7 @@ const Pricing = () => {
                 </p>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-8 flex-grow">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start">
                     <Check className="w-5 h-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
@@ -128,17 +127,17 @@ const Pricing = () => {
                 ))}
               </ul>
 
-
-              <Link to="/onboarding">
-              <Button
-                className={`w-full ${
-                  plan.highlighted
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                }`}
-              >
-                {plan.cta}
-              </Button>
+              {/* Dynamic Link based on plan.path */}
+              <Link to={plan.path} className="w-full">
+                <Button
+                  className={`w-full ${
+                    plan.highlighted
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                  }`}
+                >
+                  {plan.cta}
+                </Button>
               </Link>
             </Card>
           ))}
@@ -153,7 +152,7 @@ const Pricing = () => {
             {[
               {
                 q: "What determines custom pricing?",
-                a: "Volume of conversations monitored, number of brands/workspaces, team size, and required integrations. Contact us for a tailored quote.",
+                a: "Volume of conversations monitored, number of brands/workspaces, team size, and required integrations.",
               },
               {
                 q: "Is there a free trial?",
@@ -184,13 +183,14 @@ const Pricing = () => {
           <p className="text-muted-foreground text-lg mb-6">
             Start with a Pilot program and scale when you see results.
           </p>
-          <Button
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={handlePilotCTA}
-          >
-            Request Pilot Program
-          </Button>
+          <Link to="/sign-up">
+            <Button
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Request Pilot Program
+            </Button>
+          </Link>
         </div>
 
       </div>
