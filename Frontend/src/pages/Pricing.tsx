@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import CongestedPricing from "@/[components]/plansection";
 
 const Pricing = () => {
   /* -------- FUNCTIONAL LOGIC -------- */
@@ -77,76 +78,11 @@ const Pricing = () => {
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
         
-        {/* Header */}
-        <div className="text-center mb-16 animate-fade-in">
-          <h1 className="text-5xl font-bold mb-6">
-            Transparent <span className="text-primary">Enterprise Pricing</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            All plans include AI-powered engagement, real-time monitoring, and
-            intent scoring. Pricing scales with your volume and team size.
-          </p>
-        </div>
+        
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {plans.map((plan, index) => (
-            <Card
-              key={index}
-              className={`p-8 flex flex-col ${
-                plan.highlighted
-                  ? "bg-gradient-to-b from-primary/10 to-background border-primary shadow-xl shadow-primary/20 scale-105"
-                  : "bg-card border-border"
-              } transition-all hover:scale-105 animate-fade-in`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              {plan.highlighted && (
-                <div className="text-center mb-4">
-                  <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold">
-                    MOST POPULAR
-                  </span>
-                </div>
-              )}
-
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="text-4xl font-bold text-primary mb-2">
-                  {plan.price}
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {plan.description}
-                </p>
-              </div>
-
-              <ul className="space-y-3 mb-8 flex-grow">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <Check className="w-5 h-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Dynamic Link based on plan.path */}
-              <Link to={plan.path} className="w-full">
-                <Button
-                  className={`w-full ${
-                    plan.highlighted
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                  }`}
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
-            </Card>
-          ))}
-        </div>
-
-
-
-
-
+        
+          <CongestedPricing/>
 
 
 
