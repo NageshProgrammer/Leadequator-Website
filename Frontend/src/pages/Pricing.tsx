@@ -47,7 +47,7 @@ const Pricing = () => {
         "Priority support",
       ],
       cta: "Request Scale Quote",
-      path: "/onboarding",
+      path: "/sign-up",
       highlighted: true,
     },
     {
@@ -142,6 +142,13 @@ const Pricing = () => {
             </Card>
           ))}
         </div>
+
+
+
+
+
+
+
 
         {/* FAQ Section */}
         <div className="mt-24">
