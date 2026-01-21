@@ -70,9 +70,9 @@ export const DashboardLayout = () => {
         fixed left-0 top-0 h-screen z-40 flex flex-col`}
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="p-4 border-b border-border flex items-center justify-between pb-6">
           {sidebarOpen && (
-            <h1 className="text-xl font-bold text-foreground m-1 mb-2">Leadequator</h1>
+            <h1 className="text-xl font-bold text-foreground hover:cursor-default">Leadequator</h1>
           )}
           <Button
             variant="ghost"
@@ -80,7 +80,7 @@ export const DashboardLayout = () => {
             className={!sidebarOpen ? "mx-auto" : ""}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-4 w-4 " />
           </Button>
         </div>
 
@@ -204,8 +204,8 @@ export const DashboardLayout = () => {
         <header className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-foreground">Lead Equator</h2>
-              <Badge variant="secondary" className="bg-primary/20 text-primary">
+              <h2 className="text-lg font-semibold text-foreground hover:cursor-default">Lead Equator</h2>
+              <Badge variant="secondary" className="bg-primary/20 text-primary hover:cursor-default">
                 Pilot
               </Badge>
             </div>
