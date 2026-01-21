@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import CongestedPricing from "@/[components]/plansection";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Pricing = () => {
   /* -------- FUNCTIONAL LOGIC -------- */
@@ -76,6 +77,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4">
         
         
@@ -99,7 +101,7 @@ const Pricing = () => {
               },
               {
                 q: "Is there a free trial?",
-                a: "We offer a 30-day Pilot program with limited scope to prove ROI before committing to full deployment.",
+                a: "We offer a 14-day Pilot program with limited scope to prove ROI before committing to full deployment.",
               },
               {
                 q: "What's included in 'unlimited conversations'?",

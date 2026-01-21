@@ -3,6 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -15,19 +16,39 @@ import {
   Radio,
   Clock,
   Users,
-  Zap,
   FileText,
   Settings,
   Search,
   Menu,
   Home,
-  ArrowUpCircle, // Added icon for Upgrade
+  ArrowUpCircle,
+  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Mock Data
+  const creditsUsed = 800; 
+  const totalCredits = 1000;
+  
+  // 1. Calculate Remaining Percentage
+  const remainingPercentage = ((totalCredits - creditsUsed) / totalCredits) * 100;
+
+  // 2. Determine Color State
+  const getStatusColor = () => {
+    if (remainingPercentage <= 20) return "text-red-500";
+    if (remainingPercentage <= 50) return "text-yellow-500";
+    return "text-green-500"; // Changed to green for explicit "good" state, or use text-primary
+  };
+
+  const getBarColor = () => {
+    if (remainingPercentage <= 20) return "bg-red-500";
+    if (remainingPercentage <= 50) return "bg-yellow-500";
+    return "bg-green-500"; // Or bg-primary
+  };
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
@@ -56,6 +77,7 @@ export const DashboardLayout = () => {
           <Button
             variant="ghost"
             size="sm"
+            className={!sidebarOpen ? "mx-auto" : ""}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <Menu className="h-4 w-4" />
@@ -69,7 +91,9 @@ export const DashboardLayout = () => {
               key={item.path}
               to={item.path}
               end={item.path === "/dashboard"}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors ${
+                !sidebarOpen ? "justify-center" : ""
+              }`}
               activeClassName="bg-muted text-primary font-medium"
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -78,15 +102,15 @@ export const DashboardLayout = () => {
           ))}
         </nav>
 
-        {/* Bottom Section (Upgrade + UserButton) */}
-        <div className="p-4 border-t border-border mt-auto space-y-4">
+        {/* Bottom Section */}
+        <div className={`p-4 border-t border-border mt-auto flex flex-col gap-6 ${!sidebarOpen ? "items-center" : ""}`}>
           
           {/* Upgrade Button */}
-          <Link to="/pricing" className="block">
+          <Link to="/pricings" className="w-full flex justify-center">
             <Button 
               variant="default" 
-              className={`w-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-dashed border border-primary/50 transition-all ${
-                !sidebarOpen ? "px-0 justify-center" : "justify-start gap-3"
+              className={`bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-dashed border border-primary/50 transition-all ${
+                sidebarOpen ? "w-full justify-start gap-3" : "h-10 w-10 p-0 justify-center rounded-full"
               }`}
             >
               <ArrowUpCircle className="h-5 w-5 flex-shrink-0" />
@@ -94,8 +118,65 @@ export const DashboardLayout = () => {
             </Button>
           </Link>
 
+          {/* Credits Progress Section */}
+          <div className={`w-full flex flex-col items-center ${sidebarOpen ? "px-2" : ""}`}>
+            {sidebarOpen ? (
+              <div className="w-full space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground font-medium flex items-center gap-1">
+                    <Zap className={`h-3 w-3 fill-current ${getStatusColor()}`} /> Credits
+                  </span>
+                  <span className={`font-bold ${getStatusColor()}`}>
+                    {Math.round(remainingPercentage)}% remaining
+                  </span>
+                </div>
+                {/* Logic Fix: value is now remainingPercentage 
+                   Color Fix: [&>div]:bg-... overrides the default inner bar color
+                */}
+                <Progress 
+                  value={remainingPercentage} 
+                  className={`h-1.5 bg-muted [&>div]:${getBarColor()}`} 
+                />
+                <p className="text-[10px] text-muted-foreground text-right">
+                  {creditsUsed} / {totalCredits} used
+                </p>
+              </div>
+            ) : (
+              /* Circular Progress Bar for Collapsed State */
+              <div className="relative h-10 w-10 flex items-center justify-center" title={`${Math.round(remainingPercentage)}% remaining`}>
+                <svg className="h-full w-full transform -rotate-90">
+                  {/* Background Circle */}
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    className="text-muted/20"
+                  />
+                  {/* Foreground Circle (Dynamic Color) */}
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    strokeDasharray={100}
+                    // Logic Fix: This makes the line shrink as percentage decreases
+                    strokeDashoffset={100 - remainingPercentage} 
+                    strokeLinecap="round"
+                    className={`transition-all duration-500 ${getStatusColor()}`}
+                  />
+                </svg>
+                <Zap className={`absolute h-3 w-3 fill-current ${getStatusColor()}`} />
+              </div>
+            )}
+          </div>
+
           {/* User Button Profile */}
-          <div className={`flex items-center ${sidebarOpen ? "gap-3 px-2" : "justify-center"}`}>
+          <div className={`flex items-center w-full ${sidebarOpen ? "gap-3 px-2" : "justify-center"}`}>
             <UserButton 
               afterSignOutUrl="/" 
               appearance={{
@@ -120,7 +201,6 @@ export const DashboardLayout = () => {
           sidebarOpen ? "ml-64" : "ml-20"
         }`}
       >
-        {/* Top Bar */}
         <header className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -129,16 +209,12 @@ export const DashboardLayout = () => {
                 Pilot
               </Badge>
             </div>
-
+            
             <div className="flex items-center gap-4 flex-1 max-w-2xl">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search comments, leads, keywords..."
-                  className="pl-10 bg-background"
-                />
+                <Input placeholder="Search comments..." className="pl-10 bg-background" />
               </div>
-
               <Select defaultValue="utc">
                 <SelectTrigger className="w-32 bg-background">
                   <SelectValue />
@@ -146,16 +222,13 @@ export const DashboardLayout = () => {
                 <SelectContent>
                   <SelectItem value="utc">UTC</SelectItem>
                   <SelectItem value="pst">PST</SelectItem>
-                  <SelectItem value="est">EST</SelectItem>
-                  <SelectItem value="cet">CET</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto overflow-x-visible">
+        <main className="flex-1 overflow-y-auto overflow-x-visible p-6">
           <Outlet />
         </main>
       </div>

@@ -1,9 +1,11 @@
 import { Card } from "@/components/ui/card";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { Target, Users, Lightbulb, Award } from "lucide-react";
 
 const About = () => {
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16 animate-fade-in">

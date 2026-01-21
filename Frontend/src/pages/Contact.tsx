@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Mail, MessageSquare, Calendar } from "lucide-react";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -65,6 +66,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">

@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const RefundPolicy = () => {
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="animate-fade-in">
           <h1 className="text-5xl font-bold mb-6">Refund & Cancellation</h1>
@@ -16,8 +18,9 @@ const RefundPolicy = () => {
                 1. Subscription Cancellation
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                You may cancel your Leadequator subscription at any time. To avoid future billing, 
-                cancellations must be processed before the start of the next billing cycle.
+                You may cancel your Leadequator subscription at any time. To
+                avoid future billing, cancellations must be processed before the
+                start of the next billing cycle.
               </p>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start">
@@ -40,9 +43,10 @@ const RefundPolicy = () => {
                 2. Refund Eligibility
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                As Leadequator provides immediate digital access to AI-driven intent data and 
-                engagement tools, we generally operate on a "No Refund" policy for active 
-                subscriptions. Exceptions are made only for technical service failures exceeding 48 hours.
+                As Leadequator provides immediate digital access to AI-driven
+                intent data and engagement tools, we generally operate on a "No
+                Refund" policy for active subscriptions. Exceptions are made
+                only for technical service failures exceeding 48 hours.
               </p>
             </section>
 
@@ -51,8 +55,8 @@ const RefundPolicy = () => {
                 3. Refund Process
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Valid refund requests (due to billing errors or technical downtime) are processed 
-                within 5-7 business days of approval.
+                Valid refund requests (due to billing errors or technical
+                downtime) are processed within 5-7 business days of approval.
               </p>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start">
@@ -61,7 +65,8 @@ const RefundPolicy = () => {
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">▸</span>
-                  Transaction fees may be non-refundable per payment gateway terms
+                  Transaction fees may be non-refundable per payment gateway
+                  terms
                 </li>
               </ul>
             </section>
@@ -71,7 +76,8 @@ const RefundPolicy = () => {
                 4. Contact for Disputes
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                For questions regarding your billing or to request a refund, please contact us at:
+                For questions regarding your billing or to request a refund,
+                please contact us at:
               </p>
               <p className="text-primary mt-2">leadequatorofficial@gmail.com</p>
             </section>

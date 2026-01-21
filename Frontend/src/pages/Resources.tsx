@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Video, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Resources = () => {
   // ✅ FIX: initialize navigate
@@ -9,6 +10,7 @@ const Resources = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16 animate-fade-in">

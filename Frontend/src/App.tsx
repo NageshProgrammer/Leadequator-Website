@@ -39,6 +39,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/Refund";
 import ShippingPolicy from "./pages/Shipping";
+import CongestedPricing from "./[components]/plansection";
 
 const queryClient = new QueryClient();
 
@@ -127,6 +128,8 @@ export default function App() {
                 <Route path="/competitor-watch" element={<CompetitorWatch />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<SettingsIntegrations />} />
+                <Route path="/pricings" element={<CongestedPricing />} />
+                
               </Route>
 
               <Route path="*" element={<NotFound />} />

@@ -17,7 +17,7 @@ const plans = [
   {
     name: "PILOT",
     price: "49", // Set to 0 or a base price if you have one, since "Custom" isn't a number
-    yearlyPrice: "297",
+    yearlyPrice: "25",
     period: "30-day pilot",
     features: [
       "1 brand/product to monitor",
@@ -36,7 +36,7 @@ const plans = [
   {
     name: "SCALE",
     price: "149", // Set to 0 for "Custom" display
-    yearlyPrice: "894",
+    yearlyPrice: "75",
     period: "per month",
     features: [
       "Up to 5 brands/products",
