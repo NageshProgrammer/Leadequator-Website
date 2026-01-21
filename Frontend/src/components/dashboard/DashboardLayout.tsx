@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { UserButton } from "@clerk/clerk-react"; // Added Clerk Import
+import { UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +21,7 @@ import {
   Search,
   Menu,
   Home,
+  ArrowUpCircle, // Added icon for Upgrade
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
@@ -61,7 +62,7 @@ export const DashboardLayout = () => {
           </Button>
         </div>
 
-        {/* Navigation - flex-1 pushes the bottom section down */}
+        {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
@@ -77,14 +78,29 @@ export const DashboardLayout = () => {
           ))}
         </nav>
 
-        {/* User Button Section (Bottom of Sidebar) */}
-        <div className="p-4 border-t border-border mt-auto">
+        {/* Bottom Section (Upgrade + UserButton) */}
+        <div className="p-4 border-t border-border mt-auto space-y-4">
+          
+          {/* Upgrade Button */}
+          <Link to="/pricing" className="block">
+            <Button 
+              variant="default" 
+              className={`w-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-dashed border border-primary/50 transition-all ${
+                !sidebarOpen ? "px-0 justify-center" : "justify-start gap-3"
+              }`}
+            >
+              <ArrowUpCircle className="h-5 w-5 flex-shrink-0" />
+              {sidebarOpen && <span className="font-semibold">Upgrade Plan</span>}
+            </Button>
+          </Link>
+
+          {/* User Button Profile */}
           <div className={`flex items-center ${sidebarOpen ? "gap-3 px-2" : "justify-center"}`}>
             <UserButton 
               afterSignOutUrl="/" 
               appearance={{
                 elements: {
-                  userButtonAvatarBox: "h-9 w-9" // Slightly larger for better UX
+                  userButtonAvatarBox: "h-9 w-9"
                 }
               }}
             />
@@ -108,7 +124,7 @@ export const DashboardLayout = () => {
         <header className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold">Lead Equator</h2>
+              <h2 className="text-lg font-semibold text-foreground">Lead Equator</h2>
               <Badge variant="secondary" className="bg-primary/20 text-primary">
                 Pilot
               </Badge>
