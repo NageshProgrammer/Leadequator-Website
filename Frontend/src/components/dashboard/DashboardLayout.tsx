@@ -35,7 +35,8 @@ export const DashboardLayout = () => {
   const totalCredits = 1000;
   
   // 1. Calculate Remaining Percentage
-  const remainingPercentage = ((totalCredits - creditsUsed) / totalCredits) * 100;
+  const creditPercentageUsed = (creditsUsed / totalCredits) * 100;
+  const remainingPercentage = 100 - creditPercentageUsed;
 
   // 2. Determine Color State
   const getStatusColor = () => {
@@ -134,7 +135,7 @@ export const DashboardLayout = () => {
                    Color Fix: [&>div]:bg-... overrides the default inner bar color
                 */}
                 <Progress 
-                  value={remainingPercentage} 
+                  value={creditPercentageUsed} 
                   className={`h-1.5 bg-muted [&>div]:${getBarColor()}`} 
                 />
                 <p className="text-[10px] text-muted-foreground text-right">
