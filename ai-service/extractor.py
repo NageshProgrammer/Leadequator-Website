@@ -38,9 +38,9 @@ def extract_keywords(data: FormData):
 
     keywords = model.extract_keywords(
         clean_text(combined_text),
-        keyphrase_ngram_range=(1, 3),
+        keyphrase_ngram_range=(1, 2),
         stop_words="english",
-        top_n=7
+        top_n=5
     )
 
     return {
