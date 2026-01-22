@@ -1,0 +1,18 @@
+[
+  {
+    "platform": "reddit",
+    "original_text": "I am looking for a CRM for my startup, any recommendations?",
+    "post_url": "https://reddit.com/r/startups/fake_post_1",
+    "author": "startup_founder",
+    "intent": "product interest",
+    "generated_reply": "Absolutely! I'd highly recommend checking out Freshworks CRM. It's user-friendly, scalable, and perfect for startups like yours. Good luck on your journey! 🚀"
+  },
+  {
+    "platform": "reddit",
+    "original_text": "What is the best marketing strategy for an early stage SaaS?",
+    "post_url": "https://reddit.com/r/saas/fake_post_2",
+    "author": "saas_builder",
+    "intent": "product interest",
+    "generated_reply": "Hi there! For early-stage SaaS, I'd recommend focusing on content marketing, building a strong MVP (Minimum Viable Product), and engaging with your target audience on platforms like Reddit and LinkedIn. Keep it simple and customer-centric! 😊"
+  }
+]

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Lead Keyword Generator</title>
+</head>
+<body>
+
+<h2>Signup / Registration Form</h2>
+
+<form id="leadForm">
+    <input placeholder="Name" id="name"><br><br>
+    <input placeholder="Job Title" id="job_title"><br><br>
+    <input placeholder="Industry" id="industry"><br><br>
+    <input placeholder="Company Type" id="company_type"><br><br>
+    <input placeholder="Interests" id="interests"><br><br>
+    <input placeholder="Location" id="location"><br><br>
+    <textarea placeholder="Problem Statement" id="problem"></textarea><br><br>
+
+    <button type="submit">Generate Keywords</button>
+</form>
+
+<pre id="output"></pre>
+
+<script>
+document.getElementById("leadForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const data = {
+        name: name.value,
+        job_title: job_title.value,
+        industry: industry.value,
+        company_type: company_type.value,
+        interests: interests.value,
+        location: location.value,
+        problem: problem.value
+    };
+
+    const response = await fetch("http://127.0.0.1:8000/extract-keywords", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    document.getElementById("output").textContent =
+        JSON.stringify(result, null, 2);
+});
+</script>
+
+</body>
+</html>
