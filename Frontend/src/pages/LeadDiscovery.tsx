@@ -23,7 +23,7 @@ export default function LeadDiscovery() {
     setResult(null);
 
     try {
-      const res = await fetch("http://localhost:8000/extract-keywords", {
+      const res = await fetch("https://leadequator-website-jwwd.onrender.com/extract-keywords", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
