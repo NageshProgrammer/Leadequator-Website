@@ -11,7 +11,8 @@ kw_model = None
 def get_model():
     global kw_model
     if kw_model is None:
-        kw_model = KeyBERT()
+        print("Loading lightweight KeyBERT model...")
+        kw_model = KeyBERT("all-MiniLM-L6-v2")
     return kw_model
 
 class FormData(BaseModel):
@@ -34,10 +35,15 @@ def extract_keywords(data: FormData):
         data.location,
     ])
 
+    cleaned_text = clean_text(combined_text)
+
+    if not cleaned_text.strip():
+        return {"error": "Empty input"}
+
     model = get_model()
 
     keywords = model.extract_keywords(
-        clean_text(combined_text),
+        cleaned_text,
         keyphrase_ngram_range=(1, 2),
         stop_words="english",
         top_n=5
