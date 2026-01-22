@@ -32,6 +32,7 @@ import SettingsIntegrations from "./pages/SettingsIntegrations";
 import NotFound from "./pages/NotFound";
 import ConversionHero from "./[components]/loginpagesideview";
 import Provider from "../Provider";
+import LeadDiscovery from "./pages/LeadDiscovery";
 import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,8 @@ export default function App() {
               <Route path="/problems" element={<PublicLayout><Problems /></PublicLayout>} />
               <Route path="/contact" element={<PublicLayout><Contact/></PublicLayout>} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/lead-discovery" element={<LeadDiscovery />} />
+
 
               {/* Auth */}
               <Route

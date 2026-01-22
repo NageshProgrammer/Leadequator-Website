@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,8 @@ import {
 import { Mail, MessageSquare, Calendar } from "lucide-react";
 
 const Contact = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -64,7 +67,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
@@ -121,14 +124,17 @@ const Contact = () => {
             <Card className="p-6">
               <Mail className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-xl font-bold mb-2">Email Us</h3>
-              <a href="mailto:sales@leadequator.ai" className="text-primary">
+              <a
+                href="mailto:sales@leadequator.ai"
+                className="text-primary text-sm"
+              >
                 sales@leadequator.ai
               </a>
             </Card>
           </div>
 
           {/* Form */}
-          <Card className="md:col-span-2 p-8">
+          <Card className="md:col-span-2 p-8" id="contact-form">
             <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
@@ -225,6 +231,16 @@ const Contact = () => {
               </Button>
             </form>
           </Card>
+        </div>
+
+        {/* Lead Discovery CTA */}
+        <div className="mt-20 flex justify-center">
+          <button
+            onClick={() => navigate("/lead-discovery")}
+            className="text-sm px-6 py-2 rounded-full border border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground transition"
+          >
+            🚀 Start Lead Discovery
+          </button>
         </div>
       </div>
     </div>
