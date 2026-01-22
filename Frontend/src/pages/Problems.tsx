@@ -18,7 +18,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Problems = () => {
   return (
-    <div className="bg-black min-h-screen text-white font-sans selection:bg-amber-500/30">
+    <div className=" min-h-screen text-white font-sans selection:bg-amber-500/30">
       <ScrollProgress className="top-[65px]" />
       {/* =========================================
           SECTION 1: THE PROBLEM
@@ -133,7 +133,7 @@ const Problems = () => {
 };
 
 const ProblemCard = ({ icon, title, stat, desc }) => (
-  <div className="relative p-8 rounded-2xl bg-zinc-900/30 overflow-hidden group">
+  <div className="relative p-8 rounded-2xl bg-zinc-800/50 overflow-hidden group">
     <ShineBorder shineColor={["#7f1d1d", "#ef4444", "#f87171", "#991b1b"]} />
     <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
       <div className="flex items-center gap-4">
@@ -151,7 +151,7 @@ const ProblemCard = ({ icon, title, stat, desc }) => (
 );
 
 const SocialCard = ({ platform, time, text, icon }) => (
-  <div className="relative p-6 rounded-2xl bg-zinc-900/50 overflow-hidden group">
+  <div className="relative p-6 rounded-2xl bg-zinc-800/50 overflow-hidden group">
     {/* GOLD SHINE BORDER */}
     <ShineBorder shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]} />
 

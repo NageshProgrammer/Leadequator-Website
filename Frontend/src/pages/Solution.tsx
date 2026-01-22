@@ -6,7 +6,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Solution = () => {
   return (
-    <div className="bg-black min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
+    <div className=" min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
       <ScrollProgress className="top-[65px]" />
       <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
         {/* =========================================
@@ -31,7 +31,7 @@ const Solution = () => {
           {/* Glowing Background Effect behind the box */}
           <div className="absolute inset-0 bg-amber-500/5 blur-3xl rounded-full opacity-20 pointer-events-none"></div>
 
-          <div className="relative z-10 border border-amber-500/30 bg-zinc-900/20 rounded-3xl p-10 md:p-20 text-center max-w-5xl mx-auto backdrop-blur-sm">
+          <div className="relative z-10 border border-amber-500/30 bg-zinc-800/50  rounded-3xl p-10 md:p-20 text-center max-w-5xl mx-auto backdrop-blur-sm">
             <ShineBorder
               shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]}
             />
@@ -39,13 +39,13 @@ const Solution = () => {
             {/* Logo/Icon Container */}
             <div className="flex justify-center mb-8">
               <div className="relative group">
-                <div className="absolute -inset-1 bg-amber-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <div className="relative bg-black border border-zinc-700 p-1 rounded-xl flex items-center justify-center w-16 h-16">
+                <div className="absolute -inset-1 bg-amber-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                <div className="relative  border  p-1 rounded-full flex items-center justify-center w-124 h-24">
                   {/* Using Bot icon as placeholder for the logo */}
                   <img
                     src="/leadequator_logo.png"
                     alt="Leadequator"
-                    className="w-16 h-16 object-contain"
+                    className="w-24 h-24 object-contain"
                   />
                 </div>
               </div>

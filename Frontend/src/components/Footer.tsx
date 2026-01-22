@@ -19,7 +19,7 @@ const Footer = () => {
             <h4 className="font-semibold mb-4 text-foreground">Product</h4>
             <ul className="space-y-2">
               <li>
-                <NavLink to="/product" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <NavLink to="/features" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Features
                 </NavLink>
               </li>
@@ -29,8 +29,8 @@ const Footer = () => {
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Dashboard
+                <NavLink to="/solutions" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Solutions
                 </NavLink>
               </li>
             </ul>
@@ -68,6 +68,16 @@ const Footer = () => {
               <li>
                 <NavLink to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Terms of Service
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/shipping" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Shipping & Delivery Policy
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/refund" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Refund & Cancellation Policy
                 </NavLink>
               </li>
             </ul>

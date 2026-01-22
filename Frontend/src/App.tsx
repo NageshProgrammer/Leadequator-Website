@@ -34,6 +34,13 @@ import ConversionHero from "./[components]/loginpagesideview";
 import Provider from "../Provider";
 import LeadDiscovery from "./pages/LeadDiscovery";
 import Contact from "./pages/Contact";
+import About from "./pages/About";
+import Resources from "./pages/Resources";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import RefundPolicy from "./pages/Refund";
+import ShippingPolicy from "./pages/Shipping";
+import CongestedPricing from "./[components]/plansection";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +61,7 @@ export default function App() {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Public */}
+              {/* Public Routes */}
               <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
               <Route path="/working" element={<PublicLayout><Working /></PublicLayout>} />
               <Route path="/features" element={<PublicLayout><Features /></PublicLayout>} />
@@ -64,9 +71,14 @@ export default function App() {
               <Route path="/contact" element={<PublicLayout><Contact/></PublicLayout>} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/lead-discovery" element={<LeadDiscovery />} />
+              <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+              <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
+              <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
+              <Route path="/resources" element={<PublicLayout><Resources /></PublicLayout>} />
+              <Route path="/shipping" element={<PublicLayout><ShippingPolicy /></PublicLayout>} />
+              <Route path="/refund" element={<PublicLayout><RefundPolicy /></PublicLayout>} />
 
-
-              {/* Auth */}
+              {/* Auth - Sign In */}
               <Route
                 path="/sign-in/*"
                 element={
@@ -80,12 +92,14 @@ export default function App() {
                         path="/sign-in"
                         signUpUrl="/sign-up"
                         forceRedirectUrl="/onboarding"
+                        fallbackRedirectUrl="/onboarding"
                       />
                     </div>
                   </div>
                 }
               />
 
+              {/* Auth - Sign Up */}
               <Route
                 path="/sign-up/*"
                 element={
@@ -99,13 +113,14 @@ export default function App() {
                         path="/sign-up"
                         signInUrl="/sign-in"
                         forceRedirectUrl="/onboarding"
+                        fallbackRedirectUrl="/onboarding"
                       />
                     </div>
                   </div>
                 }
               />
 
-              {/* Protected */}
+              {/* Protected Dashboard Routes */}
               <Route element={<SignedIn><DashboardLayout /></SignedIn>}>
                 <Route path="/dashboard" element={<DashboardOverview />} />
                 <Route path="/monitor-stream" element={<MonitorStream />} />
@@ -115,6 +130,8 @@ export default function App() {
                 <Route path="/competitor-watch" element={<CompetitorWatch />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<SettingsIntegrations />} />
+                <Route path="/pricings" element={<CongestedPricing />} />
+                
               </Route>
 
               <Route path="*" element={<NotFound />} />

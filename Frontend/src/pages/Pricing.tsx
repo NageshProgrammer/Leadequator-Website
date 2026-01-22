@@ -1,18 +1,16 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { ShineBorder } from "@/components/ui/shine-border";
 import { Link } from "react-router-dom";
+import CongestedPricing from "@/[components]/plansection";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Pricing = () => {
-  /* -------- FUNCTIONAL LOGIC ONLY -------- */
-
-  const handlePlanAction = (planName: string) => {
-    // later: route to contact form / API / modal
-    alert(`Request submitted for ${planName} plan`);
-  };
+  /* -------- FUNCTIONAL LOGIC -------- */
 
   const handlePilotCTA = () => {
+    // This logic remains for the bottom button if you prefer an alert, 
+    // but typically you'd wrap this in a Link as well.
     alert("Pilot Program request initiated");
   };
 
@@ -31,6 +29,7 @@ const Pricing = () => {
         "30-day pilot program",
       ],
       cta: "Request Pilot Quote",
+      path: "/sign-up/", // Redirects to Sign Up as requested
       highlighted: false,
     },
     {
@@ -50,6 +49,7 @@ const Pricing = () => {
         "Priority support",
       ],
       cta: "Request Scale Quote",
+      path: "/sign-up/",
       highlighted: true,
     },
     {
@@ -70,79 +70,23 @@ const Pricing = () => {
         "Quarterly business reviews",
       ],
       cta: "Contact Sales",
+      path: "/contact", // Redirects to Contact as requested
       highlighted: false,
     },
   ];
 
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4">
-
-        {/* Header */}
-        <div className="text-center mb-16 animate-fade-in">
-          <h1 className="text-5xl font-bold mb-6">
-            Transparent <span className="text-primary">Enterprise Pricing</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            All plans include AI-powered engagement, real-time monitoring, and
-            intent scoring. Pricing scales with your volume and team size.
-          </p>
-        </div>
+        
+        
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {plans.map((plan, index) => (
-            <Card
-              key={index}
-              className={`p-8 ${
-                plan.highlighted
-                  ? "bg-gradient-to-b from-primary/10 to-background border-primary shadow-xl shadow-primary/20 scale-105"
-                  : "bg-card border-border"
-              } transition-all hover:scale-105 animate-fade-in`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              {plan.highlighted && (
-                <div className="text-center mb-4">
-                  <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold">
-                    MOST POPULAR
-                  </span>
-                </div>
-              )}
-      
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="text-4xl font-bold text-primary mb-2">
-                  {plan.price}
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {plan.description}
-                </p>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <Check className="w-5 h-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+        
+          <CongestedPricing/>
 
 
-              <Link to="/onboarding">
-              <Button
-                className={`w-full ${
-                  plan.highlighted
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                }`}
-              >
-                {plan.cta}
-              </Button>
-              </Link>
-            </Card>
-          ))}
-        </div>
 
         {/* FAQ Section */}
         <div className="mt-24">
@@ -153,11 +97,11 @@ const Pricing = () => {
             {[
               {
                 q: "What determines custom pricing?",
-                a: "Volume of conversations monitored, number of brands/workspaces, team size, and required integrations. Contact us for a tailored quote.",
+                a: "Volume of conversations monitored, number of brands/workspaces, team size, and required integrations.",
               },
               {
                 q: "Is there a free trial?",
-                a: "We offer a 30-day Pilot program with limited scope to prove ROI before committing to full deployment.",
+                a: "We offer a 14-day Pilot program with limited scope to prove ROI before committing to full deployment.",
               },
               {
                 q: "What's included in 'unlimited conversations'?",
@@ -184,13 +128,14 @@ const Pricing = () => {
           <p className="text-muted-foreground text-lg mb-6">
             Start with a Pilot program and scale when you see results.
           </p>
-          <Button
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={handlePilotCTA}
-          >
-            Request Pilot Program
-          </Button>
+          <Link to="/sign-up">
+            <Button
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Request Pilot Program
+            </Button>
+          </Link>
         </div>
 
       </div>

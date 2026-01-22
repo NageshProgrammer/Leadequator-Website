@@ -7,8 +7,8 @@ import { ClerkProvider } from "@clerk/clerk-react";
 // Read Clerk key from Vite env
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-// Log for debugging (remove later if you want)
-console.log("VITE_CLERK_PUBLISHABLE_KEY:", PUBLISHABLE_KEY);
+// Log for debugging (optional)
+console.log("Clerk Key Initialized:", !!PUBLISHABLE_KEY);
 
 const rootElement = document.getElementById("root");
 
@@ -19,7 +19,12 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     {PUBLISHABLE_KEY ? (
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <ClerkProvider 
+        publishableKey={PUBLISHABLE_KEY}
+        // Force global redirects to the onboarding flow
+        afterSignUpUrl="/onboarding"
+        afterSignInUrl="/onboarding"
+      >
         <App />
       </ClerkProvider>
     ) : (
@@ -28,12 +33,13 @@ createRoot(rootElement).render(
           padding: "40px",
           fontFamily: "sans-serif",
           color: "red",
+          textAlign: "center"
         }}
       >
         <h2>Clerk Publishable Key Missing</h2>
         <p>
           Please add <b>VITE_CLERK_PUBLISHABLE_KEY</b> to your{" "}
-          <code>Frontend/.env</code> file and restart the dev server.
+          <code>.env</code> file and restart the dev server.
         </p>
       </div>
     )}

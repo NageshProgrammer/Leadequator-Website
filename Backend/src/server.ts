@@ -14,7 +14,15 @@ import {
 } from "./config/schema"; // ✅ FIXED PATH
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://leadequator.live"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 
 // --------------------
@@ -90,13 +98,24 @@ app.post("/api/onboarding", async (req, res) => {
         set: { companyName: companyData.companyName },
       });
 
-    await db.insert(targetMarket).values({
-      userId,
-      targetAudience: targetData.targetAudience,
-      targetCountry: targetData.targetCountry,
-      targetStateCity: targetData.targetStateCity || null,
-      businessType: targetData.businessType,
-    });
+    await db
+      .insert(targetMarket)
+      .values({
+        userId,
+        targetAudience: targetData.targetAudience,
+        targetCountry: targetData.targetCountry,
+        targetStateCity: targetData.targetStateCity || null,
+        businessType: targetData.businessType,
+      })
+      .onConflictDoUpdate({
+        target: targetMarket.userId,
+        set: {
+          targetAudience: targetData.targetAudience,
+          targetCountry: targetData.targetCountry,
+          targetStateCity: targetData.targetStateCity || null,
+          businessType: targetData.businessType,
+        },
+      });
 
     // Reset keywords
     await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
@@ -106,7 +125,7 @@ app.post("/api/onboarding", async (req, res) => {
         keywordsData.keywords.map((k: string) => ({
           userId,
           keyword: k,
-        }))
+        })),
       );
     }
 

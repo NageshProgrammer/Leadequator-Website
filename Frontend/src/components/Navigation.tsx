@@ -46,7 +46,7 @@ const Navigation = () => {
           </NavLink>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <NavLink key={link.to} to={link.to}>
                 {link.label}
@@ -59,21 +59,19 @@ const Navigation = () => {
                 <Button className="bg-primary">Start a Free Trial</Button>
               </Link>
 
-              {/* Separate Logic for Auth */}
-              {!user ? (
+              
+              
                 <Link to="/sign-in">
                   <ShimmerButton shimmerColor="#fbbf24">Login</ShimmerButton>
                 </Link>
-              ) : (
-                <UserButton afterSignOutUrl="/" />
-              )}
+              
             </div>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-foreground"
+            className="lg:hidden text-foreground"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -81,7 +79,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-border animate-fade-in">
+          <div className="lg:hidden py-4 border-t border-border animate-fade-in">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}

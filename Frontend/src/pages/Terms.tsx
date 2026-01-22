@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Terms = () => {
   return (
     <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="animate-fade-in">
           <h1 className="text-5xl font-bold mb-6">Terms of Service</h1>
@@ -153,7 +155,7 @@ const Terms = () => {
               <p className="text-muted-foreground leading-relaxed">
                 For questions about these terms, contact:
               </p>
-              <p className="text-primary mt-2">legal@leadequator.ai</p>
+              <p className="text-primary mt-2">leadequatorofficial@gmail.com</p>
             </section>
           </Card>
         </div>

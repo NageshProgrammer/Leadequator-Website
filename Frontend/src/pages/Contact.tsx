@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Mail, MessageSquare, Calendar } from "lucide-react";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Contact = () => {
   const navigate = useNavigate();
@@ -68,6 +69,8 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-20">
+    <div className="min-h-screen pt-24 pb-12">
+      <ScrollProgress className="top-[65px]" />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
@@ -129,6 +132,9 @@ const Contact = () => {
                 className="text-primary text-sm"
               >
                 sales@leadequator.ai
+              </a>
+              <a href="mailto:leadequatorofficial@gmail.com" className="text-primary">
+                leadequatorofficial@gmail.com
               </a>
             </Card>
           </div>
@@ -244,6 +250,7 @@ const Contact = () => {
         </div>
       </div>
     </div>
+  </div>
   );
 };
 
