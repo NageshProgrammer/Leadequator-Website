@@ -8,7 +8,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://leadequator.live",
-        "https://www.leadequator.live"
+        "https://www.leadequator.live",
+        "http://localhost:5173"
+
     ],    
     allow_credentials=True,
     allow_methods=["*"],
