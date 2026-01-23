@@ -6,3 +6,4 @@ keybert
 sentence-transformers
 scikit-learn
 torch==2.5.0+cpu
+praw
