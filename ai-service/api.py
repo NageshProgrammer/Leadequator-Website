@@ -19,7 +19,7 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"message": "LeadEquator AI service running"}
+    return {"status": "LeadEquator AI service running"}
 
 app.include_router(keyword_router)
 app.include_router(reddit_router)
