@@ -1,8 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 fastapi
 uvicorn
 keybert
 sentence-transformers
 scikit-learn
-numpy
-pydantic
-torch
+torch==2.2.2+cpu
