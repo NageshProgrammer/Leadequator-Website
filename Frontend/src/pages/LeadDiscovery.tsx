@@ -1,4 +1,6 @@
 import { useState } from "react";
+const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL;
+
 
 export default function LeadDiscovery() {
   const [form, setForm] = useState({
@@ -23,7 +25,7 @@ export default function LeadDiscovery() {
     setResult(null);
 
     try {
-      const res = await fetch("https://shit-ai-integrations.onrender.com/extract-keywords", {
+      const res = await fetch(`${AI_BASE_URL}/extract-keywords`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -65,7 +67,7 @@ export default function LeadDiscovery() {
                 onChange={handleChange}
                 className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-sm"
               />
-            )
+            ),
           )}
         </div>
 
@@ -83,9 +85,7 @@ export default function LeadDiscovery() {
         {/* RESULTS */}
         {result && (
           <div className="mt-10 bg-zinc-900 border border-zinc-700 rounded-xl p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              🎯 Core Keywords
-            </h2>
+            <h2 className="text-xl font-semibold mb-4">🎯 Core Keywords</h2>
 
             <ul className="list-disc list-inside text-yellow-300 space-y-1">
               {result.core_keywords.map((kw: string) => (
