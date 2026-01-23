@@ -35,7 +35,7 @@ document.getElementById("leadForm").addEventListener("submit", async function(e)
         problem: problem.value
     };
 
-    const response = await fetch("http://127.0.0.1:8000/extract-keywords", {
+    const response = await fetch("https://127.0.0.1:8000/extract-keywords", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(data)
