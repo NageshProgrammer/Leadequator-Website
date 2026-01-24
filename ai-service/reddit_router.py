@@ -1,35 +1,69 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from typing import List
 import os
 import praw
+import json
 
 router = APIRouter(prefix="/scrape-reddit", tags=["Reddit"])
 
+USE_MOCK = os.getenv("USE_MOCK_REDDIT", "true").lower() == "true"
+
+
 def get_reddit_client():
+    client_id = os.getenv("REDDIT_CLIENT_ID")
+    client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+
+    if not client_id or not client_secret:
+        raise RuntimeError("Reddit credentials not set")
+
     return praw.Reddit(
-        client_id=os.getenv("REDDIT_CLIENT_ID"),
-        client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+        client_id=client_id,
+        client_secret=client_secret,
         user_agent="leadequator-ai"
     )
 
+
 @router.post("/")
-def scrape_reddit(keywords: list[str]):
-    reddit = get_reddit_client()
-    subreddit = reddit.subreddit("startups")
+def scrape_reddit(keywords: List[str]):
+    if not keywords:
+        raise HTTPException(status_code=400, detail="Keywords list is empty")
 
-    results = []
+    # ✅ MOCK MODE (Azure-safe)
+    if USE_MOCK:
+        try:
+            with open("reddit_test/mock_reddit_posts.json", "r") as f:
+                data = json.load(f)
+            return {
+                "mode": "mock",
+                "count": len(data),
+                "posts": data
+            }
+        except Exception:
+            raise HTTPException(status_code=500, detail="Mock data not found")
 
-    for kw in keywords:
-        for post in subreddit.search(kw, limit=5):
-            results.append({
-                "keyword": kw,
-                "title": post.title,
-                "url": post.url,
-                "score": post.score,
-                "comments": post.num_comments,
-                "subreddit": str(post.subreddit)
-            })
+    # ✅ REAL MODE
+    try:
+        reddit = get_reddit_client()
+        subreddit = reddit.subreddit("startups")
 
-    return {
-        "count": len(results),
-        "posts": results
-    }
+        results = []
+
+        for kw in keywords:
+            for post in subreddit.search(kw, limit=5):
+                results.append({
+                    "keyword": kw,
+                    "title": post.title,
+                    "url": post.url,
+                    "score": post.score,
+                    "comments": post.num_comments,
+                    "subreddit": str(post.subreddit)
+                })
+
+        return {
+            "mode": "real",
+            "count": len(results),
+            "posts": results
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
