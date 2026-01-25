@@ -1,8 +1,10 @@
 fastapi
 uvicorn[standard]
 gunicorn
+
 keybert
 sentence-transformers
 scikit-learn
+
 praw
 python-dotenv

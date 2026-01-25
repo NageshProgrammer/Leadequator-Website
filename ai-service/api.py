@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from extractor import router as keyword_router
 from reddit_router import router as reddit_router
 
-app = FastAPI()
+app = FastAPI(
+    title="LeadEquator AI Service",
+    version="1.0.0"
+)
 
+# ✅ CORS (frontend + local dev)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -17,9 +22,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ✅ Health check (IMPORTANT for Azure)
 @app.get("/")
-def home():
-    return {"status": "LeadEquator AI service running"}
+def health():
+    return {
+        "status": "ok",
+        "service": "LeadEquator AI",
+        "env": "azure"
+    }
 
+# ✅ Routers
 app.include_router(keyword_router)
 app.include_router(reddit_router)
