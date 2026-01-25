@@ -4,12 +4,8 @@ import os
 import json
 import praw
 
-router = APIRouter(
-    prefix="/scrape-reddit",
-    tags=["Reddit"]
-)
+router = APIRouter(prefix="/scrape-reddit", tags=["Reddit"])
 
-# 🔁 Toggle via Azure Environment Variable
 USE_MOCK = os.getenv("USE_MOCK_REDDIT", "true").lower() == "true"
 
 
@@ -32,15 +28,11 @@ def scrape_reddit(keywords: List[str]):
     if not keywords:
         raise HTTPException(status_code=400, detail="Keywords list is empty")
 
-    # ================= MOCK MODE =================
+    # ✅ MOCK MODE (default for Azure)
     if USE_MOCK:
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            mock_path = os.path.join(
-                base_dir,
-                "reddit_test",
-                "mock_reddit_posts.json"
-            )
+            base_dir = os.path.dirname(__file__)
+            mock_path = os.path.join(base_dir, "reddit_test", "mock_reddit_posts.json")
 
             with open(mock_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -52,12 +44,9 @@ def scrape_reddit(keywords: List[str]):
             }
 
         except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Mock data error: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=str(e))
 
-    # ================= REAL MODE =================
+    # ✅ REAL MODE
     try:
         reddit = get_reddit_client()
         subreddit = reddit.subreddit("startups")
@@ -72,13 +61,13 @@ def scrape_reddit(keywords: List[str]):
                     "url": post.url,
                     "score": post.score,
                     "comments": post.num_comments,
-                    "subreddit": str(post.subreddit)
+                    "subreddit": str(post.subreddit),
                 })
 
         return {
             "mode": "real",
             "count": len(results),
-            "posts": results
+            "posts": results,
         }
 
     except Exception as e:

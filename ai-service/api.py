@@ -5,12 +5,12 @@ from reddit_router import router as reddit_router
 
 app = FastAPI(title="LeadEquator AI Service")
 
+# ✅ CORS MUST BE HERE AND FIRST
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://leadequator.live",
         "https://www.leadequator.live",
-        "https://leadequator-ai-service-arfwaze2cyesckgj.centralindia-01.azurewebsites.net",
         "http://localhost:5173",
     ],
     allow_credentials=True,
@@ -20,11 +20,7 @@ app.add_middleware(
 
 @app.get("/")
 def health():
-    return {"status": "ok", "service": "LeadEquator AI running"}
-
-@app.get("/health")
-def health_check():
-    return {"alive": True}
+    return {"status": "LeadEquator AI service running"}
 
 app.include_router(keyword_router)
 app.include_router(reddit_router)
