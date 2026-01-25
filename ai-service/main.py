@@ -1,7 +1,7 @@
+# ai-service/main.py
 import uvicorn
 from api import app
 
-# Azure uses gunicorn, not uvicorn.run
 if __name__ == "__main__":
     uvicorn.run(
         "api:app",
