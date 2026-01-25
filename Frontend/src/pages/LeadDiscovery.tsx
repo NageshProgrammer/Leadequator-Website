@@ -31,7 +31,7 @@ export default function LeadDiscovery() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  /* ---------------- STEP 1: KEYWORD DISCOVERY ---------------- */
+  /* ---------- STEP 1: KEYWORD DISCOVERY ---------- */
   const runDiscovery = async () => {
     setLoading(true);
     setError("");
@@ -49,14 +49,14 @@ export default function LeadDiscovery() {
       if (!res.ok) throw new Error(data?.detail || "Keyword extraction failed");
 
       setResult(data);
-    } catch (err) {
+    } catch {
       setError("AI service not reachable");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- STEP 2: REDDIT SCRAPING ---------------- */
+  /* ---------- STEP 2: REDDIT SCRAPING ---------- */
   const scrapeReddit = async () => {
     if (!result?.core_keywords?.length) {
       setError("No keywords available for scraping");
@@ -76,9 +76,8 @@ export default function LeadDiscovery() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.detail || "Reddit scraping failed");
 
-      // ✅ Normalize backend response
       setRedditPosts(data.posts || []);
-    } catch (err) {
+    } catch {
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
