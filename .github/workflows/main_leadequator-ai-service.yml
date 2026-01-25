@@ -20,14 +20,14 @@ jobs:
         with:
           python-version: '3.10'
 
-      # ✅ Install dependencies ONLY for validation
+      # ✅ Validate dependencies (no venv needed)
       - name: Install dependencies
         working-directory: ai-service
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ✅ Upload ONLY what Azure needs
+      # ✅ Upload ONLY ai-service
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -43,6 +43,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ai-service-app
+          path: ai-service
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
