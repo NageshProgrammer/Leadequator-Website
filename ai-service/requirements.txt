@@ -3,5 +3,8 @@ uvicorn
 gunicorn
 keybert
 scikit-learn
-praw
+numpy
+pydantic
 python-dotenv
+praw
+requests

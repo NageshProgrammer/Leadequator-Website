@@ -12,25 +12,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Upload ai-service only
+      # ✅ Upload ONLY ai-service folder
+      - name: Upload ai-service artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-service-app
-          path: ai-service
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download artifact
+      - name: Download ai-service artifact
         uses: actions/download-artifact@v4
         with:
           name: ai-service-app
-          path: ai-service
 
-      - name: Deploy ai-service to Azure
+      - name: Deploy ai-service to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: leadequator-ai-service
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-          package: ai-service
+          package: .
