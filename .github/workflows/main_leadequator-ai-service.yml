@@ -13,26 +13,28 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
-      # ✅ Validate dependencies (no venv needed)
-      - name: Install dependencies
-        working-directory: ai-service
+      # ✅ Install dependencies from ROOT requirements.txt
+      - name: Install dependencies (validation only)
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ✅ Upload ONLY ai-service
+      # ✅ Upload everything Azure needs
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-service-app
-          path: ai-service
+          path: |
+            ai-service
+            requirements.txt
 
   deploy:
     runs-on: ubuntu-latest
@@ -43,7 +45,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ai-service-app
-          path: ai-service
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
