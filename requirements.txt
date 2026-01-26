@@ -1,9 +1,7 @@
 fastapi
 uvicorn
 gunicorn
+keybert
+scikit-learn
 praw
 python-dotenv
-keybert
-sentence-transformers
-scikit-learn
-transformers

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from keybert import KeyBERT
+from sklearn.feature_extraction.text import CountVectorizer
 import re
 from typing import Optional
 
@@ -11,9 +12,11 @@ kw_model = None
 def get_model():
     global kw_model
     if kw_model is None:
-        print("Loading lightweight KeyBERT model...")
-        kw_model = KeyBERT("all-MiniLM-L6-v2")
+        print("Loading lightweight KeyBERT (sklearn backend, no torch)...")
+        # IMPORTANT: model=None prevents sentence-transformers / torch
+        kw_model = KeyBERT(model=None)
     return kw_model
+
 
 class FormData(BaseModel):
     industry: Optional[str] = ""
@@ -22,8 +25,10 @@ class FormData(BaseModel):
     problem: Optional[str] = ""
     location: Optional[str] = ""
 
-def clean_text(text: str):
+
+def clean_text(text: str) -> str:
     return re.sub(r"[^a-zA-Z\s]", "", text.lower())
+
 
 @router.post("/extract-keywords")
 def extract_keywords(data: FormData):
@@ -44,8 +49,8 @@ def extract_keywords(data: FormData):
 
     keywords = model.extract_keywords(
         cleaned_text,
+        vectorizer=CountVectorizer(stop_words="english"),
         keyphrase_ngram_range=(1, 2),
-        stop_words="english",
         top_n=5
     )
 
