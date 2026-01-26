@@ -1,10 +1,9 @@
 fastapi
-uvicorn[standard]
+uvicorn
 gunicorn
-
+praw
+python-dotenv
 keybert
 sentence-transformers
 scikit-learn
-
-praw
-python-dotenv
+transformers
