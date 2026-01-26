@@ -1,6 +1,5 @@
 fastapi
-uvicorn
-gunicorn
+uvicorn[standard]
 keybert
 scikit-learn
 numpy
