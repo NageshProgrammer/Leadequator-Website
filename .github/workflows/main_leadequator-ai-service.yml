@@ -9,40 +9,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
-      # ✅ Install dependencies from ROOT requirements.txt
-      - name: Install dependencies (validation only)
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      # ✅ No dependency install here
 
-      # ✅ Upload everything Azure needs
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-service-app
-          path: |
-            ai-service
-            requirements.txt
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: ai-service-app
 
@@ -50,4 +37,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: leadequator-ai-service
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8C98B0B659D84BC8991F0F38F47D8229 }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}

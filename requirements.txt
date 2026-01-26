@@ -2,12 +2,11 @@ fastapi
 uvicorn
 gunicorn
 
-praw
-python-dotenv
-
-keybert
+keybert==0.9.0
 scikit-learn
 numpy
 scipy
 
+praw
+python-dotenv
 requests
