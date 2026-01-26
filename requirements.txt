@@ -1,7 +1,13 @@
 fastapi
 uvicorn
 gunicorn
-keybert
-scikit-learn
+
 praw
 python-dotenv
+
+keybert
+scikit-learn
+numpy
+scipy
+
+requests

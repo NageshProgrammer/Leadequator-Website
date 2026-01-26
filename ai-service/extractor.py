@@ -12,48 +12,7 @@ kw_model = None
 def get_model():
     global kw_model
     if kw_model is None:
-        print("Loading lightweight KeyBERT (sklearn backend, no torch)...")
-        # IMPORTANT: model=None prevents sentence-transformers / torch
-        kw_model = KeyBERT(model=None)
+        print("Loading KeyBERT (CPU-safe, sklearn backend)...")
+        vectorizer = CountVectorizer(stop_words="english")
+        kw_model = KeyBERT(model=vectorizer)
     return kw_model
-
-
-class FormData(BaseModel):
-    industry: Optional[str] = ""
-    company_type: Optional[str] = ""
-    interests: Optional[str] = ""
-    problem: Optional[str] = ""
-    location: Optional[str] = ""
-
-
-def clean_text(text: str) -> str:
-    return re.sub(r"[^a-zA-Z\s]", "", text.lower())
-
-
-@router.post("/extract-keywords")
-def extract_keywords(data: FormData):
-    combined_text = " ".join([
-        data.industry,
-        data.company_type,
-        data.interests,
-        data.problem,
-        data.location,
-    ])
-
-    cleaned_text = clean_text(combined_text)
-
-    if not cleaned_text.strip():
-        return {"error": "Empty input"}
-
-    model = get_model()
-
-    keywords = model.extract_keywords(
-        cleaned_text,
-        vectorizer=CountVectorizer(stop_words="english"),
-        keyphrase_ngram_range=(1, 2),
-        top_n=5
-    )
-
-    return {
-        "core_keywords": [kw for kw, _ in keywords]
-    }
