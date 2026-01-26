@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ShimmerButton } from "./ui/shimmer-button";
-import { UserButton, useUser } from "@clerk/clerk-react";// adjust path as needed
-
+import { UserButton, useUser } from "@clerk/clerk-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, isLoaded } = useUser();
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -18,29 +18,22 @@ const Navigation = () => {
     { to: "/working", label: "How it works" },
     { to: "/features", label: "Features" },
     { to: "/pricing", label: "Pricing" },
-    // { to: "/dashboard", label: "Dashboard" },
-    // { to: "/resources", label: "Resources" },
-    // { to: "/about", label: "About" },
-    // { to: "/contact", label: "Contact" },
   ];
-
-  const { user } = useUser();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
           <NavLink
             to="/"
             className="text-2xl font-bold flex items-center gap-1"
           >
-            {/* Using Bot icon as placeholder for the logo */}
             <img
               src="/leadequator_logo.png"
-              alt="Leadequator"
+              alt="LeadEquator"
               className="w-12 h-12 object-contain"
             />
-
             <span className="text-foreground">Lead</span>
             <span className="text-primary">equator</span>
           </NavLink>
@@ -53,19 +46,33 @@ const Navigation = () => {
               </NavLink>
             ))}
 
-            <div className="flex items-center gap-4">
-              {/* Separate Link for the Pilot Button */}
-              <Link to="/pricing">
-                <Button className="bg-primary">Start a Free Trial</Button>
-              </Link>
+            {/* Auth Section */}
+            {isLoaded && (
+              <div className="flex items-center gap-4">
+                {!user ? (
+                  <>
+                    <Link to="/pricing">
+                      <Button className="bg-primary">
+                        Start a Free Trial
+                      </Button>
+                    </Link>
 
-              
-              
-                <Link to="/sign-in">
-                  <ShimmerButton shimmerColor="#fbbf24">Login</ShimmerButton>
-                </Link>
-              
-            </div>
+                    <Link to="/sign-in">
+                      <ShimmerButton shimmerColor="#fbbf24">
+                        Login
+                      </ShimmerButton>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/dashboard">
+                      <Button variant="outline">Dashboard</Button>
+                    </Link>
+                    <UserButton afterSignOutUrl="/" />
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -91,11 +98,35 @@ const Navigation = () => {
                 {link.label}
               </NavLink>
             ))}
-            <Link to="/contact">
-              <Button className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90">
-                Request Pilot
-              </Button>
-            </Link>
+
+            <div className="mt-4 space-y-3">
+              {!user ? (
+                <>
+                  <Link to="/pricing">
+                    <Button className="w-full bg-primary">
+                      Start a Free Trial
+                    </Button>
+                  </Link>
+
+                  <Link to="/sign-in">
+                    <Button variant="outline" className="w-full">
+                      Login
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/dashboard">
+                    <Button variant="outline" className="w-full">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <div className="flex justify-center mt-2">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

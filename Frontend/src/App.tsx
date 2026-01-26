@@ -3,12 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import {
-  RedirectToSignIn,
-  SignedIn,
-  SignIn,
-  SignUp,
-} from "@clerk/clerk-react";
+import { SignedIn, SignIn, SignUp } from "@clerk/clerk-react";
 
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
@@ -30,6 +25,7 @@ import CommentTimeline from "./pages/CommentTimeline";
 import Reports from "./pages/Reports";
 import SettingsIntegrations from "./pages/SettingsIntegrations";
 import NotFound from "./pages/NotFound";
+
 import ConversionHero from "./[components]/loginpagesideview";
 import Provider from "../Provider";
 import LeadDiscovery from "./pages/LeadDiscovery";
@@ -41,6 +37,7 @@ import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/Refund";
 import ShippingPolicy from "./pages/Shipping";
 import CongestedPricing from "./[components]/plansection";
+import ComingSoon from "./pages/comingsoon";
 
 const queryClient = new QueryClient();
 
@@ -61,24 +58,29 @@ export default function App() {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Public Routes */}
+              {/* ================= PUBLIC ROUTES ================= */}
               <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
               <Route path="/working" element={<PublicLayout><Working /></PublicLayout>} />
               <Route path="/features" element={<PublicLayout><Features /></PublicLayout>} />
               <Route path="/solutions" element={<PublicLayout><Solution /></PublicLayout>} />
               <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
               <Route path="/problems" element={<PublicLayout><Problems /></PublicLayout>} />
-              <Route path="/contact" element={<PublicLayout><Contact/></PublicLayout>} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/lead-discovery" element={<LeadDiscovery />} />
+              <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
               <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+              <Route path="/resources" element={<PublicLayout><Resources /></PublicLayout>} />
               <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
               <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
-              <Route path="/resources" element={<PublicLayout><Resources /></PublicLayout>} />
               <Route path="/shipping" element={<PublicLayout><ShippingPolicy /></PublicLayout>} />
               <Route path="/refund" element={<PublicLayout><RefundPolicy /></PublicLayout>} />
 
-              {/* Auth - Sign In */}
+              {/* 🚧 COMING SOON (GLOBAL) */}
+              <Route path="/coming-soon" element={<ComingSoon />} />
+
+              {/* Other public pages */}
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/lead-discovery" element={<LeadDiscovery />} />
+
+              {/* ================= AUTH ROUTES ================= */}
               <Route
                 path="/sign-in/*"
                 element={
@@ -99,7 +101,6 @@ export default function App() {
                 }
               />
 
-              {/* Auth - Sign Up */}
               <Route
                 path="/sign-up/*"
                 element={
@@ -120,7 +121,7 @@ export default function App() {
                 }
               />
 
-              {/* Protected Dashboard Routes */}
+              {/* ================= DASHBOARD (PROTECTED) ================= */}
               <Route element={<SignedIn><DashboardLayout /></SignedIn>}>
                 <Route path="/dashboard" element={<DashboardOverview />} />
                 <Route path="/monitor-stream" element={<MonitorStream />} />
@@ -131,9 +132,9 @@ export default function App() {
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<SettingsIntegrations />} />
                 <Route path="/pricings" element={<CongestedPricing />} />
-                
               </Route>
 
+              {/* ================= FALLBACK ================= */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
