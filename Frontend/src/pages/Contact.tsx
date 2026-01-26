@@ -127,12 +127,12 @@ const Contact = () => {
             <Card className="p-6">
               <Mail className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-xl font-bold mb-2">Email Us</h3>
-              <a
+              {/* <a
                 href="mailto:sales@leadequator.ai"
                 className="text-primary text-sm"
               >
                 sales@leadequator.ai
-              </a>
+              </a> */}
               <a href="mailto:leadequatorofficial@gmail.com" className="text-primary">
                 leadequatorofficial@gmail.com
               </a>
@@ -241,12 +241,12 @@ const Contact = () => {
 
         {/* Lead Discovery CTA */}
         <div className="mt-20 flex justify-center">
-          <button
+          {/* <button
             onClick={() => navigate("/lead-discovery")}
             className="text-sm px-6 py-2 rounded-full border border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground transition"
           >
             🚀 Start Lead Discovery
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
