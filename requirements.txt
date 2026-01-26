@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+keybert
+scikit-learn
+numpy
+pydantic
+python-dotenv
+praw
+requests
