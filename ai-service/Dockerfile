@@ -2,7 +2,6 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# System dependencies (important for ML libs)
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -11,9 +10,12 @@ RUN apt-get update && apt-get install -y \
 
 COPY requirements.txt .
 
-# Upgrade pip and install deps
+# Install PyTorch CPU first (IMPORTANT)
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining dependencies
+RUN pip install -r requirements.txt
 
 COPY . .
 
