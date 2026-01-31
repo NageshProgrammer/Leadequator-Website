@@ -6,17 +6,23 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
+# 🔥 Install CPU-only torch FIRST
+RUN pip install --no-cache-dir torch==2.1.2+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Copy requirements AFTER torch
 COPY requirements.txt .
 
-# Install PyTorch CPU first (IMPORTANT)
-RUN pip install --upgrade pip \
-    && pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Install remaining deps (torch already satisfied)
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install remaining dependencies
-RUN pip install -r requirements.txt
-
+# Copy app code
 COPY . .
 
 EXPOSE 80
