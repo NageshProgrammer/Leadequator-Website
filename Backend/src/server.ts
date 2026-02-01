@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { eq } from "drizzle-orm";
 
-import { db } from "./db";
+import { db } from "./db.js";
 import leadDiscoveryRoutes from "./routes/leadDiscovery";
 
 import {
