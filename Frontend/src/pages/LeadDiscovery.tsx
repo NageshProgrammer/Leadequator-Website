@@ -32,17 +32,13 @@ export default function LeadDiscovery() {
       setLoadingKeywords(true);
       setError("");
 
-      const token = await getToken();
+      const token = await getToken({ template: "default" });
 
-      const res = await fetch(
-        `${API_BASE}/api/lead-discovery/keywords`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${API_BASE}/api/lead-discovery/keywords`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) {
         throw new Error("Failed to load keywords");
@@ -72,20 +68,16 @@ export default function LeadDiscovery() {
       setError("");
       setRedditPosts([]);
 
-      const token = await getToken();
+      const token = await getToken({ template: "default" });
 
-      const res = await fetch(
-        `${API_BASE}/api/lead-discovery/scrape`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-          body: JSON.stringify({ keywords }),
-        }
-      );
+      const res = await fetch(`${API_BASE}/api/lead-discovery/scrape`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ keywords }),
+      });
 
       if (!res.ok) {
         throw new Error("Scraping failed");
@@ -157,10 +149,7 @@ export default function LeadDiscovery() {
 
             <ul className="space-y-3 text-sm">
               {redditPosts.map((post, idx) => (
-                <li
-                  key={idx}
-                  className="border border-zinc-700 rounded-lg p-3"
-                >
+                <li key={idx} className="border border-zinc-700 rounded-lg p-3">
                   <p className="font-medium">{post.title}</p>
                   <p className="text-xs text-gray-400">
                     Keyword: {post.keyword}

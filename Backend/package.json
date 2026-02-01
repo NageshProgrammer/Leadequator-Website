@@ -9,6 +9,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@neondatabase/serverless": "^1.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
