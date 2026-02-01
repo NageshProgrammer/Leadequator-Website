@@ -38,19 +38,31 @@ export default function LeadDiscovery() {
     setResult(null);
     setRedditPosts([]);
 
+    const payload = {
+      industry: form.industry,
+      company_type: form.company_type,
+      interests: form.interests,
+      problem: form.problem,
+      location: form.location,
+    };
+
     try {
-      fetch(`${AI_BASE_URL}/extract-keywords`, {
+      const res = await fetch(`${AI_BASE_URL}/extract-keywords`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail || "Keyword extraction failed");
+
+      if (!res.ok) {
+        throw new Error(data?.detail || "Keyword extraction failed");
+      }
 
       setResult(data);
-    } catch {
-      setError("AI service not reachable");
+    } catch (err) {
+      console.error(err);
+      setError("AI service not reachable or failed");
     } finally {
       setLoading(false);
     }
@@ -70,14 +82,20 @@ export default function LeadDiscovery() {
       const res = await fetch(`${AI_BASE_URL}/scrape-reddit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(result.core_keywords),
+        body: JSON.stringify({
+          keywords: result.core_keywords,
+        }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail || "Reddit scraping failed");
+
+      if (!res.ok) {
+        throw new Error(data?.detail || "Reddit scraping failed");
+      }
 
       setRedditPosts(data.posts || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
@@ -106,7 +124,7 @@ export default function LeadDiscovery() {
                 onChange={handleChange}
                 className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-sm"
               />
-            ),
+            )
           )}
         </div>
 
