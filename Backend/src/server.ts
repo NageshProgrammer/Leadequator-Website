@@ -18,16 +18,36 @@ import {
 const app = express();
 
 /* ===============================
-   CORS (CLERK SAFE)
+   CORS (LOCAL + PRODUCTION SAFE)
 ================================ */
+
+// ✅ Explicitly allowed origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "https://leadequator.live",
+  "https://www.leadequator.live",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:8080",
-      "http://localhost:5173",
-      "https://leadequator.live",
-    ],
+    origin: (origin, callback) => {
+      // Allow server-to-server, curl, Postman, health checks
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+    ],
   })
 );
 
@@ -52,7 +72,8 @@ app.get("/api/onboarding/progress", async (req, res) => {
       .limit(1);
 
     res.json(result[0] ?? {});
-  } catch {
+  } catch (err) {
+    console.error("Onboarding progress error:", err);
     res.status(500).json({ error: "Failed to load progress" });
   }
 });
@@ -141,7 +162,8 @@ app.post("/api/onboarding", async (req, res) => {
       });
 
     res.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("Onboarding submit error:", err);
     res.status(500).json({ error: "Onboarding failed" });
   }
 });
@@ -171,6 +193,11 @@ app.post("/api/users/sync", async (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(4000, () => {
-  console.log("✅ API running on http://localhost:4000");
+/* ===============================
+   SERVER START
+================================ */
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`✅ API running on port ${PORT}`);
 });
