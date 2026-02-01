@@ -20,7 +20,7 @@ const app = express();
    CORS (LOCAL + PRODUCTION SAFE)
 ================================ */
 
-// ✅ Explicitly allowed origins
+// ✅ Explicit allowed frontend origins
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8080",
@@ -31,11 +31,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server, curl, Postman, health checks
+      // Allow server-to-server, health checks, curl, Postman
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        // ✅ MUST return origin (not true) when credentials = true
+        return callback(null, origin);
       }
 
       return callback(new Error(`CORS blocked for origin: ${origin}`));
@@ -49,6 +50,9 @@ app.use(
     ],
   })
 );
+
+// Handle preflight explicitly (important for production)
+app.options("*", cors());
 
 app.use(express.json());
 
@@ -78,17 +82,22 @@ app.get("/api/onboarding/progress", async (req, res) => {
 });
 
 app.post("/api/onboarding/progress", async (req, res) => {
-  const { userId, currentStep } = req.body;
+  try {
+    const { userId, currentStep } = req.body;
 
-  await db
-    .insert(onboardingProgress)
-    .values({ userId, currentStep })
-    .onConflictDoUpdate({
-      target: onboardingProgress.userId,
-      set: { currentStep },
-    });
+    await db
+      .insert(onboardingProgress)
+      .values({ userId, currentStep })
+      .onConflictDoUpdate({
+        target: onboardingProgress.userId,
+        set: { currentStep },
+      });
 
-  res.json({ success: true });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Progress update error:", err);
+    res.status(500).json({ error: "Failed to update progress" });
+  }
 });
 
 app.post("/api/onboarding", async (req, res) => {
@@ -167,29 +176,37 @@ app.post("/api/onboarding", async (req, res) => {
   }
 });
 
+/* ===============================
+   USER SYNC (CLERK)
+================================ */
 app.post("/api/users/sync", async (req, res) => {
-  const { clerkId, email, name } = req.body;
+  try {
+    const { clerkId, email, name } = req.body;
 
-  if (!clerkId || !email) {
-    return res.status(400).json({ error: "Missing data" });
+    if (!clerkId || !email) {
+      return res.status(400).json({ error: "Missing data" });
+    }
+
+    const existing = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, clerkId))
+      .limit(1);
+
+    if (!existing.length) {
+      await db.insert(usersTable).values({
+        id: clerkId,
+        email,
+        name,
+        credits: 20,
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("User sync error:", err);
+    res.status(500).json({ error: "User sync failed" });
   }
-
-  const existing = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, clerkId))
-    .limit(1);
-
-  if (!existing.length) {
-    await db.insert(usersTable).values({
-      id: clerkId,
-      email,
-      name,
-      credits: 20,
-    });
-  }
-
-  res.json({ success: true });
 });
 
 /* ===============================
