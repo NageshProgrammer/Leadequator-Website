@@ -384,6 +384,18 @@ const DashboardOverview = () => {
             >
               Back to Home
             </button>
+            <button
+              className="cs-btn"
+              style={{
+                background: "linear-gradient(135deg, #22c55e, #4ade80)",
+              }}
+              onClick={() => {
+                setShowComingSoon(false); // close modal
+                navigate("/lead-discovery");
+              }}
+            >
+              Go to Lead Discovery
+            </button>
           </div>
         </div>
       )}
