@@ -17,10 +17,9 @@ import {
 const app = express();
 
 /* ===============================
-   CORS (LOCAL + PRODUCTION SAFE)
+   CORS (EXPRESS v5 SAFE)
 ================================ */
 
-// ✅ Explicit allowed frontend origins
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8080",
@@ -31,39 +30,33 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server, health checks, curl, Postman
+      // allow server-to-server, curl, health checks
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        // ✅ MUST return origin (not true) when credentials = true
-        return callback(null, origin);
+        return callback(null, origin); // IMPORTANT
       }
 
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      return callback(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-    ],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// Handle preflight explicitly (important for production)
-app.options("*", cors());
 
 app.use(express.json());
 
 /* ===============================
-   LEAD DISCOVERY ROUTES
+   ROUTES
 ================================ */
+
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
 /* ===============================
-   ONBOARDING ROUTES
+   ONBOARDING
 ================================ */
+
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
     const { userId } = req.query as { userId: string };
@@ -76,28 +69,23 @@ app.get("/api/onboarding/progress", async (req, res) => {
 
     res.json(result[0] ?? {});
   } catch (err) {
-    console.error("Onboarding progress error:", err);
+    console.error(err);
     res.status(500).json({ error: "Failed to load progress" });
   }
 });
 
 app.post("/api/onboarding/progress", async (req, res) => {
-  try {
-    const { userId, currentStep } = req.body;
+  const { userId, currentStep } = req.body;
 
-    await db
-      .insert(onboardingProgress)
-      .values({ userId, currentStep })
-      .onConflictDoUpdate({
-        target: onboardingProgress.userId,
-        set: { currentStep },
-      });
+  await db
+    .insert(onboardingProgress)
+    .values({ userId, currentStep })
+    .onConflictDoUpdate({
+      target: onboardingProgress.userId,
+      set: { currentStep },
+    });
 
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Progress update error:", err);
-    res.status(500).json({ error: "Failed to update progress" });
-  }
+  res.json({ success: true });
 });
 
 app.post("/api/onboarding", async (req, res) => {
@@ -171,47 +159,44 @@ app.post("/api/onboarding", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Onboarding submit error:", err);
+    console.error(err);
     res.status(500).json({ error: "Onboarding failed" });
   }
 });
 
 /* ===============================
-   USER SYNC (CLERK)
+   USER SYNC
 ================================ */
+
 app.post("/api/users/sync", async (req, res) => {
-  try {
-    const { clerkId, email, name } = req.body;
+  const { clerkId, email, name } = req.body;
 
-    if (!clerkId || !email) {
-      return res.status(400).json({ error: "Missing data" });
-    }
-
-    const existing = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, clerkId))
-      .limit(1);
-
-    if (!existing.length) {
-      await db.insert(usersTable).values({
-        id: clerkId,
-        email,
-        name,
-        credits: 20,
-      });
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("User sync error:", err);
-    res.status(500).json({ error: "User sync failed" });
+  if (!clerkId || !email) {
+    return res.status(400).json({ error: "Missing data" });
   }
+
+  const existing = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, clerkId))
+    .limit(1);
+
+  if (!existing.length) {
+    await db.insert(usersTable).values({
+      id: clerkId,
+      email,
+      name,
+      credits: 20,
+    });
+  }
+
+  res.json({ success: true });
 });
 
 /* ===============================
-   SERVER START
+   START SERVER
 ================================ */
+
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
