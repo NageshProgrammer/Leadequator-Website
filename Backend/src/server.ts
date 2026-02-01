@@ -4,8 +4,7 @@ import cors from "cors";
 import { eq } from "drizzle-orm";
 
 import { db } from "./db.js";
-import leadDiscoveryRoutes from "./routes/leadDiscovery";
-
+import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
 import {
   onboardingProgress,
   companyDetails,
@@ -13,7 +12,7 @@ import {
   buyerKeywords,
   platformsToMonitor,
   usersTable,
-} from "./config/schema";
+} from "./config/schema.js";
 
 const app = express();
 
