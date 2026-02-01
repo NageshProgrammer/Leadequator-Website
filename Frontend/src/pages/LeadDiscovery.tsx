@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL;
+const AI_BASE_URL = import.meta.env.VITE_AI_SERVICE_URL;
 
 type RedditPost = {
   keyword: string;
@@ -39,10 +39,10 @@ export default function LeadDiscovery() {
     setRedditPosts([]);
 
     try {
-      const res = await fetch(`${AI_BASE_URL}/extract-keywords`, {
+      fetch(`${AI_BASE_URL}/extract-keywords`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -106,7 +106,7 @@ export default function LeadDiscovery() {
                 onChange={handleChange}
                 className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-sm"
               />
-            )
+            ),
           )}
         </div>
 
@@ -152,10 +152,7 @@ export default function LeadDiscovery() {
 
             <ul className="space-y-3 text-sm">
               {redditPosts.map((post, idx) => (
-                <li
-                  key={idx}
-                  className="border border-zinc-700 rounded-lg p-3"
-                >
+                <li key={idx} className="border border-zinc-700 rounded-lg p-3">
                   <p className="font-medium">{post.title}</p>
                   <p className="text-xs text-gray-400">
                     Keyword: {post.keyword}
