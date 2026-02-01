@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
 
 type RedditPost = {
   keyword: string;
@@ -13,7 +12,9 @@ type RedditPost = {
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export default function LeadDiscovery() {
-  const { getToken, isSignedIn } = useAuth();
+  // ⬇️ userId should already exist from onboarding / app state
+  // Adjust this if you store it differently (localStorage, context, etc.)
+  const userId = localStorage.getItem("userId");
 
   const [keywords, setKeywords] = useState<string[]>([]);
   const [loadingKeywords, setLoadingKeywords] = useState(true);
@@ -26,19 +27,19 @@ export default function LeadDiscovery() {
      FETCH KEYWORDS FROM BACKEND
   ================================ */
   const fetchKeywords = async () => {
-    if (!isSignedIn) return;
+    if (!userId) {
+      setError("User not onboarded yet");
+      setLoadingKeywords(false);
+      return;
+    }
 
     try {
       setLoadingKeywords(true);
       setError("");
 
-      const token = await getToken({ template: "default" });
-
-      const res = await fetch(`${API_BASE}/api/lead-discovery/keywords`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
+      );
 
       if (!res.ok) {
         throw new Error("Failed to load keywords");
@@ -58,7 +59,7 @@ export default function LeadDiscovery() {
      SCRAPE REDDIT VIA BACKEND
   ================================ */
   const scrapeReddit = async () => {
-    if (!keywords.length || !isSignedIn) {
+    if (!keywords.length) {
       setError("No keywords available for scraping");
       return;
     }
@@ -68,16 +69,16 @@ export default function LeadDiscovery() {
       setError("");
       setRedditPosts([]);
 
-      const token = await getToken({ template: "default" });
-
-      const res = await fetch(`${API_BASE}/api/lead-discovery/scrape`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ keywords }),
-      });
+      const res = await fetch(
+        `${API_BASE}/api/lead-discovery/scrape`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ keywords }),
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Scraping failed");
@@ -98,7 +99,7 @@ export default function LeadDiscovery() {
   ================================ */
   useEffect(() => {
     fetchKeywords();
-  }, [isSignedIn]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-16">
@@ -149,7 +150,10 @@ export default function LeadDiscovery() {
 
             <ul className="space-y-3 text-sm">
               {redditPosts.map((post, idx) => (
-                <li key={idx} className="border border-zinc-700 rounded-lg p-3">
+                <li
+                  key={idx}
+                  className="border border-zinc-700 rounded-lg p-3"
+                >
                   <p className="font-medium">{post.title}</p>
                   <p className="text-xs text-gray-400">
                     Keyword: {post.keyword}
