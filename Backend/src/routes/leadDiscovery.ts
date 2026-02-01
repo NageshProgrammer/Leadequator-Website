@@ -8,32 +8,21 @@ const router = Router();
 /* ===============================
    GET BUYER KEYWORDS (NO CLERK)
 ================================ */
-router.get("/keywords", async (req: Request, res: Response) => {
-  try {
-    // userId comes from query OR header OR body (flexible)
-    const userId =
-      (req.query.userId as string) ||
-      (req.headers["x-user-id"] as string);
+router.get("/keywords", async (req, res) => {
+  const { userId } = req.query as { userId: string };
 
-    if (!userId) {
-      return res.status(400).json({
-        error: "userId is required",
-      });
-    }
-
-    const rows = await db
-      .select()
-      .from(buyerKeywords)
-      .where(eq(buyerKeywords.userId, userId));
-
-    res.json({
-      keywords: rows.map((r) => r.keyword),
-    });
-  } catch (err) {
-    console.error("Keywords error:", err);
-    res.status(500).json({ error: "Failed to load keywords" });
+  if (!userId) {
+    return res.status(400).json({ error: "Missing userId" });
   }
+
+  const rows = await db
+    .select()
+    .from(buyerKeywords)
+    .where(eq(buyerKeywords.userId, userId));
+
+  res.json({ keywords: rows.map((r) => r.keyword) });
 });
+
 
 /* ===============================
    SCRAPE REDDIT (AI SERVICE)

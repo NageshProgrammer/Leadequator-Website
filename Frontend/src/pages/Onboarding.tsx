@@ -146,50 +146,46 @@ const Onboarding = () => {
   // FINISH
   // ======================
   const handleFinish = async () => {
-  if (!user) return;
-  setSaving(true);
+    if (!user) return;
+    setSaving(true);
 
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/onboarding`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          companyData,
-          industryData,
-          targetData,
-          keywordsData,
-          platformsData,
-        }),
+    try {
+      const userId = user.id;
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/onboarding`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            companyData,
+            industryData,
+            targetData,
+            keywordsData,
+            platformsData,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(text);
+        throw new Error("Save failed");
       }
-    );
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(text);
-      throw new Error("Save failed");
+      // ✅ THIS IS THE KEY FIX
+      localStorage.setItem("userId", userId);
+
+      // ✅ Go directly to Lead Discovery
+      navigate("/lead-discovery");
+    } catch (err) {
+      console.error("Finish onboarding error:", err);
+      alert("Failed to save onboarding. Please try again.");
+    } finally {
+      setSaving(false);
     }
-
-    // ✅ IMPORTANT FIX (THIS WAS MISSING)
-    localStorage.setItem("userId", user.id);
-
-    // optional but helpful
-    localStorage.setItem("onboarded", "true");
-
-    // mark UI complete
-    setIsComplete(true);
-
-    // ✅ redirect to Lead Discovery
-    navigate("/lead-discovery");
-  } catch (err) {
-    console.error("Finish onboarding error:", err);
-    alert("Failed to save onboarding. Please try again.");
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   // ======================
   // UI
