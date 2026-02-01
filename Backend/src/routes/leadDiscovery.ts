@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { db } from "../db";
-import { buyerKeywords } from "../config/schema";
+import { db } from "../db.js";
+import { buyerKeywords } from "../config/schema.js";
 import { eq } from "drizzle-orm";
 
 const router = Router();
