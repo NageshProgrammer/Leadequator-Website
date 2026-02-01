@@ -1,0 +1,6 @@
+node_modules/
+Frontend/node_modules/
+ai-service/venv/
+venv/
+__pycache__/
+*.pyc

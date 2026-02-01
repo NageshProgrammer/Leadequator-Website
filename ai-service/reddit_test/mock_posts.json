@@ -1,0 +1,14 @@
+[
+  {
+    "platform": "reddit",
+    "text": "I am looking for a CRM for my startup, any recommendations?",
+    "url": "https://reddit.com/r/startups/fake_post_1",
+    "author": "startup_founder"
+  },
+  {
+    "platform": "reddit",
+    "text": "What is the best marketing strategy for an early stage SaaS?",
+    "url": "https://reddit.com/r/saas/fake_post_2",
+    "author": "saas_builder"
+  }
+]

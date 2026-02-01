@@ -1,0 +1,452 @@
+[
+  {
+    "platform": "quora",
+    "original_text": "How should I grow my SaaS startup (CRM) as a technical solo founder?",
+    "post_url": "https://www.quora.com/How-should-I-grow-my-SaaS-startup-CRM-as-a-technical-solo-founder?topAns=28261528",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! As a solo technical founder, focusing on product-market fit and building a minimum viable product (MVP) is crucial. Networking with potential users and industry experts can also help in gaining insights and validation. Good luck on your journey! 🚀📈",
+    "ready_to_post": true
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best software for a startup: CRM, ERP, or billing?",
+    "post_url": "https://www.quora.com/What-is-the-best-software-for-a-startup-CRM-ERP-or-billing?topAns=1477743765322222",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! Each software serves a unique purpose. CRM for managing customer relationships, ERP for overall business operations, and billing for invoicing. Depending on your startup's needs, you might benefit from a combination or a specialized solution. Good luck! 🤝💪",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What would it take for you to consider a startup's product over an established vendor? (for example why would you buy a startup's CRM product as against Salesforce?)",
+    "post_url": "https://www.quora.com/unanswered/What-would-it-take-for-you-to-consider-a-startups-product-over-an-established-vendor-for-example-why-would-you-buy-a-startups-CRM-product-as-against-Salesforce",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! A startup's product could certainly catch my attention if it offers innovative features, better pricing, or a more personalized approach that aligns with our specific needs. The key is showing real value and potential for growth. Salesforce is established, but the right startup can definitely compete! 🚀💡",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What CRM software is best for a small startup?",
+    "post_url": "https://www.quora.com/What-CRM-software-is-best-for-a-small-startup",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For small startups, I'd recommend looking into Salesforce or HubSpot CRM. Both are user-friendly and offer essential features like lead tracking, email integration, and reporting at a reasonable cost. Good luck!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best CRM for a startup/business?",
+    "post_url": "https://www.quora.com/What-is-the-best-CRM-for-a-startup-business",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For startups, Salesforce and HubSpot are often recommended due to their scalability and feature-richness. However, the best CRM depends on your specific needs and budget. It's always a good idea to research and try out demos before making a decision. Good luck!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best free or cheap CRM for a startup?",
+    "post_url": "https://www.quora.com/What-is-the-best-free-or-cheap-CRM-for-a-startup",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hello! For startups, HubSpot CRM and Zoho CRM are great options as they offer free versions with essential features. Both can help manage leads, contacts, and sales pipelines effectively. Good luck with your business journey! 🚀💼",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Why do startups need CRM?",
+    "post_url": "https://www.quora.com/Why-do-startups-need-CRM",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! CRM helps startups manage customer interactions more effectively, enabling personalized service, efficient sales processes, and valuable insights for growth. 🚀📈",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "How can CRM benefit my business?",
+    "post_url": "https://www.quora.com/How-can-CRM-benefit-my-business",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! CRM can help streamline your customer interactions, improving relationships, boosting sales, and providing valuable insights for decision-making. It's a game-changer for any business! 🚀👌",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best free CRM for a small startup company?",
+    "post_url": "https://www.quora.com/What-is-the-best-free-CRM-for-a-small-startup-company?topAns=130677912",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! Great question. For small startups, Hubspot CRM is often recommended due to its user-friendly interface and range of free features. It's worth checking out! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Do startups need a CRM tool?",
+    "post_url": "https://www.quora.com/Do-startups-need-a-CRM-tool?topAns=317039719",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! CRM tools can help startups manage customer interactions more efficiently, streamline sales processes, and improve customer relationships. Highly recommended! 👍🏻",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What CRM recommended for a startup?",
+    "post_url": "https://www.quora.com/What-CRM-recommended-for-a-startup",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For startups, I'd suggest considering SugarCRM or Zoho CRM. Both are user-friendly, affordable, and offer essential features like contact management, sales automation, and customer support. Good luck on your venture! 🤝🚀",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What are free CRM solutions for startup teams of 6 people?",
+    "post_url": "https://www.quora.com/What-are-free-CRM-solutions-for-startup-teams-of-6-people?topAns=1137551",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! For smaller teams like yours, check out Zoho CRM and HubSpot CRM. Both offer free versions with all the essential features you might need. Good luck with your startup! 🚀🎉",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which CRM is better for my startup: Salesforce or Zoho? What's the most a startup should pay for a CRM per month? What are the best CRMs to use as a company that has <10 employees and about 10,000 leads?",
+    "post_url": "https://www.quora.com/Which-CRM-is-better-for-my-startup-Salesforce-or-Zoho-Whats-the-most-a-startup-should-pay-for-a-CRM-per-month-What-are-the-best-CRMs-to-use-as-a-company-that-has-10-employees-and-about-10-000-leads?topAns=15569613",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! Both Salesforce and Zoho offer great CRM solutions, but for a smaller startup, Zoho might be more cost-effective with their lower monthly plans. For a company with under 10 employees and around 10,000 leads, I'd recommend considering Zoho CRM Plus or Zoho One suite, as they provide a comprehensive set of tools suitable for your needs. 🚀💪🏼",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best simple CRM for a B2C startup?",
+    "post_url": "https://www.quora.com/What-is-the-best-simple-CRM-for-a-B2C-startup?topAns=238912637",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! For a B2C startup, I'd recommend HubSpot CRM. It's user-friendly, free, and offers essential features like contact management, email marketing, and sales pipeline. Wishing you successful customer relationships! 🚀🤝",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "CRM recommendation for a software startup?",
+    "post_url": "https://www.quora.com/CRM-recommendation-for-a-software-startup?topAns=56365680",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a software startup, I'd recommend HubSpot CRM. It's user-friendly, free, and offers essential features like contact management, email marketing, and sales automation. Worth checking out! 👍",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best free or cheap online CRM for a startup online travel agency?",
+    "post_url": "https://www.quora.com/What-is-the-best-free-or-cheap-online-CRM-for-a-startup-online-travel-agency?topAns=23453309",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! I've got a great suggestion for you. Zoho CRM offers a free version with essential features for startups like yours. You might want to check it out! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best mobile CRM for startups?",
+    "post_url": "https://www.quora.com/What-is-the-best-mobile-CRM-for-startups?topAns=328450635",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For startups, I'd recommend Zoho CRM. It's affordable, user-friendly, and offers a range of tools like sales automation, marketing integration, and mobile access. Worth checking out!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which is the best CRM for Startups in India?",
+    "post_url": "https://www.quora.com/Which-is-the-best-CRM-for-Startups-in-India?topAns=4120345",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For startups in India, HubSpot and Zoho CRM are popular choices due to their affordable pricing and user-friendly interfaces. Both offer a range of features suitable for growing businesses. Good luck with your search! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "How does a CRM add value to your small business?",
+    "post_url": "https://www.quora.com/How-does-a-CRM-add-value-to-your-small-business",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely, great question! A CRM (Customer Relationship Management) system helps small businesses by organizing customer interactions efficiently, tracking sales, and managing customer data. It can lead to increased productivity, improved customer service, and ultimately, growth.",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best SaaS CRM product for sales professionals for startups that tracks pipeline, deals both won and lost, and integrates emails with Zimbra?",
+    "post_url": "https://www.quora.com/What-is-the-best-SaaS-CRM-product-for-sales-professionals-for-startups-that-tracks-pipeline-deals-both-won-and-lost-and-integrates-emails-with-Zimbra?topAns=32779614",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For startups seeking a robust CRM solution, Hubspot might be a great fit. It tracks pipelines, deals, and integrates with various email services, including Zimbra. Worth checking out!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best CRM for a B2B startup?",
+    "post_url": "https://www.quora.com/What-is-the-best-CRM-for-a-B2B-startup?topAns=273351399",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For B2B startups, Salesforce and HubSpot are often recommended due to their robust features and scalability. Both offer a free trial, so you can test them out and see which one fits your needs better. Good luck!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What are the top integrated helpdesk and CRM solutions for startups?",
+    "post_url": "https://www.quora.com/What-are-the-top-integrated-helpdesk-and-CRM-solutions-for-startups?topAns=67996620",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! For startups, I'd recommend checking out Zoho CRM and Freshdesk. They're both user-friendly, affordable, and offer robust features like ticket management, customer interaction history, and sales automation. Give them a look and see which one fits your needs best! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "How important is customer relationship management (CRM) for a startup?",
+    "post_url": "https://www.quora.com/How-important-is-customer-relationship-management-CRM-for-a-startup?topAns=281651558",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely crucial! CRM helps startups manage and analyze customer interactions, fostering better relationships and improving business growth. It's an essential tool for long-term success.",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Is it worth starting a new CRM startup? Or is this space already taken up?",
+    "post_url": "https://www.quora.com/Is-it-worth-starting-a-new-CRM-startup-Or-is-this-space-already-taken-up?topAns=25047483",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely, the CRM market is vast and growing. However, standing out requires innovative solutions and a deep understanding of customer needs. Good luck on your journey! 🚀🚀",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which startups that are offering CRM or Social CRM services do you know?",
+    "post_url": "https://www.quora.com/Which-startups-that-are-offering-CRM-or-Social-CRM-services-do-you-know?topAns=277438",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! Here are a few notable ones: Salesforce, Zoho CRM, HubSpot CRM, Freshworks CRM, and Agile CRM. Each has its unique features, so it's worth checking out which one aligns best with your specific needs. Hope that helps!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What CRM is best for your business in 2021?",
+    "post_url": "https://www.quora.com/What-CRM-is-best-for-your-business-in-2021?topAns=374849681",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! In 2021, Salesforce and HubSpot are often recommended for their robust features and scalability. However, the best CRM for your business depends on your specific needs and budget. It's wise to explore demos and trial versions before making a decision. Good luck!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What's a good CRM for subscription based startup?",
+    "post_url": "https://www.quora.com/Whats-a-good-CRM-for-subscription-based-startup?topAns=61610525",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! A popular CRM for subscription-based startups is Hubspot. It has features tailored for this type of business, like automation for billing and renewals. Worth checking out! 👍",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Why is Zoho CRM the best for a business?",
+    "post_url": "https://www.quora.com/Why-is-Zoho-CRM-the-best-for-a-business?topAns=295763972",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Zoho CRM is highly regarded for its ease of use, robust features, and affordable pricing. It's a great choice for businesses looking to streamline sales and customer service processes. Plus, it integrates well with other Zoho apps, making it a versatile solution.",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best CRM for a SaaS startup?",
+    "post_url": "https://www.quora.com/What-is-the-best-CRM-for-a-SaaS-startup?topAns=32318566",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a SaaS startup, Salesforce and HubSpot are often top choices due to their comprehensive features. However, it's essential to consider your specific needs and budget. I'd recommend checking out their free trials to see which one fits your startup better. Good luck!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Do you use a CRM to manage your startup userbase?",
+    "post_url": "https://www.quora.com/Do-you-use-a-CRM-to-manage-your-startup-userbase?topAns=573242",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! We've found a CRM to be incredibly helpful in managing our startup's userbase. It helps us stay organized and provide personalized service. 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "I need a sales CRM with marketing automation for a startup. Currently looking at Agile CRM and Active Campaign. What are the pros/cons with the above CRMs and others in this market?",
+    "post_url": "https://www.quora.com/I-need-a-sales-CRM-with-marketing-automation-for-a-startup-Currently-looking-at-Agile-CRM-and-Active-Campaign-What-are-the-pros-cons-with-the-above-CRMs-and-others-in-this-market?topAns=7222488",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! Both Agile CRM and ActiveCampaign are great choices for marketing automation and CRM needs. Agile CRM offers a user-friendly interface and robust automation, while ActiveCampaign shines with its powerful segmentation and email marketing capabilities.\n\nConsider your specific needs and budget before making a decision. Other options to explore include Hubspot CRM, Zoho CRM, and Pipedrive. Good luck! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What are some typical customer churn rate assumptions that a subscription based SaaS startup (e.g. CRM) could use in its business plan?",
+    "post_url": "https://www.quora.com/What-are-some-typical-customer-churn-rate-assumptions-that-a-subscription-based-SaaS-startup-e-g-CRM-could-use-in-its-business-plan?topAns=1378626",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! In a SaaS startup like a CRM, it's common to assume a monthly churn rate of 1-3%, with an annual churn rate of around 10-20%. However, these rates can vary greatly depending on your specific industry, product, and customer retention strategies. 📈📊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What are inexpensive CRM solutions for B2C startups?",
+    "post_url": "https://www.quora.com/unanswered/What-are-inexpensive-CRM-solutions-for-B2C-startups",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! Great question. For budget-friendly B2C CRM solutions, consider Zoho CRM or HubSpot CRM. Both offer essential features at an affordable price range, helping startups manage customer relationships effectively. 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which CRM should a growing enterprise SaaS startup use?",
+    "post_url": "https://www.quora.com/Which-CRM-should-a-growing-enterprise-SaaS-startup-use?topAns=3379494",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely, choosing a CRM can be crucial for a growing SaaS startup. HubSpot and Salesforce are popular options due to their comprehensive features. However, consider your specific needs and budget before making a decision. Good luck! :)",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Is MS Dynamics CRM a good product for startups?",
+    "post_url": "https://www.quora.com/Is-MS-Dynamics-CRM-a-good-product-for-startups?topAns=99220491",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely, MS Dynamics CRM can be a great fit for startups. Its scalability makes it ideal for growing businesses, and it offers powerful features for sales, marketing, and customer service. However, it might have a learning curve, so considering your team's technical skills is crucial.",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Does my startup need a CRM software?",
+    "post_url": "https://www.quora.com/Does-my-startup-need-a-CRM-software?topAns=39330117",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Absolutely! A CRM can help manage customer relationships, streamline sales processes, and improve productivity. It's a great tool for startups to keep track of leads and customers effectively. I'd recommend researching options that suit your budget and specific needs.",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What would be your choice of CRM for a startup? Is Zoho best? If not, why?",
+    "post_url": "https://www.quora.com/What-would-be-your-choice-of-CRM-for-a-startup-Is-Zoho-best-If-not-why?topAns=80016624",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! Zoho is a great choice for many startups due to its affordability and user-friendly interface. However, depending on your specific needs, other CRMs like Hubspot or Salesforce might offer more advanced features. It's important to consider what works best for your team and growth strategy. Good luck!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is best CRM tool for a Food Delivery Startup?",
+    "post_url": "https://www.quora.com/unanswered/What-is-best-CRM-tool-for-a-Food-Delivery-Startup",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a food delivery startup, Zoho CRM and Salesforce are often great choices. Zoho offers an affordable solution with built-in tools for managing orders, while Salesforce is more robust and scalable, with extensive customization options. Both can help streamline your operations and grow your business. Good luck! :)",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What CRM platform do you recommend for a medium-sized startup?",
+    "post_url": "https://www.quora.com/What-CRM-platform-do-you-recommend-for-a-medium-sized-startup?topAns=195345205",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a medium-sized startup, I'd recommend considering Hubspot CRM. It offers great features like automation, email marketing, and lead management, all at no cost for basic use. Worth checking out!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What's the best free CRM for a web design startup?",
+    "post_url": "https://www.quora.com/Whats-the-best-free-CRM-for-a-web-design-startup?topAns=78827941",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! For a web design startup, I'd recommend Hubspot CRM. It's free, offers great features like email tracking, contact management, and even some basic automation. Good luck with your startup! 🚀🚀",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which are the best sales CRM startups in India?",
+    "post_url": "https://www.quora.com/unanswered/Which-are-the-best-sales-CRM-startups-in-India",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! Great question. Here are a few top sales CRM startups in India you might want to check out: Freshsales, Zoho CRM, and Salesforce Essentials. Each has its unique features, so it's worth exploring to find the one that best fits your needs. Good luck! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which is the least expensive CRM available in the market for startups?",
+    "post_url": "https://www.quora.com/unanswered/Which-is-the-least-expensive-CRM-available-in-the-market-for-startups",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! There are affordable CRM options for startups like Hubspot CRM, Zoho CRM, and Freshsales, which offer free basic plans with essential features. It's always a good idea to compare their pricing and features to find the best fit for your needs. 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What lightweight CRM tool would you recommend using as a startup with a few person sales team, preferably free or reasonably priced? And when would you consider switching from an excel based solution to the solution you suggested?",
+    "post_url": "https://www.quora.com/What-lightweight-CRM-tool-would-you-recommend-using-as-a-startup-with-a-few-person-sales-team-preferably-free-or-reasonably-priced-And-when-would-you-consider-switching-from-an-excel-based-solution-to-the-solution-you-suggested?topAns=860686",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a budget-friendly, lightweight CRM, I'd recommend checking out HubSpot CRM. It's free with essential features like contact management, email integration, and sales pipeline tools. Consider switching when your team size grows, or you need more advanced automation and analytics. Good luck! 👍🏽️🚀",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What are the free and best CRM for startup e-commerce?",
+    "post_url": "https://www.quora.com/unanswered/What-are-the-free-and-best-CRM-for-startup-e-commerce",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! Great question. For startups, Hubspot CRM and Zoho CRM are often recommended due to their free version and e-commerce features. Hubspot has excellent marketing tools, while Zoho offers a more comprehensive suite of business software. Cheers!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "For a SaaS startup, what is a good one-stop-shop solution for support and CRM processes?",
+    "post_url": "https://www.quora.com/For-a-SaaS-startup-what-is-a-good-one-stop-shop-solution-for-support-and-CRM-processes?topAns=56630594",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a seamless SaaS support and CRM experience, I'd recommend Zoho CRM. It integrates well with Zoho Desk for ticketing, making it a one-stop solution for managing customer relationships and support processes. Wishing you success!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the most recommended CRM for start-up businesses in the US?",
+    "post_url": "https://www.quora.com/unanswered/What-is-the-most-recommended-CRM-for-start-up-businesses-in-the-US",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hey there! For startups, I'd suggest considering Salesforce or HubSpot. Both offer user-friendly interfaces and scalable solutions that grow with your business. Happy exploring! 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Is it a bad idea to create a simple CRM tool custom fit to your startup's needs?",
+    "post_url": "https://www.quora.com/Is-it-a-bad-idea-to-create-a-simple-CRM-tool-custom-fit-to-your-startups-needs?topAns=228927471",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Not at all! In fact, it could give you a competitive edge. Just make sure to prioritize ease of use and scalability. Good luck! 🚀🚀",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best phone/CRM combination for a small startup?",
+    "post_url": "https://www.quora.com/What-is-the-best-phone-CRM-combination-for-a-small-startup?topAns=15568461",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a small startup, I'd recommend considering the combination of an iPhone (for its overall user experience) and Salesforce as your CRM. Salesforce integrates well with various devices and offers scalable solutions perfect for growing businesses. 😊",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "What is the best CRM tool for a two-sided marketplace startup?",
+    "post_url": "https://www.quora.com/unanswered/What-is-the-best-CRM-tool-for-a-two-sided-marketplace-startup",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! For a two-sided marketplace startup, I'd recommend considering tools like Salesforce or Zoho CRM. They both have features tailored to your needs, such as managing leads, customers, and partnerships effectively. Good luck with your startup!",
+    "ready_to_post": false
+  },
+  {
+    "platform": "quora",
+    "original_text": "Which is the best CRM system for a 4PL startup?",
+    "post_url": "https://www.quora.com/Which-is-the-best-CRM-system-for-a-4PL-startup?topAns=87529759",
+    "author": null,
+    "intent": "information seeking",
+    "generated_reply": "Hi there! CRMs can greatly help manage your 4PL startup's relationships. Salesforce, HubSpot, and Zoho are often recommended for their versatility. However, it's crucial to consider your specific needs and budget before making a decision. Good luck with your search!",
+    "ready_to_post": false
+  }
+]

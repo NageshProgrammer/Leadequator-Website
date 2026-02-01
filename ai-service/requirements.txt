@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+keybert
+sentence-transformers
+transformers
+torch
+praw
+numpy
+scikit-learn
+pydantic
+python-dotenv
+requests
