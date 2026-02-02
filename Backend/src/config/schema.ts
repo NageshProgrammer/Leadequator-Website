@@ -6,6 +6,7 @@ import {
   integer,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { uuid } from "drizzle-orm/pg-core/columns/uuid";
 
 /* =========================
    USERS
@@ -76,4 +77,24 @@ export const platformsToMonitor = pgTable("platforms_to_monitor", {
   facebook: boolean("facebook").default(false).notNull(),
   youtube: boolean("youtube").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+
+export const redditPosts = pgTable("reddit_posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  platform: text("platform").default("reddit"),
+  text: text("text").notNull(),
+  url: text("url").notNull(),
+  author: text("author"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const redditAiReplies = pgTable("reddit_ai_replies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  redditPostId: uuid("reddit_post_id")
+    .references(() => redditPosts.id, { onDelete: "cascade" }),
+  intent: text("intent"),
+  generatedReply: text("generated_reply"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
