@@ -178,7 +178,7 @@ const Onboarding = () => {
       localStorage.setItem("userId", userId);
 
       // ✅ Go directly to Lead Discovery
-      navigate("/lead-discovery");
+      navigate("/");
     } catch (err) {
       console.error("Finish onboarding error:", err);
       alert("Failed to save onboarding. Please try again.");
