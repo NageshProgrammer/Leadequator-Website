@@ -58,20 +58,20 @@ export default function LeadDiscovery() {
       setError("");
       setRedditPosts([]);
 
-      const AI_BASE = import.meta.env.VITE_AI_SERVICE_URL;
-
-      const res = await fetch(`${AI_BASE}/scrape-reddit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(keywords), // 👈 AI expects ARRAY only
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery/scrape`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keywords }), // ONLY keywords
+        },
+      );
 
       if (!res.ok) throw new Error("Failed");
 
       const data = await res.json();
       setRedditPosts(data.posts || []);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
