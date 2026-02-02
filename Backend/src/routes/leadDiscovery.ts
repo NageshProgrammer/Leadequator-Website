@@ -41,14 +41,11 @@ router.post("/scrape", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid keywords" });
     }
 
-    const aiRes = await fetch(
-      `${process.env.AI_SERVICE_URL}/scrape-reddit`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(keywords), // ✅ correct payload
-      }
-    );
+    const aiRes = await fetch(`${process.env.AI_SERVICE_URL}/scrape-reddit/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(keywords),
+    });
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
