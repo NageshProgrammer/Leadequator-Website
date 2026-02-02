@@ -7,6 +7,7 @@ type RedditPost = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const AI_BASE = import.meta.env.VITE_AI_SERVICE_URL;
 
 export default function LeadDiscovery() {
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -29,7 +30,7 @@ export default function LeadDiscovery() {
 
     try {
       const res = await fetch(
-        `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
+        `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`,
       );
 
       if (!res.ok) throw new Error("Failed");
@@ -56,10 +57,10 @@ export default function LeadDiscovery() {
       setScraping(true);
       setRedditPosts([]);
 
-      const res = await fetch(`${API_BASE}/lead-discovery/scrape`, {
+      const res = await fetch(`${AI_BASE}/scrape-reddit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, keywords }),
+        body: JSON.stringify(keywords), // AI expects ONLY array
       });
 
       if (!res.ok) throw new Error("Failed");
