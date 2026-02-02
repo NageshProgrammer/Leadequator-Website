@@ -55,19 +55,23 @@ export default function LeadDiscovery() {
 
     try {
       setScraping(true);
+      setError("");
       setRedditPosts([]);
+
+      const AI_BASE = import.meta.env.VITE_AI_SERVICE_URL;
 
       const res = await fetch(`${AI_BASE}/scrape-reddit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(keywords), // AI expects ONLY array
+        body: JSON.stringify(keywords), // 👈 AI expects ARRAY only
       });
 
       if (!res.ok) throw new Error("Failed");
 
       const data = await res.json();
       setRedditPosts(data.posts || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
