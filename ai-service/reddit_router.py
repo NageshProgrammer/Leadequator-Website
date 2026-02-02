@@ -4,7 +4,7 @@ import os
 import json
 import praw
 
-router = APIRouter(prefix="/scrape-reddit", tags=["Reddit"])
+router = APIRouter(prefix="/scrape-reddit/", tags=["Reddit"])
 
 USE_MOCK = os.getenv("USE_MOCK_REDDIT", "true").lower() == "true"
 
