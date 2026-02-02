@@ -6,28 +6,21 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 /* ===============================
-   GET BUYER KEYWORDS
+   GET BUYER KEYWORDS (NO CLERK)
 ================================ */
-router.get("/keywords", async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.query as { userId?: string };
+router.get("/keywords", async (req, res) => {
+  const { userId } = req.query as { userId: string };
 
-    if (!userId) {
-      return res.status(400).json({ error: "Missing userId" });
-    }
-
-    const rows = await db
-      .select()
-      .from(buyerKeywords)
-      .where(eq(buyerKeywords.userId, userId));
-
-    res.json({
-      keywords: rows.map((r) => r.keyword),
-    });
-  } catch (err) {
-    console.error("Fetch keywords error:", err);
-    res.status(500).json({ error: "Failed to fetch keywords" });
+  if (!userId) {
+    return res.status(400).json({ error: "Missing userId" });
   }
+
+  const rows = await db
+    .select()
+    .from(buyerKeywords)
+    .where(eq(buyerKeywords.userId, userId));
+
+  res.json({ keywords: rows.map((r) => r.keyword) });
 });
 
 /* ===============================
@@ -48,16 +41,10 @@ router.post("/scrape", async (req: Request, res: Response) => {
     });
 
     if (!aiRes.ok) {
-      const text = await aiRes.text();
-      console.error("AI service response:", text);
-      return res.status(500).json({ error: "AI service failed" });
+      throw new Error("AI service failed");
     }
 
     const data = await aiRes.json();
-
-    // ⏭️ NEXT STEP (later):
-    // here we will insert Reddit posts into NeonDB
-
     res.json(data);
   } catch (err) {
     console.error("AI Service Error:", err);
