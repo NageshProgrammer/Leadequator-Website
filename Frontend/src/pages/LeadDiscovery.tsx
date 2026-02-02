@@ -63,24 +63,25 @@ export default function LeadDiscovery() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords }), // ONLY keywords
+          body: JSON.stringify({ keywords }), // ✅ ONLY keywords
         },
       );
 
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Backend error:", text);
+        throw new Error("Scrape failed");
+      }
 
       const data = await res.json();
       setRedditPosts(data.posts || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
     }
   };
-
-  useEffect(() => {
-    fetchKeywords();
-  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-16">
