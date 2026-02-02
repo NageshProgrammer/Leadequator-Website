@@ -56,7 +56,7 @@ export default function LeadDiscovery() {
       setScraping(true);
       setRedditPosts([]);
 
-      const res = await fetch(`${API_BASE}/api/lead-discovery/scrape`, {
+      const res = await fetch(`${API_BASE}/lead-discovery/scrape`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, keywords }),
