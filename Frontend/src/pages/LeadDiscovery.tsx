@@ -48,8 +48,8 @@ export default function LeadDiscovery() {
      SCRAPE REDDIT
   ================================ */
   const scrapeReddit = async () => {
-    if (!keywords.length || !userId) {
-      setError("User not onboarded yet");
+    if (!keywords.length) {
+      setError("No keywords available");
       return;
     }
 
@@ -63,20 +63,15 @@ export default function LeadDiscovery() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords }), // ✅ ONLY keywords
+          body: JSON.stringify({ keywords }),
         },
       );
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Backend error:", text);
-        throw new Error("Scrape failed");
-      }
+      if (!res.ok) throw new Error("Scrape failed");
 
       const data = await res.json();
       setRedditPosts(data.posts || []);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
