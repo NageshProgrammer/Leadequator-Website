@@ -1,5 +1,5 @@
-from db.neon import get_cursor
-from ai.reply_generator import generate_replies
+from reddit_test.db.neon import get_cursor
+from reddit_test.ai.reply_generator import generate_replies
 
 def generate_reddit_replies():
     cursor = get_cursor()

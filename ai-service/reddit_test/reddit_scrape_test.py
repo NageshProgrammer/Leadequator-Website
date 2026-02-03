@@ -6,7 +6,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT_DIR))
 
 from playwright.sync_api import sync_playwright
-from db.neon import get_cursor
+from reddit_test.db.neon import get_cursor
 
 SUBREDDIT = "startups"
 SESSION_FILE = Path(__file__).parent / "auth" / "reddit_state.json"
