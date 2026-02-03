@@ -1,42 +1,68 @@
-import json
-from ai.reply_generator import generate_reply
+from db.neon import get_cursor
+from ai.reply_generator import generate_replies
 
-INPUT_FILE = "quora_real_posts.json"
-OUTPUT_FILE = "quora_replies_output.json"
+def generate_quora_replies():
+    cursor = get_cursor()
 
-with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    posts = json.load(f)
+    # Fetch Quora posts that do NOT yet have replies
+    cursor.execute("""
+        SELECT id, text, url, author
+        FROM social_posts
+        WHERE platform = 'quora'
+          AND id NOT IN (
+              SELECT post_id FROM ai_replies
+          )
+        LIMIT 20
+    """)
 
-replies = []
+    posts = cursor.fetchall()
 
-for post in posts:
-    text = post.get("text", "").strip()
-    url = post.get("url")
-    author = post.get("author")
+    if not posts:
+        print("⚠️ No new Quora posts found for reply generation.")
+        return
 
-    if not text or not url:
-        continue
+    for post_id, text, url, author in posts:
+        text = (text or "").strip()
 
-    # Intent can be improved later — keep simple for now
-    intent = "information seeking"
+        if not text:
+            continue
 
-    reply = generate_reply(
-        text=text,
-        intent=intent,
-        platform="quora"
+        print("Generating replies for:", text[:60])
+
+        # Generate 2 AI reply options
+        replies = generate_replies(text, platform="quora")
+
+        if len(replies) < 2:
+            print("⚠️ Skipping (less than 2 replies generated)")
+            continue
+
+        # Store replies in Neon DB
+        cursor.execute(
+    """
+    INSERT INTO ai_replies (
+        post_id,
+        platform,
+        post_url,
+        reply_option_1,
+        reply_option_2,
+        approved
     )
+    VALUES (%s, %s, %s, %s, %s, %s)
+    """,
+    (
+        post_id,
+        "quora",
+        url,
+        replies[0],
+        replies[1],
+        False
+    )
+)
 
-    replies.append({
-    "platform": "quora",
-    "original_text": text,
-    "post_url": url,
-    "author": author,
-    "intent": intent,
-    "generated_reply": reply,
-    "ready_to_post": False
-})
 
-with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-    json.dump(replies, f, indent=2, ensure_ascii=False)
+        print("✅ Stored 2 replies")
 
-print(f"✅ Generated {len(replies)} replies → {OUTPUT_FILE}")
+    print(f"🎉 Finished generating replies for {len(posts)} Quora posts")
+
+if __name__ == "__main__":
+    generate_quora_replies()

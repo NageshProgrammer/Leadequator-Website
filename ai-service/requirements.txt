@@ -10,3 +10,6 @@ scikit-learn
 pydantic
 python-dotenv
 requests
+mistralai
+playwright
+psycopg2-binary

@@ -22,26 +22,44 @@ SYSTEM_PROMPT = (
     "Your tone is neutral, helpful, and non-commercial."
 )
 
-def generate_reply(text: str, intent: str, platform: str = "reddit") -> str:
+def generate_replies(text, platform="quora"):
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {
+            "role": "system",
+            "content": (
+                "You are a human replying on social media. "
+                "Replies must be short (1–2 lines), natural, non-promotional."
+            )
+        },
         {
             "role": "user",
-            "content": f"""
-Platform: {platform}
-Detected intent: {intent}
-
-User post:
-{text}
-
-Write a natural reply.
-"""
+            "content": (
+                f"Post:\n{text}\n\n"
+                "Write exactly two reply options.\n"
+                "Format strictly like this:\n"
+                "1. <reply one>\n"
+                "2. <reply two>\n"
+                "Do not add anything else."
+            )
         }
     ]
 
     response = client.chat.complete(
         model="open-mistral-7b",
-        messages=messages
+        messages=messages,
+        temperature=0.7
     )
 
-    return response.choices[0].message.content.strip()
+    raw = response.choices[0].message.content.strip()
+
+    replies = []
+    for line in raw.split("\n"):
+        if line.strip().startswith(("1.", "2.")):
+            replies.append(line.split(".", 1)[1].strip())
+
+    # Safety fallback
+    if len(replies) < 2:
+        replies = [r.strip() for r in raw.split("\n") if r.strip()][:2]
+
+    return replies
+
