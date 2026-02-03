@@ -7,7 +7,6 @@ type RedditPost = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
-const AI_BASE = import.meta.env.VITE_AI_SERVICE_URL;
 
 export default function LeadDiscovery() {
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -29,15 +28,20 @@ export default function LeadDiscovery() {
     }
 
     try {
+      setError("");
+
       const res = await fetch(
-        `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`,
+        `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
       );
 
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        throw new Error("Failed to fetch keywords");
+      }
 
       const data = await res.json();
       setKeywords(data.keywords || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Failed to load buyer keywords");
     } finally {
       setLoadingKeywords(false);
@@ -45,7 +49,7 @@ export default function LeadDiscovery() {
   };
 
   /* ===============================
-     SCRAPE REDDIT
+     SCRAPE REDDIT (via backend proxy)
   ================================ */
   const scrapeReddit = async () => {
     if (!keywords.length) {
@@ -59,24 +63,34 @@ export default function LeadDiscovery() {
       setRedditPosts([]);
 
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery/scrape`,
+        `${API_BASE}/api/lead-discovery/scrape`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ keywords }),
-        },
+        }
       );
 
-      if (!res.ok) throw new Error("Scrape failed");
+      if (!res.ok) {
+        throw new Error("Scrape failed");
+      }
 
       const data = await res.json();
       setRedditPosts(data.posts || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Failed to scrape Reddit data");
     } finally {
       setScraping(false);
     }
   };
+
+  /* ===============================
+     IMPORTANT: THIS WAS MISSING ❌
+  ================================ */
+  useEffect(() => {
+    fetchKeywords();
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-16">
