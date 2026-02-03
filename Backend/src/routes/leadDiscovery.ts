@@ -23,6 +23,7 @@ router.get("/keywords", async (req, res) => {
   res.json({ keywords: rows.map((r) => r.keyword) });
 });
 
+
 /* ===============================
    SCRAPE REDDIT (AI SERVICE)
 ================================ */
