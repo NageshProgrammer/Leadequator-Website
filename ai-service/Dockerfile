@@ -1,5 +1,8 @@
 FROM python:3.10-slim
 
+# -----------------------------
+# System setup
+# -----------------------------
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
@@ -9,22 +12,31 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
+# -----------------------------
+# Python setup
+# -----------------------------
 RUN pip install --no-cache-dir --upgrade pip
 
-# 🔥 Install CPU-only torch FIRST
-RUN pip install --no-cache-dir torch==2.1.2+cpu \
-    --index-url https://download.pytorch.org/whl/cpu
-
-# Copy requirements AFTER torch
+# -----------------------------
+# Install dependencies
+# -----------------------------
 COPY requirements.txt .
 
-# Install remaining deps (torch already satisfied)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
+# -----------------------------
+# Playwright setup (IMPORTANT)
+# -----------------------------
+RUN playwright install chromium --with-deps
+
+# -----------------------------
+# Copy application code
+# -----------------------------
 COPY . .
 
+# -----------------------------
+# Runtime
+# -----------------------------
 EXPOSE 80
 
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
