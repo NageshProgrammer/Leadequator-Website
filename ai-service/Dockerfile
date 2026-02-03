@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 
 # -----------------------------
-# System setup
+# System dependencies
 # -----------------------------
 WORKDIR /app
 
@@ -18,10 +18,9 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir --upgrade pip
 
 # -----------------------------
-# Install dependencies
+# Install Python dependencies
 # -----------------------------
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
 # -----------------------------
@@ -38,5 +37,4 @@ COPY . .
 # Runtime
 # -----------------------------
 EXPOSE 80
-
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
