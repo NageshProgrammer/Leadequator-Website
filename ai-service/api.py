@@ -1,4 +1,3 @@
-# ai-service/api.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from extractor import router as keyword_router

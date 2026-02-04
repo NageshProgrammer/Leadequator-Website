@@ -1,12 +1,9 @@
 import { Router, Request, Response } from "express";
-import { db } from "../db.js";
-import { buyerKeywords } from "../config/schema.js";
-import { eq } from "drizzle-orm";
 
 const router = Router();
 
 /* ===============================
-   GET BUYER KEYWORDS (NO CLERK)
+   GET BUYER KEYWORDS
 ================================ */
 router.get("/keywords", async (req, res) => {
   const { userId } = req.query as { userId: string };
@@ -23,33 +20,34 @@ router.get("/keywords", async (req, res) => {
   res.json({ keywords: rows.map((r) => r.keyword) });
 });
 
-
 /* ===============================
-   SCRAPE REDDIT (AI SERVICE)
+   RUN REDDIT SCRAPING (🔥 MAIN)
 ================================ */
-router.post("/scrape", async (req: Request, res: Response) => {
+router.post("/reddit/run", async (_req: Request, res: Response) => {
   try {
-    const { keywords } = req.body;
-
-    if (!Array.isArray(keywords) || keywords.length === 0) {
-      return res.status(400).json({ error: "Invalid keywords" });
-    }
-
-    const aiRes = await fetch(`${process.env.AI_SERVICE_URL}/scrape-reddit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(keywords),
-    });
+    const aiRes = await fetch(
+      `${process.env.AI_SERVICE_URL}/reddit/run`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
     if (!aiRes.ok) {
-      throw new Error("AI service failed");
+      const text = await aiRes.text();
+      throw new Error(text);
     }
 
     const data = await aiRes.json();
-    res.json(data);
+
+    res.json({
+      success: true,
+      message: "Reddit scraping completed",
+      data,
+    });
   } catch (err) {
-    console.error("AI Service Error:", err);
-    res.status(500).json({ error: "AI service failed" });
+    console.error("REDDIT SCRAPE ERROR:", err);
+    res.status(500).json({ error: "Reddit scraping failed" });
   }
 });
 
