@@ -13,7 +13,7 @@ export default function LeadDiscovery() {
 
   /* ===============================
      FETCH BUYER KEYWORDS
-  ================================ */
+  =============================== */
   const fetchBuyerKeywords = async () => {
     if (!userId) {
       setError("User not onboarded");
@@ -26,12 +26,10 @@ export default function LeadDiscovery() {
         `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
       );
 
-      if (!res.ok) throw new Error("Failed to load keywords");
-
       const data = await res.json();
       setBuyerKeywords(data.keywords || []);
-    } catch (err) {
-      setError("Failed to fetch buyer keywords");
+    } catch {
+      setError("Failed to load keywords");
     } finally {
       setLoading(false);
     }
@@ -39,7 +37,7 @@ export default function LeadDiscovery() {
 
   /* ===============================
      RUN REDDIT SCRAPING
-  ================================ */
+  =============================== */
   const runRedditScraping = async () => {
     try {
       setRunning(true);
@@ -48,20 +46,19 @@ export default function LeadDiscovery() {
 
       const res = await fetch(
         `${API_BASE}/api/lead-discovery/reddit/run`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
+        { method: "POST" }
       );
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
+        throw new Error(data.detail || "Reddit scraping failed");
       }
 
-      setSuccess("Reddit scraping started successfully");
-    } catch (err) {
-      setError("Reddit scraping failed");
+      setSuccess("✅ Reddit scraping completed successfully");
+
+    } catch (err: any) {
+      setError(err.message || "Reddit scraping failed");
     } finally {
       setRunning(false);
     }
@@ -78,30 +75,33 @@ export default function LeadDiscovery() {
           🔍 Lead <span className="text-yellow-400">Discovery</span>
         </h1>
 
+        {/* KEYWORDS */}
         <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-3">Buyer Keywords</h2>
+          <h2 className="font-semibold mb-3">Buyer Keywords</h2>
 
           {loading ? (
-            <p className="text-gray-400">Loading…</p>
+            <p>Loading…</p>
           ) : buyerKeywords.length === 0 ? (
             <p className="text-red-400">No keywords found</p>
           ) : (
             <ul className="list-disc list-inside text-yellow-300">
-              {buyerKeywords.map((kw) => (
-                <li key={kw}>{kw}</li>
+              {buyerKeywords.map(k => (
+                <li key={k}>{k}</li>
               ))}
             </ul>
           )}
         </div>
 
+        {/* BUTTON */}
         <button
           onClick={runRedditScraping}
-          disabled={running || buyerKeywords.length === 0}
+          disabled={running || !buyerKeywords.length}
           className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold disabled:opacity-50"
         >
           {running ? "Running Reddit Scraping…" : "Run Reddit Scraping"}
         </button>
 
+        {/* STATUS */}
         {error && <p className="mt-4 text-red-500">{error}</p>}
         {success && <p className="mt-4 text-green-400">{success}</p>}
       </div>
