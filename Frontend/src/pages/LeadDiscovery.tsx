@@ -6,8 +6,8 @@ export default function LeadDiscovery() {
   const [buyerKeywords, setBuyerKeywords] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const userId = localStorage.getItem("userId");
 
@@ -26,12 +26,12 @@ export default function LeadDiscovery() {
         `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
       );
 
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error("Failed to load keywords");
 
       const data = await res.json();
       setBuyerKeywords(data.keywords || []);
-    } catch {
-      setError("Failed to load keywords");
+    } catch (err) {
+      setError("Failed to fetch buyer keywords");
     } finally {
       setLoading(false);
     }
@@ -44,11 +44,14 @@ export default function LeadDiscovery() {
     try {
       setRunning(true);
       setError("");
-      setMessage("");
+      setSuccess("");
 
       const res = await fetch(
         `${API_BASE}/api/lead-discovery/reddit/run`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
       );
 
       if (!res.ok) {
@@ -56,10 +59,8 @@ export default function LeadDiscovery() {
         throw new Error(text);
       }
 
-      const data = await res.json();
-      setMessage(data.message || "Reddit scraping completed");
+      setSuccess("Reddit scraping started successfully");
     } catch (err) {
-      console.error(err);
       setError("Reddit scraping failed");
     } finally {
       setRunning(false);
@@ -78,7 +79,7 @@ export default function LeadDiscovery() {
         </h1>
 
         <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-3">🎯 Buyer Keywords</h2>
+          <h2 className="text-lg font-semibold mb-3">Buyer Keywords</h2>
 
           {loading ? (
             <p className="text-gray-400">Loading…</p>
@@ -86,8 +87,8 @@ export default function LeadDiscovery() {
             <p className="text-red-400">No keywords found</p>
           ) : (
             <ul className="list-disc list-inside text-yellow-300">
-              {buyerKeywords.map((k) => (
-                <li key={k}>{k}</li>
+              {buyerKeywords.map((kw) => (
+                <li key={kw}>{kw}</li>
               ))}
             </ul>
           )}
@@ -95,14 +96,14 @@ export default function LeadDiscovery() {
 
         <button
           onClick={runRedditScraping}
-          disabled={running}
+          disabled={running || buyerKeywords.length === 0}
           className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold disabled:opacity-50"
         >
-          {running ? "Scraping Reddit…" : "Run Reddit Scraping"}
+          {running ? "Running Reddit Scraping…" : "Run Reddit Scraping"}
         </button>
 
-        {message && <p className="mt-4 text-green-400">{message}</p>}
         {error && <p className="mt-4 text-red-500">{error}</p>}
+        {success && <p className="mt-4 text-green-400">{success}</p>}
       </div>
     </div>
   );
