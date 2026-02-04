@@ -1,15 +1,15 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db.js";
 import { buyerKeywords, redditPosts } from "../config/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 const router = Router();
 
 /* ===============================
    GET BUYER KEYWORDS
 ================================ */
-router.get("/keywords", async (req: Request, res: Response) => {
-  const { userId } = req.query as { userId?: string };
+router.get("/keywords", async (req, res) => {
+  const { userId } = req.query as { userId: string };
 
   if (!userId) {
     return res.status(400).json({ error: "Missing userId" });
@@ -20,62 +20,61 @@ router.get("/keywords", async (req: Request, res: Response) => {
     .from(buyerKeywords)
     .where(eq(buyerKeywords.userId, userId));
 
-  res.json({
-    keywords: rows.map((r) => r.keyword),
-  });
+  res.json({ keywords: rows.map((r) => r.keyword) });
 });
 
 /* ===============================
-   RUN REDDIT SCRAPING (PRODUCTION SAFE)
+   RUN REDDIT SCRAPING
 ================================ */
-router.post("/reddit/run", async (req: Request, res: Response) => {
+router.post("/reddit/run", async (_req: Request, res: Response) => {
   try {
-    const { userId } = req.body as { userId?: string };
+    const aiRes = await fetch(
+      `${process.env.AI_SERVICE_URL}/reddit/run`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (!aiRes.ok) {
+      const text = await aiRes.text();
+      throw new Error(text);
+    }
+
+    await aiRes.json();
+
+    res.json({
+      success: true,
+      message: "Reddit scraping triggered successfully",
+    });
+  } catch (err) {
+    console.error("REDDIT SCRAPE ERROR:", err);
+    res.status(500).json({ error: "Reddit scraping failed" });
+  }
+});
+
+/* ===============================
+   FETCH REDDIT POSTS FROM DB 🔥
+================================ */
+router.get("/reddit/posts", async (req, res) => {
+  try {
+    const { userId } = req.query as { userId: string };
 
     if (!userId) {
       return res.status(400).json({ error: "Missing userId" });
     }
 
-    // 1️⃣ Get buyer keywords
-    const rows = await db
+    const posts = await db
       .select()
-      .from(buyerKeywords)
-      .where(eq(buyerKeywords.userId, userId));
+      .from(redditPosts)
+      .where(eq(redditPosts.userId, userId))
+      .orderBy(desc(redditPosts.createdAt))
+      .limit(20);
 
-    const keywords = rows.map((r) => r.keyword);
-
-    if (!keywords.length) {
-      return res.status(400).json({ error: "No buyer keywords found" });
-    }
-
-    // 2️⃣ Trigger AI Service (fire & forget)
-    fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keywords }),
-    }).catch((err) => {
-      console.error("AI SERVICE ERROR:", err);
-    });
-
-    // 3️⃣ Store trigger record in DB (IMPORTANT)
-    await db.insert(redditPosts).values(
-      keywords.map((kw) => ({
-        userId,
-        platform: "reddit",
-        text: `Triggered scrape for keyword: ${kw}`,
-        url: "pending",
-        author: "system",
-      }))
-    );
-
-    return res.json({
-      success: true,
-      message: "Reddit scraping triggered successfully",
-      keywords,
-    });
+    res.json({ posts });
   } catch (err) {
-    console.error("REDDIT RUN ERROR:", err);
-    res.status(500).json({ error: "Reddit scraping failed" });
+    console.error("FETCH REDDIT POSTS ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch Reddit posts" });
   }
 });
 
