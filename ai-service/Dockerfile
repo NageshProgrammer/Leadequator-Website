@@ -1,37 +1,26 @@
-FROM python:3.10-bookworm
+FROM python:3.10-bullseye
 
-# -----------------------------
-# App directory
-# -----------------------------
 WORKDIR /app
 
-# -----------------------------
-# System dependencies (MINIMAL & STABLE)
-# -----------------------------
+# System deps (stable Debian)
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
     ca-certificates \
+    curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# -----------------------------
-# Python deps
-# -----------------------------
+# Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
+# Copy requirements first
 COPY requirements.txt .
+
+# Install Python deps (torch CPU auto-resolves)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# -----------------------------
-# Playwright
-# -----------------------------
-RUN playwright install chromium --with-deps
-
-# -----------------------------
-# Copy source
-# -----------------------------
+# Copy app code
 COPY . .
 
 EXPOSE 80
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
