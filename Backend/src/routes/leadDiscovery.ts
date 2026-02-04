@@ -20,11 +20,11 @@ router.get("/keywords", async (req: Request, res: Response) => {
     .from(buyerKeywords)
     .where(eq(buyerKeywords.userId, userId));
 
-  res.json({ keywords: rows.map((r) => r.keyword) });
+  res.json({ keywords: rows.map(r => r.keyword) });
 });
 
 /* ===============================
-   RUN REDDIT SCRAPING (🔥 MAIN)
+   RUN REDDIT SCRAPING (PRODUCTION)
 ================================ */
 router.post("/reddit/run", async (_req: Request, res: Response) => {
   try {
@@ -32,24 +32,30 @@ router.post("/reddit/run", async (_req: Request, res: Response) => {
       `${process.env.AI_SERVICE_URL}/reddit/run`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       }
     );
 
+    const text = await aiRes.text();
+
     if (!aiRes.ok) {
-      const text = await aiRes.text();
-      throw new Error(text);
+      console.error("AI ERROR RESPONSE:", text);
+      return res.status(500).json({
+        error: "Reddit scraping failed",
+        detail: text
+      });
     }
 
-    const data = await aiRes.json();
+    const data = JSON.parse(text);
 
     res.json({
       success: true,
       message: "Reddit scraping completed",
-      data,
+      data
     });
+
   } catch (err) {
-    console.error("REDDIT SCRAPE ERROR:", err);
+    console.error("BACKEND REDDIT ERROR:", err);
     res.status(500).json({ error: "Reddit scraping failed" });
   }
 });
