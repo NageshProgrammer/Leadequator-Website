@@ -1,4 +1,7 @@
 import { Router, Request, Response } from "express";
+import { db } from "../db.js";
+import { buyerKeywords } from "../config/schema.js";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -6,7 +9,7 @@ const router = Router();
    GET BUYER KEYWORDS
 ================================ */
 router.get("/keywords", async (req, res) => {
-  const { userId } = req.query as { userId: string };
+  const { userId } = req.query as { userId?: string };
 
   if (!userId) {
     return res.status(400).json({ error: "Missing userId" });
@@ -21,7 +24,7 @@ router.get("/keywords", async (req, res) => {
 });
 
 /* ===============================
-   RUN REDDIT SCRAPING (🔥 MAIN)
+   RUN REDDIT SCRAPING (PRODUCTION)
 ================================ */
 router.post("/reddit/run", async (_req: Request, res: Response) => {
   try {
@@ -42,7 +45,7 @@ router.post("/reddit/run", async (_req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: "Reddit scraping completed",
+      message: "Reddit scraping completed successfully",
       data,
     });
   } catch (err) {
