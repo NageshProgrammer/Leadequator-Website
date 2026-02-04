@@ -11,33 +11,35 @@ export default function LeadDiscovery() {
 
   const userId = localStorage.getItem("userId");
 
-  /* ===============================
+  /* =====================================
      FETCH BUYER KEYWORDS
-  =============================== */
+  ===================================== */
   const fetchBuyerKeywords = async () => {
-    if (!userId) {
-      setError("User not onboarded");
-      setLoading(false);
-      return;
-    }
-
     try {
+      if (!userId) {
+        setError("User not onboarded");
+        return;
+      }
+
       const res = await fetch(
         `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
       );
 
+      if (!res.ok) throw new Error("Failed to load keywords");
+
       const data = await res.json();
       setBuyerKeywords(data.keywords || []);
-    } catch {
-      setError("Failed to load keywords");
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load buyer keywords");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ===============================
+  /* =====================================
      RUN REDDIT SCRAPING
-  =============================== */
+  ===================================== */
   const runRedditScraping = async () => {
     try {
       setRunning(true);
@@ -46,19 +48,25 @@ export default function LeadDiscovery() {
 
       const res = await fetch(
         `${API_BASE}/api/lead-discovery/reddit/run`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        }
       );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.detail || "Reddit scraping failed");
-      }
-
-      setSuccess("✅ Reddit scraping completed successfully");
-
-    } catch (err: any) {
-      setError(err.message || "Reddit scraping failed");
+      setSuccess("✅ Reddit scraping started successfully");
+      console.log("SCRAPE RESPONSE:", data);
+    } catch (err) {
+      console.error(err);
+      setError("❌ Reddit scraping failed");
     } finally {
       setRunning(false);
     }
@@ -77,22 +85,22 @@ export default function LeadDiscovery() {
 
         {/* KEYWORDS */}
         <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 mb-6">
-          <h2 className="font-semibold mb-3">Buyer Keywords</h2>
+          <h2 className="text-lg font-semibold mb-3">🎯 Buyer Keywords</h2>
 
           {loading ? (
-            <p>Loading…</p>
+            <p className="text-gray-400">Loading…</p>
           ) : buyerKeywords.length === 0 ? (
             <p className="text-red-400">No keywords found</p>
           ) : (
-            <ul className="list-disc list-inside text-yellow-300">
-              {buyerKeywords.map(k => (
-                <li key={k}>{k}</li>
+            <ul className="list-disc list-inside text-yellow-300 space-y-1">
+              {buyerKeywords.map((kw) => (
+                <li key={kw}>{kw}</li>
               ))}
             </ul>
           )}
         </div>
 
-        {/* BUTTON */}
+        {/* RUN BUTTON */}
         <button
           onClick={runRedditScraping}
           disabled={running || !buyerKeywords.length}
