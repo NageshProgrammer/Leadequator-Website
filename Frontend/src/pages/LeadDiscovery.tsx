@@ -1,19 +1,12 @@
 import { useEffect, useState } from "react";
 
-type RedditPost = {
-  id: string;
-  text: string;
-  url: string;
-  author: string | null;
-};
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export default function LeadDiscovery() {
   const [buyerKeywords, setBuyerKeywords] = useState<string[]>([]);
-  const [redditPosts, setRedditPosts] = useState<RedditPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scraping, setScraping] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const userId = localStorage.getItem("userId");
@@ -22,66 +15,68 @@ export default function LeadDiscovery() {
      FETCH BUYER KEYWORDS
   ================================ */
   const fetchBuyerKeywords = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setError("User not onboarded");
+      return;
+    }
 
-    const res = await fetch(
-      `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
-    );
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
+      );
 
-    const data = await res.json();
-    setBuyerKeywords(data.keywords || []);
-  };
-
-  /* ===============================
-     FETCH REDDIT POSTS 🔥
-  ================================ */
-  const fetchRedditPosts = async () => {
-    if (!userId) return;
-
-    const res = await fetch(
-      `${API_BASE}/api/lead-discovery/reddit/posts?userId=${userId}`
-    );
-
-    const data = await res.json();
-    setRedditPosts(data.posts || []);
+      const data = await res.json();
+      setBuyerKeywords(data.keywords || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load buyer keywords");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ===============================
      RUN REDDIT SCRAPING
   ================================ */
   const runRedditScraping = async () => {
+    if (!userId) return;
+
     try {
-      setScraping(true);
+      setRunning(true);
       setError("");
+      setMessage("");
 
       const res = await fetch(
         `${API_BASE}/api/lead-discovery/reddit/run`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        }
       );
 
-      if (!res.ok) throw new Error();
+      const data = await res.json();
 
-      // wait a bit for DB insert
-      setTimeout(fetchRedditPosts, 3000);
-    } catch {
-      setError("Reddit scraping failed");
+      if (!res.ok) {
+        throw new Error(data.error || "Scraping failed");
+      }
+
+      setMessage("✅ Reddit scraping started successfully");
+    } catch (err: any) {
+      console.error(err);
+      setError("❌ Reddit scraping failed");
     } finally {
-      setScraping(false);
+      setRunning(false);
     }
   };
 
-  /* ===============================
-     INITIAL LOAD
-  ================================ */
   useEffect(() => {
     fetchBuyerKeywords();
-    fetchRedditPosts();
-    setLoading(false);
   }, []);
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-16">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold mb-6">
           🔍 Lead <span className="text-yellow-400">Discovery</span>
         </h1>
@@ -92,8 +87,10 @@ export default function LeadDiscovery() {
 
           {loading ? (
             <p className="text-gray-400">Loading…</p>
+          ) : buyerKeywords.length === 0 ? (
+            <p className="text-red-400">No keywords found</p>
           ) : (
-            <ul className="list-disc list-inside text-yellow-300">
+            <ul className="list-disc list-inside text-yellow-300 space-y-1">
               {buyerKeywords.map((kw) => (
                 <li key={kw}>{kw}</li>
               ))}
@@ -104,43 +101,15 @@ export default function LeadDiscovery() {
         {/* RUN BUTTON */}
         <button
           onClick={runRedditScraping}
-          disabled={scraping}
-          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold"
+          disabled={running || !buyerKeywords.length}
+          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold disabled:opacity-50"
         >
-          {scraping ? "Scraping Reddit…" : "Run Reddit Scraping"}
+          {running ? "Running…" : "Run Reddit Scraping"}
         </button>
 
-        {error && <p className="mt-4 text-red-500">❌ {error}</p>}
-
-        {/* REDDIT POSTS */}
-        {redditPosts.length > 0 && (
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {redditPosts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-zinc-900 border border-zinc-700 rounded-xl p-5"
-              >
-                <p className="text-sm text-gray-300 mb-3 line-clamp-4">
-                  {post.text}
-                </p>
-
-                <a
-                  href={post.url}
-                  target="_blank"
-                  className="text-yellow-400 text-sm underline"
-                >
-                  View on Reddit →
-                </a>
-
-                {post.author && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    by {post.author}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* STATUS */}
+        {message && <p className="mt-4 text-green-400">{message}</p>}
+        {error && <p className="mt-4 text-red-500">{error}</p>}
       </div>
     </div>
   );
