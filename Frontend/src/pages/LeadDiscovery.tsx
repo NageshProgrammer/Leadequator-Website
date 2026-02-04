@@ -1,29 +1,28 @@
 import { useEffect, useState } from "react";
 
-type RedditPost = {
+type ExtractedKeyword = {
   keyword: string;
-  title: string;
-  url: string;
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const AI_BASE = import.meta.env.VITE_AI_SERVICE_URL;
 
 export default function LeadDiscovery() {
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [loadingKeywords, setLoadingKeywords] = useState(true);
-  const [scraping, setScraping] = useState(false);
-  const [redditPosts, setRedditPosts] = useState<RedditPost[]>([]);
+  const [buyerKeywords, setBuyerKeywords] = useState<string[]>([]);
+  const [aiKeywords, setAiKeywords] = useState<string[]>([]);
+  const [loadingBuyerKeywords, setLoadingBuyerKeywords] = useState(true);
+  const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState("");
 
   const userId = localStorage.getItem("userId");
 
   /* ===============================
-     FETCH KEYWORDS
+     FETCH BUYER KEYWORDS (DB)
   ================================ */
-  const fetchKeywords = async () => {
+  const fetchBuyerKeywords = async () => {
     if (!userId) {
       setError("User not onboarded yet");
-      setLoadingKeywords(false);
+      setLoadingBuyerKeywords(false);
       return;
     }
 
@@ -35,61 +34,66 @@ export default function LeadDiscovery() {
       );
 
       if (!res.ok) {
-        throw new Error("Failed to fetch keywords");
+        throw new Error("Failed to fetch buyer keywords");
       }
 
       const data = await res.json();
-      setKeywords(data.keywords || []);
+      setBuyerKeywords(data.keywords || []);
     } catch (err) {
       console.error(err);
       setError("Failed to load buyer keywords");
     } finally {
-      setLoadingKeywords(false);
+      setLoadingBuyerKeywords(false);
     }
   };
 
   /* ===============================
-     SCRAPE REDDIT (via backend proxy)
+     CALL HOSTINGER AI SERVICE
+     /extract-keywords
   ================================ */
-  const scrapeReddit = async () => {
-    if (!keywords.length) {
-      setError("No keywords available");
+  const extractKeywordsFromAI = async () => {
+    if (!buyerKeywords.length) {
+      setError("No buyer keywords available");
       return;
     }
 
     try {
-      setScraping(true);
+      setExtracting(true);
       setError("");
-      setRedditPosts([]);
+      setAiKeywords([]);
 
-      const res = await fetch(
-        `${API_BASE}/api/lead-discovery/scrape`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords }),
-        }
-      );
+      const res = await fetch(`${AI_BASE}/extract-keywords`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          keywords: buyerKeywords,
+          userId, // optional but future-proof
+        }),
+      });
 
       if (!res.ok) {
-        throw new Error("Scrape failed");
+        throw new Error("AI keyword extraction failed");
       }
 
       const data = await res.json();
-      setRedditPosts(data.posts || []);
+
+      // expecting: { keywords: [...] }
+      setAiKeywords(data.keywords || []);
     } catch (err) {
       console.error(err);
-      setError("Failed to scrape Reddit data");
+      setError("Failed to extract keywords using AI service");
     } finally {
-      setScraping(false);
+      setExtracting(false);
     }
   };
 
   /* ===============================
-     IMPORTANT: THIS WAS MISSING ❌
+     INITIAL LOAD
   ================================ */
   useEffect(() => {
-    fetchKeywords();
+    fetchBuyerKeywords();
   }, []);
 
   return (
@@ -99,31 +103,49 @@ export default function LeadDiscovery() {
           🔍 Lead <span className="text-yellow-400">Discovery</span>
         </h1>
 
+        {/* BUYER KEYWORDS */}
         <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 mb-6">
           <h2 className="text-lg font-semibold mb-3">🎯 Buyer Keywords</h2>
 
-          {loadingKeywords ? (
+          {loadingBuyerKeywords ? (
             <p className="text-gray-400">Loading keywords…</p>
-          ) : keywords.length === 0 ? (
+          ) : buyerKeywords.length === 0 ? (
             <p className="text-red-400">No keywords found.</p>
           ) : (
-            <ul className="list-disc list-inside text-yellow-300">
-              {keywords.map((kw) => (
+            <ul className="list-disc list-inside text-yellow-300 space-y-1">
+              {buyerKeywords.map((kw) => (
                 <li key={kw}>{kw}</li>
               ))}
             </ul>
           )}
         </div>
 
+        {/* AI BUTTON */}
         <button
-          onClick={scrapeReddit}
-          disabled={scraping || !keywords.length}
-          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold"
+          onClick={extractKeywordsFromAI}
+          disabled={extracting || !buyerKeywords.length}
+          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold disabled:opacity-50"
         >
-          {scraping ? "Scraping…" : "Scrape Reddit Data"}
+          {extracting ? "Extracting with AI…" : "Run AI Keyword Extraction"}
         </button>
 
+        {/* ERROR */}
         {error && <p className="mt-4 text-red-500">{error}</p>}
+
+        {/* AI RESULTS */}
+        {aiKeywords.length > 0 && (
+          <div className="mt-8 bg-zinc-900 border border-zinc-700 rounded-xl p-6">
+            <h2 className="text-lg font-semibold mb-4">
+              🧠 AI-Extracted Keywords
+            </h2>
+
+            <ul className="list-disc list-inside text-green-400 space-y-1">
+              {aiKeywords.map((kw, index) => (
+                <li key={index}>{kw}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
