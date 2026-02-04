@@ -8,8 +8,8 @@ const router = Router();
 /* ===============================
    GET BUYER KEYWORDS
 ================================ */
-router.get("/keywords", async (req, res) => {
-  const { userId } = req.query as { userId?: string };
+router.get("/keywords", async (req: Request, res: Response) => {
+  const { userId } = req.query as { userId: string };
 
   if (!userId) {
     return res.status(400).json({ error: "Missing userId" });
@@ -24,7 +24,7 @@ router.get("/keywords", async (req, res) => {
 });
 
 /* ===============================
-   RUN REDDIT SCRAPING (PRODUCTION)
+   RUN REDDIT SCRAPING (MAIN)
 ================================ */
 router.post("/reddit/run", async (_req: Request, res: Response) => {
   try {
@@ -45,7 +45,7 @@ router.post("/reddit/run", async (_req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: "Reddit scraping completed successfully",
+      message: "Reddit scraping completed",
       data,
     });
   } catch (err) {
