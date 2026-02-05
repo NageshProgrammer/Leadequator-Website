@@ -1,19 +1,41 @@
+from typing import Optional
 from reddit_test.db.neon import get_cursor
 from reddit_test.ai.reply_generator import generate_replies
 
-def generate_reddit_replies():
+
+def generate_reddit_replies(user_id: Optional[str] = None):
+    """
+    If user_id is provided → generate replies only for that user
+    Else → existing global behavior (unchanged)
+    """
+
     cursor = get_cursor()
 
-    # Fetch Reddit posts that do NOT yet have replies
-    cursor.execute("""
-        SELECT id, text, url, author
-        FROM social_posts
-        WHERE platform = 'reddit'
-          AND id NOT IN (
-              SELECT post_id FROM ai_replies
-          )
-        LIMIT 20
-    """)
+    # -------------------------------
+    # QUERY MODE (SAFE EXTENSION)
+    # -------------------------------
+    if user_id:
+        cursor.execute("""
+            SELECT id, text, url, author
+            FROM social_posts
+            WHERE platform = 'reddit'
+              AND user_id = %s
+              AND id NOT IN (
+                  SELECT post_id FROM ai_replies
+              )
+            LIMIT 20
+        """, (user_id,))
+    else:
+        # 🔁 EXISTING BEHAVIOR (UNCHANGED)
+        cursor.execute("""
+            SELECT id, text, url, author
+            FROM social_posts
+            WHERE platform = 'reddit'
+              AND id NOT IN (
+                  SELECT post_id FROM ai_replies
+              )
+            LIMIT 20
+        """)
 
     posts = cursor.fetchall()
 
@@ -29,7 +51,7 @@ def generate_reddit_replies():
 
         print("🧠 Generating replies for:", text[:70])
 
-        # Generate 2 AI replies
+        # Generate 2 AI replies (UNCHANGED)
         replies = generate_replies(
             text=text,
             platform="reddit"
@@ -39,7 +61,7 @@ def generate_reddit_replies():
             print("⚠️ Skipped (AI did not return 2 replies)")
             continue
 
-        # Insert into ai_replies table
+        # Insert into ai_replies table (UNCHANGED)
         cursor.execute(
             """
             INSERT INTO ai_replies (
@@ -67,5 +89,8 @@ def generate_reddit_replies():
     print(f"🎉 Finished generating replies for {len(posts)} Reddit posts")
 
 
+# ----------------------------------
+# LOCAL RUN (UNCHANGED)
+# ----------------------------------
 if __name__ == "__main__":
     generate_reddit_replies()

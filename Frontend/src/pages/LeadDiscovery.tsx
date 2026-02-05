@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
@@ -23,30 +23,36 @@ export default function LeadDiscovery() {
   /* ===============================
      LOAD KEYWORDS
   ================================ */
-  const loadKeywords = async () => {
+  const loadKeywords = useCallback(async () => {
+    if (!userId) return;
+
     const res = await fetch(
       `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
     );
     const data = await res.json();
+
     setBuyerKeywords(data.keywords || []);
     setLoading(false);
-  };
+  }, [userId]);
 
   /* ===============================
      LOAD REDDIT POSTS
   ================================ */
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
+    if (!userId) return;
+
     const res = await fetch(
       `${API_BASE}/api/lead-discovery/reddit/posts?userId=${userId}`
     );
     const data = await res.json();
+
     setPosts(data.posts || []);
-  };
+  }, [userId]);
 
   /* ===============================
-     RUN SCRAPER
+     RUN SCRAPER / LOGIN
   ================================ */
-  const runScraping = async () => {
+  const runScraping = async (forceLogin = false) => {
     setRunning(true);
     setError("");
     setMessage("");
@@ -57,16 +63,26 @@ export default function LeadDiscovery() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
+          body: JSON.stringify({
+            userId,
+            forceLogin,
+          }),
         }
       );
 
       if (!res.ok) throw new Error();
 
-      setMessage("✅ Reddit scraping started");
-      setTimeout(loadPosts, 5000); // wait for AI
+      setMessage(
+        forceLogin
+          ? "🔐 Reddit login window opened"
+          : "✅ Reddit scraping started"
+      );
+
+      if (!forceLogin) {
+        setTimeout(loadPosts, 5000);
+      }
     } catch {
-      setError("❌ Reddit scraping failed");
+      setError("❌ Reddit action failed");
     } finally {
       setRunning(false);
     }
@@ -75,7 +91,7 @@ export default function LeadDiscovery() {
   useEffect(() => {
     loadKeywords();
     loadPosts();
-  }, []);
+  }, [loadKeywords, loadPosts]);
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-16">
@@ -87,15 +103,29 @@ export default function LeadDiscovery() {
         {/* Keywords */}
         <div className="bg-zinc-900 p-6 rounded-xl">
           <h2 className="font-semibold mb-2">Buyer Keywords</h2>
-          {loading ? "Loading..." : (
+          {loading ? (
+            "Loading..."
+          ) : (
             <ul className="list-disc ml-6 text-yellow-300">
-              {buyerKeywords.map(k => <li key={k}>{k}</li>)}
+              {buyerKeywords.map((k) => (
+                <li key={k}>{k}</li>
+              ))}
             </ul>
           )}
         </div>
 
+        {/* Login */}
         <button
-          onClick={runScraping}
+          onClick={() => runScraping(true)}
+          disabled={running}
+          className="w-full bg-zinc-700 text-white py-3 rounded-xl font-semibold"
+        >
+          {running ? "Opening Reddit…" : "Login to Reddit"}
+        </button>
+
+        {/* Scrape */}
+        <button
+          onClick={() => runScraping(false)}
           disabled={running}
           className="w-full bg-yellow-400 text-black py-3 rounded-xl font-bold"
         >
@@ -107,7 +137,7 @@ export default function LeadDiscovery() {
 
         {/* Results */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {posts.map(p => (
+          {posts.map((p) => (
             <div key={p.id} className="bg-zinc-900 p-4 rounded-xl">
               <p className="text-sm text-gray-400">u/{p.author}</p>
               <p className="mt-2">{p.text}</p>

@@ -9,7 +9,7 @@ import { useState } from "react";
 /* ================= TYPES ================= */
 
 export type DetailComment = {
-  id: number;
+  id: string;
   platform: string;
   user: string;
   followers: number;
@@ -24,7 +24,7 @@ export type DetailComment = {
 interface DetailPaneProps {
   comment: DetailComment;
   onClose: () => void;
-  onSend: (id: number) => void;
+  onSend: (id: string) => void;
 }
 
 /* ================= COMPONENT ================= */

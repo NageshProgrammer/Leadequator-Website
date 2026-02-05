@@ -28,7 +28,10 @@ router.get("/keywords", async (req: Request, res: Response) => {
 ================================ */
 router.post("/reddit/run", async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
+    const { userId, forceLogin } = req.body as {
+      userId?: string;
+      forceLogin?: boolean;
+    };
 
     if (!userId) {
       return res.status(400).json({ error: "Missing userId" });
@@ -45,11 +48,15 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
-    // 🔥 Fire & forget AI service
+    // 🔥 Fire & forget AI service (BACKWARD SAFE)
     fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, keywords }),
+      body: JSON.stringify({
+        userId,
+        keywords,
+        force_login: !!forceLogin,
+      }),
     }).catch(err => {
       console.error("AI SERVICE ERROR:", err);
     });

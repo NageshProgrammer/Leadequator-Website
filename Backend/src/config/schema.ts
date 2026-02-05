@@ -98,3 +98,28 @@ export const redditAiReplies = pgTable("reddit_ai_replies", {
   generatedReply: text("generated_reply"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+/* =========================
+   PYTHON AI COMPATIBILITY
+   (DO NOT REMOVE)
+========================= */
+export const socialPosts = pgTable("social_posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id"),
+  platform: text("platform").notNull(),
+  text: text("text").notNull(),
+  url: text("url").notNull().unique(),
+  author: text("author"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const aiReplies = pgTable("ai_replies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  postId: uuid("post_id")
+    .references(() => socialPosts.id, { onDelete: "cascade" }),
+  platform: text("platform"),
+  postUrl: text("post_url"),
+  replyOption1: text("reply_option_1"),
+  replyOption2: text("reply_option_2"),
+  approved: boolean("approved").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});

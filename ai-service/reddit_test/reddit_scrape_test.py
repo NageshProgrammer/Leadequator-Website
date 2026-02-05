@@ -1,6 +1,7 @@
 import sys
 import time
 from pathlib import Path
+from typing import List, Optional
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT_DIR))
@@ -12,6 +13,9 @@ SUBREDDIT = "startups"
 SESSION_FILE = Path(__file__).parent / "auth" / "reddit_state.json"
 
 
+# --------------------------------------------------
+# MANUAL LOGIN (UNCHANGED)
+# --------------------------------------------------
 def manual_login_and_save_session():
     print("🔐 Manual Reddit login required")
 
@@ -32,7 +36,18 @@ def manual_login_and_save_session():
     print("✅ Reddit session saved")
 
 
-def scrape_reddit():
+# --------------------------------------------------
+# SCRAPER (EXTENDED, NOT REPLACED)
+# --------------------------------------------------
+def scrape_reddit(
+    user_id: Optional[str] = None,
+    keywords: Optional[List[str]] = None
+):
+    """
+    If keywords are provided → search-based scraping
+    Else → subreddit scraping (existing behavior)
+    """
+
     cursor = get_cursor()
     inserted = 0
 
@@ -45,7 +60,17 @@ def scrape_reddit():
         )
 
         page = context.new_page()
-        page.goto(f"https://www.reddit.com/r/{SUBREDDIT}/", timeout=60000)
+
+        # 🔁 MODE SELECTION (SAFE)
+        if keywords:
+            query = " OR ".join(keywords)
+            url = f"https://www.reddit.com/search/?q={query}&sort=new"
+            print(f"🔍 Searching Reddit for keywords: {keywords}")
+        else:
+            url = f"https://www.reddit.com/r/{SUBREDDIT}/"
+            print(f"📂 Scraping subreddit: r/{SUBREDDIT}")
+
+        page.goto(url, timeout=60000)
 
         page.wait_for_timeout(8000)
         page.mouse.wheel(0, 4000)
@@ -71,17 +96,19 @@ def scrape_reddit():
 
                 print("➡️ INSERTING:", title[:70])
 
+                # 🧠 SAFE INSERT (user_id optional)
                 cursor.execute(
                     """
-                    INSERT INTO social_posts (platform, text, url, author)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO social_posts (platform, text, url, author, user_id)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (url) DO NOTHING
                     """,
                     (
                         "reddit",
                         title.strip(),
                         post_url,
-                        username
+                        username,
+                        user_id
                     )
                 )
 
@@ -96,6 +123,9 @@ def scrape_reddit():
     print(f"🎉 Reddit scraping finished — inserted {inserted} rows")
 
 
+# --------------------------------------------------
+# LOCAL RUN (UNCHANGED)
+# --------------------------------------------------
 if __name__ == "__main__":
     if not SESSION_FILE.exists():
         manual_login_and_save_session()
