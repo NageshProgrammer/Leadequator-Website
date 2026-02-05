@@ -3,8 +3,8 @@ import express from "express";
 import cors from "cors";
 import { eq } from "drizzle-orm";
 
-import { db } from "./db";
-import leadDiscoveryRoutes from "./routes/leadDiscovery";
+import { db } from "./db.js";
+import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
 
 import {
   onboardingProgress,
@@ -13,12 +13,12 @@ import {
   buyerKeywords,
   platformsToMonitor,
   usersTable,
-} from "./config/schema";
+} from "./config/schema.js";
 
 const app = express();
 
 /* ===============================
-   CORS (PRODUCTION + CLERK SAFE)
+   CORS (PRODUCTION SAFE)
 ================================ */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -30,25 +30,18 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow server-to-server & health checks
       if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, origin);
-      }
-
-      return callback(new Error(`CORS blocked: ${origin}`));
+      if (allowedOrigins.includes(origin)) return callback(null, origin);
+      return callback(new Error("CORS blocked"));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 app.use(express.json());
 
 /* ===============================
-   LEAD DISCOVERY (🔥 MAIN FLOW)
+   LEAD DISCOVERY
 ================================ */
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
@@ -163,7 +156,7 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   USER SYNC (CLERK)
+   USER SYNC
 ================================ */
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
@@ -191,17 +184,16 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   HEALTH CHECK
+   HEALTH
 ================================ */
 app.get("/", (_req, res) => {
   res.json({ status: "Backend running" });
 });
 
 /* ===============================
-   START SERVER
+   START
 ================================ */
 const PORT = process.env.PORT || 4000;
-
 app.listen(PORT, () => {
   console.log(`✅ API running on port ${PORT}`);
 });
