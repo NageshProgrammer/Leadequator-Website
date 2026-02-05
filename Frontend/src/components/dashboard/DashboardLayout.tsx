@@ -81,7 +81,7 @@ export const DashboardLayout = () => {
             className={!sidebarOpen ? "mx-auto" : ""}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <Menu className="h-4 w-4 " />
+            <Menu className="h-4 w-4 " /> 
           </Button>
         </div>
 

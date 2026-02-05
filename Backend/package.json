@@ -15,12 +15,14 @@
     "dotenv": "^16.6.1",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
+    "nodemailer": "^8.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.25",
     "@types/node": "^22.19.7",
+    "@types/nodemailer": "^7.0.9",
     "drizzle-kit": "^0.31.8",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
