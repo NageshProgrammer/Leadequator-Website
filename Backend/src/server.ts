@@ -5,7 +5,6 @@ import { eq } from "drizzle-orm";
 
 import { db } from "./db.js";
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
-
 import {
   onboardingProgress,
   companyDetails,
@@ -18,7 +17,7 @@ import {
 const app = express();
 
 /* ===============================
-   CORS (PRODUCTION SAFE)
+   CORS
 ================================ */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -29,10 +28,10 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, origin);
-      return callback(new Error("CORS blocked"));
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, origin);
+      return cb(new Error("CORS blocked"));
     },
     credentials: true,
   })
@@ -41,122 +40,12 @@ app.use(
 app.use(express.json());
 
 /* ===============================
-   LEAD DISCOVERY
+   ROUTES
 ================================ */
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
 /* ===============================
-   ONBOARDING
-================================ */
-app.get("/api/onboarding/progress", async (req, res) => {
-  try {
-    const { userId } = req.query as { userId: string };
-
-    const result = await db
-      .select()
-      .from(onboardingProgress)
-      .where(eq(onboardingProgress.userId, userId))
-      .limit(1);
-
-    res.json(result[0] ?? {});
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to load progress" });
-  }
-});
-
-app.post("/api/onboarding/progress", async (req, res) => {
-  const { userId, currentStep } = req.body;
-
-  await db
-    .insert(onboardingProgress)
-    .values({ userId, currentStep })
-    .onConflictDoUpdate({
-      target: onboardingProgress.userId,
-      set: { currentStep },
-    });
-
-  res.json({ success: true });
-});
-
-app.post("/api/onboarding", async (req, res) => {
-  try {
-    const {
-      userId,
-      companyData,
-      industryData,
-      targetData,
-      keywordsData,
-      platformsData,
-    } = req.body;
-
-    await db
-      .insert(companyDetails)
-      .values({
-        userId,
-        companyName: companyData.companyName,
-        websiteUrl: companyData.websiteUrl || null,
-        businessEmail: companyData.businessEmail || null,
-        phoneNumber: companyData.phoneNumber || null,
-        industry: industryData.industry,
-        industryOther: industryData.industryOther || null,
-        productDescription: industryData.productDescription || null,
-      })
-      .onConflictDoUpdate({
-        target: companyDetails.userId,
-        set: { companyName: companyData.companyName },
-      });
-
-    await db
-      .insert(targetMarket)
-      .values({
-        userId,
-        targetAudience: targetData.targetAudience,
-        targetCountry: targetData.targetCountry,
-        targetStateCity: targetData.targetStateCity || null,
-        businessType: targetData.businessType,
-      })
-      .onConflictDoUpdate({
-        target: targetMarket.userId,
-        set: targetData,
-      });
-
-    await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
-
-    if (keywordsData?.keywords?.length) {
-      await db.insert(buyerKeywords).values(
-        keywordsData.keywords.map((k: string) => ({
-          userId,
-          keyword: k,
-        }))
-      );
-    }
-
-    await db
-      .insert(platformsToMonitor)
-      .values({ userId, ...platformsData })
-      .onConflictDoUpdate({
-        target: platformsToMonitor.userId,
-        set: platformsData,
-      });
-
-    await db
-      .insert(onboardingProgress)
-      .values({ userId, completed: true, currentStep: 5 })
-      .onConflictDoUpdate({
-        target: onboardingProgress.userId,
-        set: { completed: true, currentStep: 5 },
-      });
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Onboarding failed" });
-  }
-});
-
-/* ===============================
-   USER SYNC
+   USERS SYNC
 ================================ */
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
@@ -184,16 +73,10 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   HEALTH
-================================ */
-app.get("/", (_req, res) => {
-  res.json({ status: "Backend running" });
-});
-
-/* ===============================
-   START
+   START SERVER
 ================================ */
 const PORT = process.env.PORT || 4000;
+
 app.listen(PORT, () => {
   console.log(`✅ API running on port ${PORT}`);
 });
