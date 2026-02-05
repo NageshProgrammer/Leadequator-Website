@@ -17,22 +17,30 @@ SYSTEM_PROMPT = (
     "You sound friendly, natural, and human — never corporate or salesy. "
     "You acknowledge the point first, then add one useful thought. "
     "Avoid over-explaining. "
-    "If one sentence is enough, use only one."
+    "If one sentence is enough, use only one. "
+    "You are a real Reddit user. "
+    "You do not promote products or companies. "
+    "You reply in a neutral, experience-based tone. "
+    "You never recommend specific brands. "
+    "You focus on sharing perspective, not selling."
 )
 
-def generate_reply(text: str, intent: str, platform: str = "reddit") -> str:
+def generate_replies(text: str, platform: str = "reddit") -> list[str]:
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
             "content": f"""
 Platform: {platform}
-Detected intent: {intent}
 
 User post:
 {text}
 
-Write a natural reply.
+Write TWO different natural reply options.
+Keep them short.
+Number them as:
+Option 1:
+Option 2:
 """
         }
     ]
@@ -42,4 +50,21 @@ Write a natural reply.
         messages=messages
     )
 
-    return response.choices[0].message.content.strip()
+    raw = response.choices[0].message.content.strip()
+
+    # 🧠 Parse options safely
+    replies = []
+
+    for line in raw.splitlines():
+        line = line.strip()
+        if line.lower().startswith("option"):
+            reply = line.split(":", 1)[-1].strip()
+            if reply:
+                replies.append(reply)
+
+    # Fallback (just in case model formatting changes)
+    if len(replies) < 2:
+        parts = raw.split("\n\n")
+        replies = [p.strip() for p in parts if p.strip()][:2]
+
+    return replies

@@ -3,10 +3,13 @@ uvicorn
 keybert
 sentence-transformers
 transformers
-torch
+torch==2.1.2
 praw
 numpy
 scikit-learn
 pydantic
 python-dotenv
 requests
+mistralai
+playwright
+psycopg2-binary

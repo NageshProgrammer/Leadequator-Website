@@ -2,11 +2,10 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { eq } from "drizzle-orm";
-// 1. Add Nodemailer Import
-import nodemailer from "nodemailer";
 
 import { db } from "./db.js";
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
+
 import {
   onboardingProgress,
   companyDetails,
@@ -19,9 +18,8 @@ import {
 const app = express();
 
 /* ===============================
-   CORS (EXPRESS v5 SAFE)
+   CORS (CLERK + PROD SAFE)
 ================================ */
-
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8080",
@@ -32,88 +30,35 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow server-to-server, curl, health checks
       if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, origin); // IMPORTANT
-      }
-
-      return callback(new Error(`CORS blocked: ${origin}`));
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS blocked"));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 app.use(express.json());
 
 /* ===============================
-   EMAIL TRANSPORTER (Added)
+   HEALTH
 ================================ */
-// This configures the connection to Gmail using the secrets from your .env file
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, 
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+app.get("/", (_req, res) => {
+  res.json({ status: "Backend running" });
 });
 
 /* ===============================
-   CONTACT ROUTE (Added)
+   LEAD DISCOVERY
 ================================ */
-app.post("/api/contact", async (req, res) => {
-  try {
-    const { firstName, lastName, email, company, role, interest, message } = req.body;
-
-    if (!email || !firstName) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
-    }
-
-    const mailOptions = {
-      from: `"${firstName} ${lastName}" <${process.env.SMTP_FROM}>`, 
-      replyTo: email, 
-      to: process.env.RECEIVER_EMAIL, 
-      subject: `New Lead: ${firstName} ${lastName} from ${company}`,
-      html: `
-        <h2>New Contact Request</h2>
-        <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Company:</strong> ${company}</p>
-        <p><strong>Role:</strong> ${role}</p>
-        <p><strong>Interest:</strong> ${interest}</p>
-        <hr />
-        <h3>Message:</h3>
-        <p>${message}</p>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully");
-    res.status(200).json({ success: true, message: "Email sent" });
-  } catch (error) {
-    console.error("❌ Error sending email:", error);
-    res.status(500).json({ success: false, message: "Failed to send email" });
-  }
-});
-
-/* ===============================
-   EXISTING ROUTES (Unchanged)
-================================ */
-
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
 /* ===============================
-   ONBOARDING (Unchanged)
+   ONBOARDING
 ================================ */
-
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
-    const { userId } = req.query as { userId: string };
+    const { userId } = req.query as { userId?: string };
+    if (!userId) return res.status(400).json({});
 
     const result = await db
       .select()
@@ -153,6 +98,7 @@ app.post("/api/onboarding", async (req, res) => {
       platformsData,
     } = req.body;
 
+    // company
     await db
       .insert(companyDetails)
       .values({
@@ -170,22 +116,17 @@ app.post("/api/onboarding", async (req, res) => {
         set: { companyName: companyData.companyName },
       });
 
+    // target
     await db
       .insert(targetMarket)
-      .values({
-        userId,
-        targetAudience: targetData.targetAudience,
-        targetCountry: targetData.targetCountry,
-        targetStateCity: targetData.targetStateCity || null,
-        businessType: targetData.businessType,
-      })
+      .values({ userId, ...targetData })
       .onConflictDoUpdate({
         target: targetMarket.userId,
         set: targetData,
       });
 
+    // keywords
     await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
-
     if (keywordsData?.keywords?.length) {
       await db.insert(buyerKeywords).values(
         keywordsData.keywords.map((k: string) => ({
@@ -195,6 +136,7 @@ app.post("/api/onboarding", async (req, res) => {
       );
     }
 
+    // platforms
     await db
       .insert(platformsToMonitor)
       .values({ userId, ...platformsData })
@@ -203,6 +145,7 @@ app.post("/api/onboarding", async (req, res) => {
         set: platformsData,
       });
 
+    // progress
     await db
       .insert(onboardingProgress)
       .values({ userId, completed: true, currentStep: 5 })
@@ -219,15 +162,11 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   USER SYNC (Unchanged)
+   USERS SYNC (CLERK)
 ================================ */
-
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
-
-  if (!clerkId || !email) {
-    return res.status(400).json({ error: "Missing data" });
-  }
+  if (!clerkId || !email) return res.status(400).json({});
 
   const existing = await db
     .select()
@@ -248,11 +187,9 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   START SERVER
+   START
 ================================ */
-
 const PORT = process.env.PORT || 4000;
-
 app.listen(PORT, () => {
   console.log(`✅ API running on port ${PORT}`);
 });

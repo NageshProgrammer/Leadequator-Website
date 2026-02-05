@@ -384,7 +384,7 @@ const DashboardOverview = () => {
             >
               Back to Home
             </button>
-            <button
+            {/* <button
               className="cs-btn"
               style={{
                 background: "linear-gradient(135deg, #22c55e, #4ade80)",
@@ -395,7 +395,7 @@ const DashboardOverview = () => {
               }}
             >
               Go to Lead Discovery
-            </button>
+            </button> */}
           </div>
         </div>
       )}

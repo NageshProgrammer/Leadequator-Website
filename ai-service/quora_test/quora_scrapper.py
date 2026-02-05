@@ -2,11 +2,14 @@ from playwright.sync_api import sync_playwright
 import json
 import time
 from pathlib import Path
+from db.neon import get_cursor
 
 COOKIE_FILE = "quora_cookies.json"
 OUTPUT_FILE = "quora_real_posts.json"
 
 def scrape_quora_with_cookies():
+    cursor = get_cursor()  # ✅ DB cursor
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         context = browser.new_context()
@@ -29,7 +32,7 @@ def scrape_quora_with_cookies():
 
         posts = []
 
-        # Quora question links
+        # Grab all links
         links = page.query_selector_all("a")
 
         for link in links:
@@ -43,27 +46,43 @@ def scrape_quora_with_cookies():
                 if href.startswith("/"):
                     href = "https://www.quora.com" + href
 
-                # heuristic for question URLs
+                # Heuristic for question URLs
                 if "quora.com/" in href and len(text) > 20:
-                    posts.append({
+                    post = {
                         "platform": "quora",
                         "text": text,
                         "url": href,
                         "author": None
-                    })
-            except:
-                pass
+                    }
+
+                    posts.append(post)
+
+                    # ✅ INSERT INTO NEON DB (RIGHT PLACE)
+                    cursor.execute(
+                        """
+                        INSERT INTO social_posts (platform, text, url, author)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (url) DO NOTHING
+                        """,
+                        ("quora", text, href, None)
+                    )
+
+                    print("INSERTED:", text[:50])
+
+            except Exception as e:
+                print("Error parsing link:", e)
 
         browser.close()
 
-    # Deduplicate by URL
+    # Deduplicate for JSON backup
     unique = {p["url"]: p for p in posts}
     posts = list(unique.values())
 
+    # ✅ JSON backup (optional but good)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(posts, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ Saved {len(posts)} posts to {OUTPUT_FILE}")
+    print(f"✅ Saved {len(posts)} posts to DB and {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     scrape_quora_with_cookies()

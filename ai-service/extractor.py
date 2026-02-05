@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from keybert import KeyBERT
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
-from typing import Optional
+from typing import Optional, List
 
 router = APIRouter()
 
@@ -21,12 +21,16 @@ def get_model():
     return kw_model
 
 
-class FormData(BaseModel):
+class KeywordInput(BaseModel):
+    # onboarding / form based
     industry: Optional[str] = ""
     company_type: Optional[str] = ""
     interests: Optional[str] = ""
     problem: Optional[str] = ""
     location: Optional[str] = ""
+
+    # DB based (IMPORTANT)
+    keywords: Optional[List[str]] = []
 
 
 def clean_text(text: str):
@@ -34,14 +38,18 @@ def clean_text(text: str):
 
 
 @router.post("/extract-keywords")
-def extract_keywords(data: FormData):
-    combined_text = " ".join([
-        data.industry,
-        data.company_type,
-        data.interests,
-        data.problem,
-        data.location,
-    ])
+def extract_keywords(data: KeywordInput):
+    # ✅ SUPPORT BOTH INPUT STYLES
+    if data.keywords:
+        combined_text = " ".join(data.keywords)
+    else:
+        combined_text = " ".join([
+            data.industry or "",
+            data.company_type or "",
+            data.interests or "",
+            data.problem or "",
+            data.location or "",
+        ])
 
     cleaned_text = clean_text(combined_text)
 
@@ -55,4 +63,6 @@ def extract_keywords(data: FormData):
         top_n=5
     )
 
-    return {"core_keywords": [kw for kw, _ in keywords]}
+    return {
+        "core_keywords": [kw for kw, _ in keywords]
+    }

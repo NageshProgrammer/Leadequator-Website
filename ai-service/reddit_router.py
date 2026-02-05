@@ -1,76 +1,67 @@
+import sys
+from pathlib import Path
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
-from typing import List
-import os
-import json
-import praw
 
-router = APIRouter(prefix="/scrape-reddit", tags=["Reddit"])
+# ------------------------------------------------------------------
+# FIX PYTHON PATH (CRITICAL FOR WINDOWS + UVICORN)
+# ------------------------------------------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.append(str(BASE_DIR))
 
-USE_MOCK = os.getenv("USE_MOCK_REDDIT", "true").lower() == "true"
+# ------------------------------------------------------------------
+# IMPORT REDDIT PIPELINE (ALREADY WORKING FILES)
+# ------------------------------------------------------------------
+from reddit_test.reddit_scrape_test import (
+    scrape_reddit,
+    manual_login_and_save_session,
+)
+from reddit_test.reddit_generate_replies import generate_reddit_replies
 
+# ------------------------------------------------------------------
+# ROUTER
+# ------------------------------------------------------------------
+router = APIRouter(
+    prefix="/reddit",
+    tags=["Reddit"],
+)
 
-def get_reddit_client():
-    client_id = os.getenv("REDDIT_CLIENT_ID")
-    client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+# ------------------------------------------------------------------
+# API ENDPOINT
+# ------------------------------------------------------------------
+@router.post("/run")
+def run_reddit_pipeline(
+    force_login: Optional[bool] = False
+):
+    """
+    Runs full Reddit pipeline:
 
-    if not client_id or not client_secret:
-        raise RuntimeError("Reddit credentials not set")
+    1. (Optional) Manual Reddit login via Playwright
+    2. Scrape Reddit posts (stores in NeonDB)
+    3. Generate AI replies (stores in NeonDB)
+    """
 
-    return praw.Reddit(
-        client_id=client_id,
-        client_secret=client_secret,
-        user_agent="leadequator-ai"
-    )
-
-
-@router.post("/")
-def scrape_reddit(keywords: List[str]):
-    if not keywords or not isinstance(keywords, list):
-        raise HTTPException(status_code=400, detail="Keywords list is empty or invalid")
-
-    # ✅ MOCK MODE (default for local + Azure)
-    if USE_MOCK:
-        try:
-            base_dir = os.path.dirname(__file__)
-            mock_path = os.path.join(
-                base_dir, "reddit_test", "mock_reddit_posts.json"
-            )
-
-            with open(mock_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            return {
-                "mode": "mock",
-                "count": len(data),
-                "posts": data
-            }
-
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    # ✅ REAL MODE
     try:
-        reddit = get_reddit_client()
-        subreddit = reddit.subreddit("startups")
+        # Step 1: Manual login (only when explicitly requested)
+        if force_login:
+            manual_login_and_save_session()
 
-        results = []
+        # Step 2: Scrape Reddit posts (DB insert happens inside)
+        scrape_reddit()
 
-        for kw in keywords:
-            for post in subreddit.search(kw, limit=5):
-                results.append({
-                    "keyword": kw,
-                    "title": post.title,
-                    "url": post.url,
-                    "score": post.score,
-                    "comments": post.num_comments,
-                    "subreddit": str(post.subreddit),
-                })
+        # Step 3: Generate AI replies (DB insert happens inside)
+        generate_reddit_replies()
 
         return {
-            "mode": "real",
-            "count": len(results),
-            "posts": results,
+            "status": "success",
+            "message": "Reddit scraping and reply generation completed successfully",
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # IMPORTANT: expose real error for debugging (local)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Reddit pipeline failed: {str(e)}",
+        )
