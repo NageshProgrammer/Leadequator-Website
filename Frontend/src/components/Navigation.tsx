@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ShimmerButton } from "./ui/shimmer-button";
-import { UserButton, useUser } from "@clerk/clerk-react";// adjust path as needed
-
+import { UserButton, SignedIn, SignedOut } from "@clerk/clerk-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,29 +17,18 @@ const Navigation = () => {
     { to: "/working", label: "How it works" },
     { to: "/features", label: "Features" },
     { to: "/pricing", label: "Pricing" },
-    // { to: "/dashboard", label: "Dashboard" },
-    // { to: "/resources", label: "Resources" },
-    // { to: "/about", label: "About" },
-    // { to: "/contact", label: "Contact" },
   ];
-
-  const { user } = useUser();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <NavLink
-            to="/"
-            className="text-2xl font-bold flex items-center gap-1"
-          >
-            {/* Using Bot icon as placeholder for the logo */}
+          <NavLink to="/" className="text-2xl font-bold flex items-center gap-1">
             <img
               src="/leadequator_logo.png"
               alt="Leadequator"
               className="w-12 h-12 object-contain"
             />
-
             <span className="text-foreground">Lead</span>
             <span className="text-primary">equator</span>
           </NavLink>
@@ -54,17 +42,23 @@ const Navigation = () => {
             ))}
 
             <div className="flex items-center gap-4">
-              {/* Separate Link for the Pilot Button */}
-              <Link to="/pricing">
-                <Button className="bg-primary">Start a Free Trial</Button>
-              </Link>
-
-              
-              
+              {/* Rendered only when user is NOT logged in */}
+              <SignedOut>
+                <Link to="/pricing">
+                  <Button className="bg-primary">Start a Free Trial</Button>
+                </Link>
                 <Link to="/sign-in">
                   <ShimmerButton shimmerColor="#fbbf24">Login</ShimmerButton>
                 </Link>
-              
+              </SignedOut>
+
+              {/* Rendered only when user IS logged in */}
+              <SignedIn>
+                <Link to="/dashboard">
+                  <Button variant="outline">Dashboard</Button>
+                </Link>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
             </div>
           </div>
 
@@ -85,17 +79,27 @@ const Navigation = () => {
                 key={link.to}
                 to={link.to}
                 className="block py-2 text-muted-foreground"
-                activeClassName="text-primary font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 {link.label}
               </NavLink>
             ))}
-            <Link to="/contact">
-              <Button className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90">
-                Request Pilot
-              </Button>
-            </Link>
+            
+            <div className="mt-4 space-y-2">
+              <SignedOut>
+                <Link to="/contact" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full bg-primary">Request Pilot</Button>
+                </Link>
+              </SignedOut>
+              <SignedIn>
+                <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full mb-4" variant="outline">Go to Dashboard</Button>
+                </Link>
+                <div className="flex justify-center">
+                   <UserButton afterSignOutUrl="/" />
+                </div>
+              </SignedIn>
+            </div>
           </div>
         )}
       </div>
