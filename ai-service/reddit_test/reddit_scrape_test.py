@@ -20,7 +20,14 @@ def manual_login_and_save_session():
     print("🔐 Manual Reddit login required")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(
+            headless=False,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
         context = browser.new_context()
         page = context.new_page()
 

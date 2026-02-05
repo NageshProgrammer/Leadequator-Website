@@ -21,7 +21,7 @@ export default function LeadDiscovery() {
   const userId = localStorage.getItem("userId");
 
   /* ===============================
-     LOAD KEYWORDS
+     LOAD BUYER KEYWORDS
   ================================ */
   const loadKeywords = useCallback(async () => {
     if (!userId) return;
@@ -50,9 +50,10 @@ export default function LeadDiscovery() {
   }, [userId]);
 
   /* ===============================
-     RUN SCRAPER / LOGIN
+     RUN REDDIT SCRAPING
+     (OPENS CHROME LOGIN POPUP)
   ================================ */
-  const runScraping = async (forceLogin = false) => {
+  const runScraping = async () => {
     setRunning(true);
     setError("");
     setMessage("");
@@ -65,7 +66,7 @@ export default function LeadDiscovery() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
-            forceLogin,
+            forceLogin: true, // 🔥 ALWAYS OPEN LOGIN POPUP
           }),
         }
       );
@@ -73,16 +74,13 @@ export default function LeadDiscovery() {
       if (!res.ok) throw new Error();
 
       setMessage(
-        forceLogin
-          ? "🔐 Reddit login window opened"
-          : "✅ Reddit scraping started"
+        "🔐 Reddit login window opened. Complete login to start scraping."
       );
 
-      if (!forceLogin) {
-        setTimeout(loadPosts, 5000);
-      }
+      // wait a bit, then refresh posts
+      setTimeout(loadPosts, 8000);
     } catch {
-      setError("❌ Reddit action failed");
+      setError("❌ Reddit scraping failed");
     } finally {
       setRunning(false);
     }
@@ -100,7 +98,7 @@ export default function LeadDiscovery() {
           Lead <span className="text-yellow-400">Discovery</span>
         </h1>
 
-        {/* Keywords */}
+        {/* BUYER KEYWORDS */}
         <div className="bg-zinc-900 p-6 rounded-xl">
           <h2 className="font-semibold mb-2">Buyer Keywords</h2>
           {loading ? (
@@ -114,20 +112,11 @@ export default function LeadDiscovery() {
           )}
         </div>
 
-        {/* Login */}
+        {/* SINGLE ACTION BUTTON */}
         <button
-          onClick={() => runScraping(true)}
+          onClick={runScraping}
           disabled={running}
-          className="w-full bg-zinc-700 text-white py-3 rounded-xl font-semibold"
-        >
-          {running ? "Opening Reddit…" : "Login to Reddit"}
-        </button>
-
-        {/* Scrape */}
-        <button
-          onClick={() => runScraping(false)}
-          disabled={running}
-          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-bold"
+          className="w-full bg-yellow-400 text-black py-4 rounded-xl font-bold text-lg"
         >
           {running ? "Running…" : "Run Reddit Scraping"}
         </button>
@@ -135,7 +124,7 @@ export default function LeadDiscovery() {
         {message && <p className="text-green-400">{message}</p>}
         {error && <p className="text-red-500">{error}</p>}
 
-        {/* Results */}
+        {/* RESULTS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {posts.map((p) => (
             <div key={p.id} className="bg-zinc-900 p-4 rounded-xl">
