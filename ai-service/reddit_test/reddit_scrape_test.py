@@ -28,7 +28,7 @@ def scrape_reddit(
         return
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False)
+        browser = pw.chromium.launch(headless=True)
 
         # ✅ Load saved session
         context = browser.new_context(
