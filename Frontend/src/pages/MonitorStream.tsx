@@ -26,11 +26,11 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 /* ================= TYPES ================= */
 
-type RedditPost = {
+type QuoraPost = {
   id: string;
-  text: string;
+  question: string;
   url: string;
-  author: string;
+  author: string | null;
   createdAt: string;
 };
 
@@ -58,37 +58,42 @@ const MonitorStream = () => {
 
   const userId = localStorage.getItem("userId");
 
-  /* ================= LOAD STREAM ================= */
+  /* ================= LOAD QUORA STREAM ================= */
 
   const loadThreads = useCallback(async () => {
     if (!userId) return;
 
-    const res = await fetch(
-      `${API_BASE}/api/lead-discovery/reddit/posts?userId=${userId}`
-    );
-    const data = await res.json();
-    const posts: RedditPost[] = data.posts || [];
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/lead-discovery/quora/posts?userId=${userId}`
+      );
 
-    const mapped: Thread[] = posts.map((p) => {
-      const intent = Math.floor(60 + Math.random() * 40);
+      const data = await res.json();
+      const posts: QuoraPost[] = data.posts || [];
 
-      return {
-        id: p.id,
-        platform: "Reddit",
-        user: p.author || "unknown",
-        intent,
-        sentiment:
-          intent >= 80 ? "Positive" : intent >= 65 ? "Neutral" : "Negative",
-        timestamp: new Date(p.createdAt).toLocaleString(),
-        content: p.text,
-        engagement: { likes: Math.floor(Math.random() * 100) },
-        keywords: [],
-        replyStatus: "Not Sent",
-        url: p.url,
-      };
-    });
+      const mapped: Thread[] = posts.map((p) => {
+        const intent = Math.floor(60 + Math.random() * 40);
 
-    setThreads(mapped);
+        return {
+          id: p.id,
+          platform: "Quora",
+          user: p.author || "anonymous",
+          intent,
+          sentiment:
+            intent >= 80 ? "Positive" : intent >= 65 ? "Neutral" : "Negative",
+          timestamp: new Date(p.createdAt).toLocaleString(),
+          content: p.question,
+          engagement: { likes: Math.floor(Math.random() * 100) },
+          keywords: [],
+          replyStatus: "Not Sent",
+          url: p.url,
+        };
+      });
+
+      setThreads(mapped);
+    } catch (error) {
+      console.error("Error loading Quora posts:", error);
+    }
   }, [userId]);
 
   /* ================= STREAM ================= */
@@ -116,8 +121,6 @@ const MonitorStream = () => {
   const openExternalLink = (url: string) => {
     window.open(url, "_blank");
   };
-
-  /* ================= SEND ================= */
 
   const handleSendReply = (id: string) => {
     setThreads((prev) =>
@@ -151,7 +154,7 @@ const MonitorStream = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">Monitor Stream</h1>
               <p className="text-muted-foreground">
-                Live Reddit conversations based on your keywords
+                Live Quora conversations based on your keywords
               </p>
             </div>
             <Button
@@ -174,12 +177,13 @@ const MonitorStream = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Select defaultValue="reddit">
+
+              <Select defaultValue="quora">
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="reddit">Reddit</SelectItem>
+                  <SelectItem value="quora">Quora</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -192,7 +196,7 @@ const MonitorStream = () => {
                   <TableHead>Time</TableHead>
                   <TableHead>Platform</TableHead>
                   <TableHead>Author</TableHead>
-                  <TableHead>Post</TableHead>
+                  <TableHead>Question</TableHead>
                   <TableHead>Intent</TableHead>
                   <TableHead>Sentiment</TableHead>
                   <TableHead>Reply</TableHead>
@@ -211,7 +215,7 @@ const MonitorStream = () => {
                     <TableCell>
                       <Badge>{t.platform}</Badge>
                     </TableCell>
-                    <TableCell>u/{t.user}</TableCell>
+                    <TableCell>{t.user}</TableCell>
                     <TableCell className="truncate max-w-xs">
                       {t.content}
                     </TableCell>
@@ -246,6 +250,7 @@ const MonitorStream = () => {
                         >
                           <ExternalLink className="h-3 w-3" />
                         </Button>
+
                         <Button
                           size="sm"
                           onClick={(e) => {
