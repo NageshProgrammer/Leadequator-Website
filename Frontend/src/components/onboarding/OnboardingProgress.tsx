@@ -20,12 +20,12 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ currentStep, to
     <div className="w-full max-w-3xl mx-auto mb-12">
       {/* Progress Bar */}
       <div className="relative mb-6">
-        <div className="absolute top-1/2 left-0 w-full h-1 bg-border -translate-y-1/2 rounded-full" />
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-border -translate-y-3 rounded-full" />
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
-          className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-primary to-primary-glow -translate-y-1/2 rounded-full"
+          className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-primary to-primary-glow -translate-y-3 rounded-full"
         />
         
         {/* Step Indicators */}
@@ -44,7 +44,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ currentStep, to
                     isCompleted
                       ? 'bg-primary text-primary-foreground'
                       : isCurrent
-                      ? 'bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-lg shadow-primary/30'
+                      ? 'bg-amber-500 from-primary to-primary-glow text-primary-foreground '
                       : 'bg-card border-2 border-border text-muted-foreground'
                   }`}
                 >
