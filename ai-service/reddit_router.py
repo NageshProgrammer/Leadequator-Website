@@ -1,86 +1,34 @@
-import sys
-from pathlib import Path
-from typing import Optional, List
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import List, Optional
 
-# ------------------------------------------------------------------
-# FIX PYTHON PATH (CRITICAL FOR WINDOWS + UVICORN)
-# ------------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.append(str(BASE_DIR))
-
-# ------------------------------------------------------------------
-# IMPORT REDDIT PIPELINE (ALREADY WORKING FILES)
-# ------------------------------------------------------------------
-from reddit_test.reddit_scrape_test import (
-    scrape_reddit,
-    manual_login_and_save_session,
-)
+from reddit_test.reddit_scrape_test import scrape_reddit
 from reddit_test.reddit_generate_replies import generate_reddit_replies
 
-# ------------------------------------------------------------------
-# ROUTER
-# ------------------------------------------------------------------
 router = APIRouter(
     prefix="/reddit",
-    tags=["Reddit"],
+    tags=["Reddit"]
 )
 
-# ------------------------------------------------------------------
-# REQUEST MODEL (OPTIONAL)
-# ------------------------------------------------------------------
-class RedditRunPayload(BaseModel):
-    userId: Optional[str] = None
+class RedditRunRequest(BaseModel):
+    userId: str
     keywords: Optional[List[str]] = None
-    force_login: Optional[bool] = False
 
 
-# ------------------------------------------------------------------
-# API ENDPOINT (BACKWARD COMPATIBLE)
-# ------------------------------------------------------------------
 @router.post("/run")
-def run_reddit_pipeline(payload: Optional[RedditRunPayload] = None):
-    """
-    Runs full Reddit pipeline:
-
-    1. (Optional) Manual Reddit login via Playwright
-    2. Scrape Reddit posts
-       - keyword-based if provided
-       - subreddit-based otherwise
-    3. Generate AI replies
-    """
-
+def run_reddit_pipeline(payload: RedditRunRequest):
     try:
-        # ---------------------------
-        # SAFE PAYLOAD EXTRACTION
-        # ---------------------------
-        force_login = payload.force_login if payload else False
-        user_id = payload.userId if payload else None
-        keywords = payload.keywords if payload else None
-
-        # Step 1: Manual login
-        if force_login:
-            manual_login_and_save_session()
-
-        # Step 2: Scrape Reddit (extended but safe)
         scrape_reddit(
-            user_id=user_id,
-            keywords=keywords
+            user_id=payload.userId,
+            keywords=payload.keywords
         )
 
-        # Step 3: Generate replies (extended but safe)
-        generate_reddit_replies(user_id=user_id)
+        generate_reddit_replies(user_id=payload.userId)
 
         return {
             "status": "success",
-            "message": "Reddit scraping and reply generation completed successfully",
+            "message": "Reddit scraping and reply generation completed"
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Reddit pipeline failed: {str(e)}",
-        )
+        raise HTTPException(status_code=500, detail=str(e))

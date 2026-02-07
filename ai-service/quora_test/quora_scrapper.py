@@ -1,88 +1,108 @@
 from playwright.sync_api import sync_playwright
-import json
-import time
+from urllib.parse import quote_plus
 from pathlib import Path
-from db.neon import get_cursor
+import json
 
-COOKIE_FILE = "quora_cookies.json"
-OUTPUT_FILE = "quora_real_posts.json"
+from quora_test.db.neon import get_cursor
 
-def scrape_quora_with_cookies():
-    cursor = get_cursor()  # ✅ DB cursor
+COOKIE_FILE = Path(__file__).parent / "quora_cookies.json"
+
+
+def scrape_quora(user_id: str, keywords: list[str]):
+    cursor = get_cursor()
+    inserted = 0
+
+    if not keywords:
+        print("⚠️ No keywords provided")
+        return
+
+    if not COOKIE_FILE.exists():
+        print("❌ Login required. Run quora_login.py first.")
+        return
+
+    search_query = quote_plus(" ".join(keywords))
+    search_url = f"https://www.quora.com/search?q={search_query}"
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(
+            headless=False,
+            args=["--no-sandbox", "--disable-dev-shm-usage"]
+        )
+
         context = browser.new_context()
 
-        # Load cookies
-        cookies = json.load(open(COOKIE_FILE, "r", encoding="utf-8"))
+        # Load saved cookies
+        with open(COOKIE_FILE, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+
         context.add_cookies(cookies)
 
         page = context.new_page()
 
-        print("Opening Quora search page with cookies...")
-        page.goto("https://www.quora.com/search?q=startup%20crm", timeout=60000)
+        print("🔍 Opening:", search_url)
+        page.goto(search_url, timeout=60000)
+        page.wait_for_timeout(8000)
 
-        time.sleep(5)
+        # Scroll
+        for _ in range(8):
+            page.mouse.wheel(0, 6000)
+            page.wait_for_timeout(3000)
 
-        # Scroll to load content
-        for _ in range(4):
-            page.mouse.wheel(0, 4000)
-            time.sleep(2)
+        question_links = page.locator("a[href*='/']")
 
-        posts = []
+        total = question_links.count()
+        print("📊 Total anchor elements found:", total)
 
-        # Grab all links
-        links = page.query_selector_all("a")
+        seen = set()
 
-        for link in links:
+        for i in range(min(total, 50)):
             try:
-                text = link.inner_text().strip()
-                href = link.get_attribute("href")
+                link = question_links.nth(i)
 
-                if not text or not href:
+                href = link.get_attribute("href")
+                text = (link.inner_text() or "").strip()
+
+                if not href or not text:
                     continue
 
-                if href.startswith("/"):
-                    href = "https://www.quora.com" + href
+                if "/profile/" in href:
+                    continue
+                if "/search?" in href:
+                    continue
+                if len(text) < 40:
+                    continue
+                if "?" in href:
+                    continue
 
-                # Heuristic for question URLs
-                if "quora.com/" in href and len(text) > 20:
-                    post = {
-                        "platform": "quora",
-                        "text": text,
-                        "url": href,
-                        "author": None
-                    }
+                full_url = "https://www.quora.com" + href
 
-                    posts.append(post)
+                if full_url in seen:
+                    continue
 
-                    # ✅ INSERT INTO NEON DB (RIGHT PLACE)
-                    cursor.execute(
-                        """
-                        INSERT INTO social_posts (platform, text, url, author)
-                        VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (url) DO NOTHING
-                        """,
-                        ("quora", text, href, None)
+                seen.add(full_url)
+
+                cursor.execute(
+                    """
+                    INSERT INTO quora_posts
+                    (user_id, platform, question, url, author)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (url) DO NOTHING
+                    """,
+                    (
+                        user_id,
+                        "quora",
+                        text,
+                        full_url,
+                        None
                     )
+                )
 
-                    print("INSERTED:", text[:50])
+                inserted += 1
+                print("✅ INSERTED:", text[:80])
 
             except Exception as e:
-                print("Error parsing link:", e)
+                print("❌ Skip error:", e)
 
         browser.close()
 
-    # Deduplicate for JSON backup
-    unique = {p["url"]: p for p in posts}
-    posts = list(unique.values())
-
-    # ✅ JSON backup (optional but good)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(posts, f, indent=2, ensure_ascii=False)
-
-    print(f"✅ Saved {len(posts)} posts to DB and {OUTPUT_FILE}")
-
-if __name__ == "__main__":
-    scrape_quora_with_cookies()
+    print(f"🎉 Quora scraping finished — inserted {inserted} rows")

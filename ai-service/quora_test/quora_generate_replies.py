@@ -1,68 +1,57 @@
-from db.neon import get_cursor
-from ai.reply_generator import generate_replies
+from quora_test.db.neon import get_cursor
+from quora_test.ai.reply_generator import generate_replies
 
-def generate_quora_replies():
+
+def generate_quora_replies(user_id: str):
     cursor = get_cursor()
 
-    # Fetch Quora posts that do NOT yet have replies
     cursor.execute("""
-        SELECT id, text, url, author
-        FROM social_posts
-        WHERE platform = 'quora'
+        SELECT id, question, url, author
+        FROM quora_posts
+        WHERE user_id = %s
           AND id NOT IN (
-              SELECT post_id FROM ai_replies
+              SELECT quora_post_id FROM quora_ai_replies
           )
         LIMIT 20
-    """)
+    """, (user_id,))
 
     posts = cursor.fetchall()
 
     if not posts:
-        print("⚠️ No new Quora posts found for reply generation.")
+        print("⚠️ No new Quora posts found.")
         return
 
-    for post_id, text, url, author in posts:
-        text = (text or "").strip()
+    for post_id, question, url, author in posts:
+        question = (question or "").strip()
 
-        if not text:
+        if not question:
             continue
 
-        print("Generating replies for:", text[:60])
+        print("🧠 Generating replies for:", question[:70])
 
-        # Generate 2 AI reply options
-        replies = generate_replies(text, platform="quora")
+        replies = generate_replies(
+            text=question,
+            platform="quora"
+        )
 
-        if len(replies) < 2:
-            print("⚠️ Skipping (less than 2 replies generated)")
+        if not replies or len(replies) < 2:
+            print("⚠️ AI did not return enough replies")
             continue
 
-        # Store replies in Neon DB
         cursor.execute(
-    """
-    INSERT INTO ai_replies (
-        post_id,
-        platform,
-        post_url,
-        reply_option_1,
-        reply_option_2,
-        approved
-    )
-    VALUES (%s, %s, %s, %s, %s, %s)
-    """,
-    (
-        post_id,
-        "quora",
-        url,
-        replies[0],
-        replies[1],
-        False
-    )
-)
+            """
+            INSERT INTO quora_ai_replies
+            (quora_post_id, reply_option_1, reply_option_2, approved)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (
+                post_id,
+                replies[0],
+                replies[1],
+                False
+            )
+        )
 
+        print("✅ Replies stored")
 
-        print("✅ Stored 2 replies")
-
-    print(f"🎉 Finished generating replies for {len(posts)} Quora posts")
-
-if __name__ == "__main__":
-    generate_quora_replies()
+    print("🎉 Quora reply generation complete")
