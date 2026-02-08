@@ -2,9 +2,12 @@
 node_modules/
 dist/
 
-# env
+# env (IGNORE ALL ENV FILES)
 .env
 .env.local
+backend/.env
+frontend/.env
+ai-service/.env
 
 # python
 __pycache__/
