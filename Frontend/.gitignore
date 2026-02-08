@@ -5,8 +5,8 @@ dist/
 # env (IGNORE ALL ENV FILES)
 .env
 .env.local
-backend/.env
-frontend/.env
+Backend/.env
+Frontend/.env
 ai-service/.env
 
 # python
