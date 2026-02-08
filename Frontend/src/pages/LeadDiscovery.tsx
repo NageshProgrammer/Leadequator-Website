@@ -12,7 +12,7 @@ type RedditPost = {
 
 type QuoraPost = {
   id: string;
-  content: string;
+  question: string;
   url: string;
   author: string | null;
 };
@@ -38,8 +38,8 @@ export default function LeadDiscovery() {
     const res = await fetch(
       `${API_BASE}/api/lead-discovery/keywords?userId=${userId}`
     );
-    const data = await res.json();
 
+    const data = await res.json();
     setBuyerKeywords(data.keywords || []);
     setLoading(false);
   }, [userId]);
@@ -53,8 +53,8 @@ export default function LeadDiscovery() {
     const res = await fetch(
       `${API_BASE}/api/lead-discovery/reddit/posts?userId=${userId}`
     );
-    const data = await res.json();
 
+    const data = await res.json();
     setPosts(data.posts || []);
   }, [userId]);
 
@@ -65,17 +65,22 @@ export default function LeadDiscovery() {
     if (!userId) return;
 
     const res = await fetch(
-      `${API_BASE}/quora/posts?userId=${userId}`
+      `${API_BASE}/api/lead-discovery/quora/posts?userId=${userId}`
     );
-    const data = await res.json();
 
-    setQuoraPosts(data.data || []);
+    const data = await res.json();
+    setQuoraPosts(data.posts || []);
   }, [userId]);
 
   /* ===============================
      RUN REDDIT SCRAPING
   ================================ */
   const runScraping = async () => {
+    if (!userId) {
+      setError("User not found");
+      return;
+    }
+
     setRunning(true);
     setError("");
     setMessage("");
@@ -93,13 +98,15 @@ export default function LeadDiscovery() {
         }
       );
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Reddit failed");
+      }
 
       setMessage("🔐 Reddit scraping started.");
-
       setTimeout(loadPosts, 5000);
-    } catch {
-      setError("❌ Reddit scraping failed");
+    } catch (err: any) {
+      setError(err.message || "Reddit scraping failed");
     } finally {
       setRunning(false);
     }
@@ -109,6 +116,11 @@ export default function LeadDiscovery() {
      RUN QUORA SCRAPING
   ================================ */
   const runQuoraScraping = async () => {
+    if (!userId) {
+      setError("User not found");
+      return;
+    }
+
     setRunningQuora(true);
     setError("");
     setMessage("");
@@ -119,20 +131,19 @@ export default function LeadDiscovery() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            keywords: buyerKeywords,
-          }),
+          body: JSON.stringify({ userId }),
         }
       );
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Quora failed");
+      }
 
       setMessage("🟢 Quora query executed successfully.");
-
-      setTimeout(loadQuoraPosts, 3000);
-    } catch {
-      setError("❌ Quora scraping failed");
+      setTimeout(loadQuoraPosts, 5000);
+    } catch (err: any) {
+      setError(err.message || "Quora scraping failed");
     } finally {
       setRunningQuora(false);
     }
@@ -151,7 +162,6 @@ export default function LeadDiscovery() {
           Lead <span className="text-yellow-400">Discovery</span>
         </h1>
 
-        {/* BUYER KEYWORDS */}
         <div className="bg-zinc-900 p-6 rounded-xl">
           <h2 className="font-semibold mb-2">Buyer Keywords</h2>
           {loading ? (
@@ -165,7 +175,6 @@ export default function LeadDiscovery() {
           )}
         </div>
 
-        {/* ACTION BUTTONS */}
         <div className="space-y-4">
           <button
             onClick={runScraping}
@@ -187,7 +196,6 @@ export default function LeadDiscovery() {
         {message && <p className="text-green-400">{message}</p>}
         {error && <p className="text-red-500">{error}</p>}
 
-        {/* REDDIT RESULTS */}
         <h2 className="text-2xl font-bold mt-8">Reddit Results</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {posts.map((p) => (
@@ -205,12 +213,11 @@ export default function LeadDiscovery() {
           ))}
         </div>
 
-        {/* QUORA RESULTS */}
         <h2 className="text-2xl font-bold mt-8">Quora Results</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {quoraPosts.map((p) => (
             <div key={p.id} className="bg-zinc-900 p-4 rounded-xl">
-              <p className="mt-2">{p.content}</p>
+              <p className="mt-2">{p.question}</p>
               <a
                 href={p.url}
                 target="_blank"
