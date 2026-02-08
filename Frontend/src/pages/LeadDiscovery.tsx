@@ -115,7 +115,7 @@ export default function LeadDiscovery() {
 
     try {
       const res = await fetch(
-        `${API_BASE}/quora/run`,
+        `${API_BASE}/api/lead-discovery/quora/run`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
