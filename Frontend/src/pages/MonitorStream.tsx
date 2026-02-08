@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Filter, Sparkles, ExternalLink } from "lucide-react";
 import { FilterPanel } from "@/components/dashboard/FilterPanel";
-import { DetailPane, DetailComment } from "@/components/dashboard/DetailPane";
+import { DetailPane } from "@/components/dashboard/DetailPane";
 import {
   Table,
   TableBody,
@@ -22,10 +22,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 /* ================= TYPES ================= */
 
+type QuoraPost = {
+  id: string;
+  question: string;
+  url: string;
+  author: string | null;
+  createdAt: string;
+};
+
 type Thread = {
-  id: number;
+  id: string;
   platform: string;
   user: string;
   intent: number;
@@ -35,6 +45,7 @@ type Thread = {
   engagement: { likes: number };
   keywords: string[];
   replyStatus: "Not Sent" | "Sent";
+  url: string;
 };
 
 /* ================= COMPONENT ================= */
@@ -43,48 +54,55 @@ const MonitorStream = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selected, setSelected] = useState<Thread | null>(null);
+  const [search, setSearch] = useState("");
 
-  /* ================= LOAD CSV ================= */
+  const userId = localStorage.getItem("userId");
 
-  useEffect(() => {
-    const loadCSV = async () => {
-      const res = await fetch("/data/leads.csv");
-      const text = await res.text();
-      if (text.startsWith("<!doctype html")) return;
+  /* ================= LOAD QUORA STREAM ================= */
 
-      const lines = text.trim().split("\n");
-      const headers = lines[0].split(",");
+  const loadThreads = useCallback(async () => {
+    if (!userId) return;
 
-      const data: Thread[] = lines.slice(1).map((line, index) => {
-        const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-        const row: Record<string, string> = {};
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/lead-discovery/quora/posts?userId=${userId}`
+      );
 
-        headers.forEach((h, i) => {
-          row[h] = values[i]?.replace(/^"|"$/g, "").trim() ?? "";
-        });
+      const data = await res.json();
+      const posts: QuoraPost[] = data.posts || [];
 
-        const intent = Number(row.intent);
+      const mapped: Thread[] = posts.map((p) => {
+        const intent = Math.floor(60 + Math.random() * 40);
 
         return {
-          id: index + 1,
-          platform: row.platform,
-          user: row.name,
+          id: p.id,
+          platform: "Quora",
+          user: p.author || "anonymous",
           intent,
           sentiment:
-            intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
-          timestamp: new Date(row.createdAt).toLocaleString(),
-          content: `Looking for solutions related to ${row.company} via ${row.platform}`,
-          engagement: { likes: Math.floor(Number(row.value) / 1000) },
-          keywords: [row.company, row.platform],
+            intent >= 80 ? "Positive" : intent >= 65 ? "Neutral" : "Negative",
+          timestamp: new Date(p.createdAt).toLocaleString(),
+          content: p.question,
+          engagement: { likes: Math.floor(Math.random() * 100) },
+          keywords: [],
           replyStatus: "Not Sent",
+          url: p.url,
         };
       });
 
-      setThreads(data);
-    };
+      setThreads(mapped);
+    } catch (error) {
+      console.error("Error loading Quora posts:", error);
+    }
+  }, [userId]);
 
-    loadCSV();
-  }, []);
+  /* ================= STREAM ================= */
+
+  useEffect(() => {
+    loadThreads();
+    const interval = setInterval(loadThreads, 8000);
+    return () => clearInterval(interval);
+  }, [loadThreads]);
 
   /* ================= HELPERS ================= */
 
@@ -100,20 +118,11 @@ const MonitorStream = () => {
     return "text-muted-foreground";
   };
 
-  const openExternalLink = (platform: string) => {
-    const links: Record<string, string> = {
-      LinkedIn: "https://linkedin.com",
-      Reddit: "https://reddit.com",
-      "X (Twitter)": "https://x.com",
-      Quora: "https://quora.com",
-      Website: "https://google.com",
-    };
-    window.open(links[platform] || "#", "_blank");
+  const openExternalLink = (url: string) => {
+    window.open(url, "_blank");
   };
 
-  /* ================= SEND HANDLER ================= */
-
-  const handleSendReply = (id: number) => {
+  const handleSendReply = (id: string) => {
     setThreads((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, replyStatus: "Sent" } : t
@@ -125,28 +134,27 @@ const MonitorStream = () => {
     );
   };
 
+  const filteredThreads = threads.filter((t) =>
+    t.content.toLowerCase().includes(search.toLowerCase())
+  );
+
   /* ================= UI ================= */
 
   return (
     <div className="p-8 bg-background">
-      <div
-        className={`flex gap-6 ${
-          selected ? "overflow-x-auto" : "overflow-x-hidden"
-        }`}
-      >
+      <div className={`flex gap-6 ${selected ? "overflow-x-auto" : ""}`}>
         {showFilters && (
           <div className="w-80 flex-shrink-0">
             <FilterPanel onClose={() => setShowFilters(false)} />
           </div>
         )}
 
-        {/* TABLE */}
         <div className="flex-1 space-y-6 min-w-[900px]">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Monitor Stream</h1>
               <p className="text-muted-foreground">
-                Real-time feed of high-value conversations across platforms
+                Live Quora conversations based on your keywords
               </p>
             </div>
             <Button
@@ -161,64 +169,54 @@ const MonitorStream = () => {
           <Card className="p-4 bg-card border-border">
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search conversations, keywords, users..."
-                  className="pl-10 bg-background"
+                  placeholder="Search conversations..."
+                  className="pl-10"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-48 bg-background">
+
+              <Select defaultValue="quora">
+                <SelectTrigger className="w-48">
                   <SelectValue placeholder="Platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Platforms</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select defaultValue="high">
-                <SelectTrigger className="w-48 bg-background">
-                  <SelectValue placeholder="Intent Score" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="quora">Quora</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </Card>
 
-          <Card className="bg-card border-border overflow-hidden">
+          <Card className="overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Time</TableHead>
                   <TableHead>Platform</TableHead>
                   <TableHead>Author</TableHead>
-                  <TableHead>Comment</TableHead>
+                  <TableHead>Question</TableHead>
                   <TableHead>Intent</TableHead>
                   <TableHead>Sentiment</TableHead>
                   <TableHead>Reply</TableHead>
-                  <TableHead>Clicks</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
-                {threads.map((t) => (
+                {filteredThreads.map((t) => (
                   <TableRow
                     key={t.id}
-                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => setSelected(t)}
+                    className="cursor-pointer hover:bg-muted/50"
                   >
-                    <TableCell className="text-xs text-muted-foreground">
-                      {t.timestamp}
-                    </TableCell>
+                    <TableCell>{t.timestamp}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{t.platform}</Badge>
+                      <Badge>{t.platform}</Badge>
                     </TableCell>
-                    <TableCell className="font-medium text-sm">
-                      {t.user}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate text-sm">
+                    <TableCell>{t.user}</TableCell>
+                    <TableCell className="truncate max-w-xs">
                       {t.content}
                     </TableCell>
                     <TableCell>
@@ -227,13 +225,12 @@ const MonitorStream = () => {
                       </Badge>
                     </TableCell>
                     <TableCell
-                      className={`text-sm ${getSentimentColor(t.sentiment)}`}
+                      className={getSentimentColor(t.sentiment)}
                     >
                       {t.sentiment}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={t.replyStatus === "Sent" ? "default" : "secondary"}
                         className={
                           t.replyStatus === "Sent" ? "bg-green-500" : ""
                         }
@@ -241,7 +238,6 @@ const MonitorStream = () => {
                         {t.replyStatus}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-center">0</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
@@ -249,14 +245,14 @@ const MonitorStream = () => {
                           variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
-                            openExternalLink(t.platform);
+                            openExternalLink(t.url);
                           }}
                         >
                           <ExternalLink className="h-3 w-3" />
                         </Button>
+
                         <Button
                           size="sm"
-                          className="bg-primary text-primary-foreground"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelected(t);
@@ -273,7 +269,6 @@ const MonitorStream = () => {
           </Card>
         </div>
 
-        {/* DETAIL PANE */}
         {selected && (
           <div className="w-[600px] flex-shrink-0">
             <DetailPane

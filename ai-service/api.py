@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from extractor import router as keyword_router
 from reddit_router import router as reddit_router
+from quora_test.quora_scrapper import scrape_quora
+from quora_router import router as quora_router
+
 
 app = FastAPI()
 
@@ -23,3 +26,4 @@ def health():
 
 app.include_router(keyword_router)
 app.include_router(reddit_router)
+app.include_router(quora_router)   # ✅ ADD THIS

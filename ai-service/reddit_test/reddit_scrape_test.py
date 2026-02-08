@@ -1,103 +1,118 @@
-import sys
-import time
-from pathlib import Path
-
-ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT_DIR))
-
 from playwright.sync_api import sync_playwright
+from typing import List, Optional
+from pathlib import Path
+from urllib.parse import quote_plus
 from reddit_test.db.neon import get_cursor
+import time
 
-SUBREDDIT = "startups"
+# ----------------------------------------
+# CONFIG
+# ----------------------------------------
+
 SESSION_FILE = Path(__file__).parent / "auth" / "reddit_state.json"
+SUBREDDIT = "startups"
 
+# ----------------------------------------
+# MAIN SCRAPER
+# ----------------------------------------
 
-def manual_login_and_save_session():
-    print("🔐 Manual Reddit login required")
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context()
-        page = context.new_page()
-
-        page.goto("https://www.reddit.com/login", timeout=60000)
-        print("👉 Login manually, wait 25 seconds...")
-        time.sleep(25)
-
-        SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
-        context.storage_state(path=SESSION_FILE)
-
-        browser.close()
-
-    print("✅ Reddit session saved")
-
-
-def scrape_reddit():
+def scrape_reddit(
+    user_id: str,
+    keywords: Optional[List[str]] = None
+):
     cursor = get_cursor()
     inserted = 0
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False)
+    if not SESSION_FILE.exists():
+        print("❌ reddit_state.json not found. Login first.")
+        return
 
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        # ✅ Load saved session
         context = browser.new_context(
-            storage_state=SESSION_FILE,
+            storage_state=str(SESSION_FILE),
             viewport={"width": 1280, "height": 800},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         )
 
         page = context.new_page()
-        page.goto(f"https://www.reddit.com/r/{SUBREDDIT}/", timeout=60000)
 
-        page.wait_for_timeout(8000)
-        page.mouse.wheel(0, 4000)
-        page.wait_for_timeout(3000)
+        # ----------------------------------------
+        # BUILD SEARCH URL
+        # ----------------------------------------
 
-        cards = page.locator("shreddit-post")
-        total = cards.count()
+        if keywords:
+            query = quote_plus(" ".join(keywords))
+            url = f"https://www.reddit.com/search/?q={query}&sort=new"
+            print("🔍 Searching Reddit:", keywords)
+        else:
+            url = f"https://www.reddit.com/r/{SUBREDDIT}/"
+            print("📂 Scraping subreddit:", SUBREDDIT)
 
-        print(f"📌 Found Reddit posts: {total}")
+        page.goto(url, timeout=60000)
 
-        for i in range(min(total, 20)):  # safety limit
+        time.sleep(5)
+
+        print("Current URL:", page.url)
+        print("Page title:", page.title())
+
+        # ----------------------------------------
+        # WAIT FOR POSTS
+        # ----------------------------------------
+
+        try:
+            page.wait_for_selector("shreddit-post", timeout=15000)
+        except:
+            print("⚠️ No shreddit-post found. Possibly blocked or not logged in.")
+            browser.close()
+            return
+
+        posts = page.locator("shreddit-post")
+        total = posts.count()
+
+        print("📊 Found shreddit-post elements:", total)
+
+        # ----------------------------------------
+        # LOOP POSTS
+        # ----------------------------------------
+
+        for i in range(min(total, 20)):
             try:
-                card = cards.nth(i)
+                post = posts.nth(i)
 
-                title = card.get_attribute("post-title") or ""
-                username = card.get_attribute("author") or "unknown"
-                permalink = card.get_attribute("permalink") or ""
+                title = post.get_attribute("post-title")
+                permalink = post.get_attribute("permalink")
+                author = post.get_attribute("author")
 
-                if not title.strip() or not permalink:
+                if not title or not permalink:
                     continue
 
-                post_url = f"https://www.reddit.com{permalink}"
-
-                print("➡️ INSERTING:", title[:70])
+                full_url = f"https://www.reddit.com{permalink}"
 
                 cursor.execute(
                     """
-                    INSERT INTO social_posts (platform, text, url, author)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO reddit_posts
+                    (user_id, platform, text, url, author)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (url) DO NOTHING
                     """,
                     (
+                        user_id,
                         "reddit",
                         title.strip(),
-                        post_url,
-                        username
+                        full_url,
+                        author
                     )
                 )
 
                 inserted += 1
-                print("✅ INSERT OK")
+                print("✅ INSERTED:", title[:80])
 
             except Exception as e:
-                print("❌ INSERT FAILED:", e)
+                print("❌ Insert error:", e)
 
         browser.close()
 
     print(f"🎉 Reddit scraping finished — inserted {inserted} rows")
-
-
-if __name__ == "__main__":
-    if not SESSION_FILE.exists():
-        manual_login_and_save_session()
-
-    scrape_reddit()

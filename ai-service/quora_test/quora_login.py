@@ -1,8 +1,8 @@
 from playwright.sync_api import sync_playwright
+from pathlib import Path
 import json
-import os
 
-COOKIE_FILE = "quora_cookies.json"
+COOKIE_FILE = Path(__file__).parent / "quora_cookies.json"
 
 def save_cookies():
     with sync_playwright() as p:
@@ -10,20 +10,18 @@ def save_cookies():
         context = browser.new_context()
         page = context.new_page()
 
-        print("Opening Quora login page...")
-        page.goto("https://www.quora.com")
+        print("🔐 Opening Quora login page...")
+        page.goto("https://www.quora.com/login", timeout=60000)
 
-        print("👉 Log in manually in the browser.")
-        print("👉 After login, wait for homepage to load.")
-        print("👉 You have 60 seconds.")
-
-        page.wait_for_timeout(60000)  # 60 seconds to login
+        print("👉 Login manually in browser.")
+        input("✅ After login completes, press ENTER here...")
 
         cookies = context.cookies()
+
         with open(COOKIE_FILE, "w", encoding="utf-8") as f:
             json.dump(cookies, f, indent=2)
 
-        print("✅ Cookies saved to", COOKIE_FILE)
+        print(f"✅ Cookies saved to {COOKIE_FILE}")
 
         browser.close()
 
