@@ -4,3 +4,8 @@ ai-service/venv/
 venv/
 __pycache__/
 *.pyc
+
+.env
+Backend/.env
+Frontend/.env
+ai-service/.env
