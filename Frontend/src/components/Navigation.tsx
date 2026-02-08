@@ -54,7 +54,7 @@ const Navigation = () => {
 
               {/* Rendered only when user IS logged in */}
               <SignedIn>
-                <Link to="/dashboard">
+                <Link to="/onboarding">
                   <Button variant="outline">Dashboard</Button>
                 </Link>
                 <UserButton afterSignOutUrl="/" />
@@ -92,7 +92,7 @@ const Navigation = () => {
                 </Link>
               </SignedOut>
               <SignedIn>
-                <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                <Link to="/onboarding" onClick={() => setIsOpen(false)}>
                   <Button className="w-full mb-4" variant="outline">Go to Dashboard</Button>
                 </Link>
                 <div className="flex justify-center">
