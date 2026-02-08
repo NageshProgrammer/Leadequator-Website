@@ -10,11 +10,20 @@ type RedditPost = {
   createdAt: string;
 };
 
+type QuoraPost = {
+  id: string;
+  content: string;
+  url: string;
+  author: string | null;
+};
+
 export default function LeadDiscovery() {
   const [buyerKeywords, setBuyerKeywords] = useState<string[]>([]);
   const [posts, setPosts] = useState<RedditPost[]>([]);
+  const [quoraPosts, setQuoraPosts] = useState<QuoraPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [runningQuora, setRunningQuora] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -50,8 +59,21 @@ export default function LeadDiscovery() {
   }, [userId]);
 
   /* ===============================
+     LOAD QUORA POSTS
+  ================================ */
+  const loadQuoraPosts = useCallback(async () => {
+    if (!userId) return;
+
+    const res = await fetch(
+      `${API_BASE}/quora/posts?userId=${userId}`
+    );
+    const data = await res.json();
+
+    setQuoraPosts(data.data || []);
+  }, [userId]);
+
+  /* ===============================
      RUN REDDIT SCRAPING
-     (OPENS CHROME LOGIN POPUP)
   ================================ */
   const runScraping = async () => {
     setRunning(true);
@@ -66,19 +88,16 @@ export default function LeadDiscovery() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
-            forceLogin: true, // 🔥 ALWAYS OPEN LOGIN POPUP
+            forceLogin: true,
           }),
         }
       );
 
       if (!res.ok) throw new Error();
 
-      setMessage(
-        "🔐 Reddit login window opened. Complete login to start scraping."
-      );
+      setMessage("🔐 Reddit scraping started.");
 
-      // wait a bit, then refresh posts
-      setTimeout(loadPosts, 8000);
+      setTimeout(loadPosts, 5000);
     } catch {
       setError("❌ Reddit scraping failed");
     } finally {
@@ -86,10 +105,44 @@ export default function LeadDiscovery() {
     }
   };
 
+  /* ===============================
+     RUN QUORA SCRAPING
+  ================================ */
+  const runQuoraScraping = async () => {
+    setRunningQuora(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/quora/run`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            keywords: buyerKeywords,
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error();
+
+      setMessage("🟢 Quora query executed successfully.");
+
+      setTimeout(loadQuoraPosts, 3000);
+    } catch {
+      setError("❌ Quora scraping failed");
+    } finally {
+      setRunningQuora(false);
+    }
+  };
+
   useEffect(() => {
     loadKeywords();
     loadPosts();
-  }, [loadKeywords, loadPosts]);
+    loadQuoraPosts();
+  }, [loadKeywords, loadPosts, loadQuoraPosts]);
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-16">
@@ -112,19 +165,30 @@ export default function LeadDiscovery() {
           )}
         </div>
 
-        {/* SINGLE ACTION BUTTON */}
-        <button
-          onClick={runScraping}
-          disabled={running}
-          className="w-full bg-yellow-400 text-black py-4 rounded-xl font-bold text-lg"
-        >
-          {running ? "Running…" : "Run Reddit Scraping"}
-        </button>
+        {/* ACTION BUTTONS */}
+        <div className="space-y-4">
+          <button
+            onClick={runScraping}
+            disabled={running}
+            className="w-full bg-yellow-400 text-black py-4 rounded-xl font-bold text-lg"
+          >
+            {running ? "Running…" : "Run Reddit Scraping"}
+          </button>
+
+          <button
+            onClick={runQuoraScraping}
+            disabled={runningQuora}
+            className="w-full bg-green-500 text-black py-4 rounded-xl font-bold text-lg"
+          >
+            {runningQuora ? "Running…" : "Run Quora Query"}
+          </button>
+        </div>
 
         {message && <p className="text-green-400">{message}</p>}
         {error && <p className="text-red-500">{error}</p>}
 
-        {/* RESULTS */}
+        {/* REDDIT RESULTS */}
+        <h2 className="text-2xl font-bold mt-8">Reddit Results</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {posts.map((p) => (
             <div key={p.id} className="bg-zinc-900 p-4 rounded-xl">
@@ -136,6 +200,23 @@ export default function LeadDiscovery() {
                 className="text-yellow-400 text-sm mt-2 inline-block"
               >
                 View on Reddit →
+              </a>
+            </div>
+          ))}
+        </div>
+
+        {/* QUORA RESULTS */}
+        <h2 className="text-2xl font-bold mt-8">Quora Results</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {quoraPosts.map((p) => (
+            <div key={p.id} className="bg-zinc-900 p-4 rounded-xl">
+              <p className="mt-2">{p.content}</p>
+              <a
+                href={p.url}
+                target="_blank"
+                className="text-green-400 text-sm mt-2 inline-block"
+              >
+                View on Quora →
               </a>
             </div>
           ))}
