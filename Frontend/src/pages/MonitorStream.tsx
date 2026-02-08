@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Filter, Sparkles, ExternalLink } from "lucide-react";
 import { FilterPanel } from "@/components/dashboard/FilterPanel";
-import { DetailPane } from "@/components/dashboard/DetailPane";
+import { DetailPane, DetailComment } from "@/components/dashboard/DetailPane";
 import {
   Table,
   TableBody,
@@ -22,20 +23,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-
 /* ================= TYPES ================= */
 
-type QuoraPost = {
-  id: string;
-  question: string;
-  url: string;
-  author: string | null;
-  createdAt: string;
-};
-
 type Thread = {
-  id: string;
+  id: number;
   platform: string;
   user: string;
   intent: number;
@@ -44,65 +35,88 @@ type Thread = {
   content: string;
   engagement: { likes: number };
   keywords: string[];
+  url?: string;
+  replyOption1?: string | null;
+  replyOption2?: string | null;
   replyStatus: "Not Sent" | "Sent";
-  url: string;
 };
+
+
 
 /* ================= COMPONENT ================= */
 
 const MonitorStream = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [threads, setThreads] = useState<Thread[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Thread | null>(null);
-  const [search, setSearch] = useState("");
+  const { toast } = useToast();
 
-  const userId = localStorage.getItem("userId");
-
-  /* ================= LOAD QUORA STREAM ================= */
-
-  const loadThreads = useCallback(async () => {
-    if (!userId) return;
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/lead-discovery/quora/posts?userId=${userId}`
-      );
-
-      const data = await res.json();
-      const posts: QuoraPost[] = data.posts || [];
-
-      const mapped: Thread[] = posts.map((p) => {
-        const intent = Math.floor(60 + Math.random() * 40);
-
-        return {
-          id: p.id,
-          platform: "Quora",
-          user: p.author || "anonymous",
-          intent,
-          sentiment:
-            intent >= 80 ? "Positive" : intent >= 65 ? "Neutral" : "Negative",
-          timestamp: new Date(p.createdAt).toLocaleString(),
-          content: p.question,
-          engagement: { likes: Math.floor(Math.random() * 100) },
-          keywords: [],
-          replyStatus: "Not Sent",
-          url: p.url,
-        };
-      });
-
-      setThreads(mapped);
-    } catch (error) {
-      console.error("Error loading Quora posts:", error);
-    }
-  }, [userId]);
-
-  /* ================= STREAM ================= */
+  /* ================= LOAD CSV ================= */
 
   useEffect(() => {
-    loadThreads();
-    const interval = setInterval(loadThreads, 8000);
-    return () => clearInterval(interval);
-  }, [loadThreads]);
+    // Fetch Quora posts from ai-service and map to Thread[]
+    const loadQuora = async () => {
+      setLoading(true);
+      setError(null);
+
+      type BackendPost = Record<string, unknown>;
+
+      const mapItems = (items: BackendPost[]): Thread[] =>
+        items.map((it: BackendPost, idx: number) => {
+          const rawIntent = it.intent as number | undefined;
+          const intent = Number(rawIntent ?? 50 + (idx % 50));
+
+          return {
+            id: Number((it.id as number) ?? idx + 1),
+            platform: (it.platform as string) ?? "Quora",
+            user: (it.author as string) ?? (it.userId as string) ?? "unknown",
+            intent,
+            sentiment: intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
+            timestamp: (it.timestamp as string) ?? new Date().toLocaleString(),
+            content: (it.content as string) ?? (it.question as string) ?? (it.title as string) ?? "",
+            url: (it.url as string | undefined),
+            replyOption1: (it.replyOption1 as string) ?? null,
+            replyOption2: (it.replyOption2 as string) ?? null,
+            engagement: { likes: Number((it.likes as number) ?? 0) },
+            keywords: (it.keywords as string[]) ?? [],
+            replyStatus: (it.replyStatus as "Not Sent" | "Sent") ?? "Not Sent",
+          };
+        });
+
+      const tryFetch = async (url: string): Promise<BackendPost[]> => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        return json;
+      };
+
+      try {
+        // First attempt: use dev proxy path; fallback to direct backend
+        let body = null;
+        try {
+          body = await tryFetch("/api/quora/posts");
+        } catch {
+          body = await tryFetch("http://localhost:8000/quora/posts");
+        }
+
+        const itemsRaw = (body as { data?: BackendPost[] })?.data ?? body;
+        const items = (itemsRaw ?? []) as BackendPost[];
+        const data = mapItems(items);
+        setThreads(data);
+      } catch (e: unknown) {
+        console.error("Failed to load quora posts", e);
+        const msg = (e as Error)?.message ?? String(e);
+        setError(msg);
+        toast({ title: "Failed to load posts", description: msg });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuora();
+  }, [toast]);
 
   /* ================= HELPERS ================= */
 
@@ -118,43 +132,55 @@ const MonitorStream = () => {
     return "text-muted-foreground";
   };
 
-  const openExternalLink = (url: string) => {
-    window.open(url, "_blank");
+  const openExternalLink = (platform: string, url?: string) => {
+    if (url) {
+      window.open(url, "_blank");
+      return;
+    }
+
+    const links: Record<string, string> = {
+      LinkedIn: "https://linkedin.com",
+      Reddit: "https://reddit.com",
+      "X (Twitter)": "https://x.com",
+      Quora: "https://quora.com",
+      Website: "https://google.com",
+    };
+    window.open(links[platform] || "#", "_blank");
   };
 
+  /* ================= SEND HANDLER ================= */
+
   const handleSendReply = (id: string) => {
+    const nid = Number(id);
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, replyStatus: "Sent" } : t
+        t.id === nid ? { ...t, replyStatus: "Sent" } : t
       )
     );
 
     setSelected((prev) =>
-      prev && prev.id === id ? { ...prev, replyStatus: "Sent" } : prev
+      prev && prev.id === nid ? { ...prev, replyStatus: "Sent" } : prev
     );
   };
-
-  const filteredThreads = threads.filter((t) =>
-    t.content.toLowerCase().includes(search.toLowerCase())
-  );
 
   /* ================= UI ================= */
 
   return (
     <div className="p-8 bg-background">
-      <div className={`flex gap-6 ${selected ? "overflow-x-auto" : ""}`}>
+      <div className="flex gap-6">
         {showFilters && (
           <div className="w-80 flex-shrink-0">
             <FilterPanel onClose={() => setShowFilters(false)} />
           </div>
         )}
 
+        {/* TABLE */}
         <div className="flex-1 space-y-6 min-w-[900px]">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Monitor Stream</h1>
               <p className="text-muted-foreground">
-                Live Quora conversations based on your keywords
+                Real-time feed of high-value conversations across platforms
               </p>
             </div>
             <Button
@@ -169,124 +195,182 @@ const MonitorStream = () => {
           <Card className="p-4 bg-card border-border">
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search conversations..."
-                  className="pl-10"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search conversations, keywords, users..."
+                  className="pl-10 bg-background"
                 />
               </div>
-
-              <Select defaultValue="quora">
-                <SelectTrigger className="w-48">
+              <Select defaultValue="all">
+                <SelectTrigger className="w-48 bg-background">
                   <SelectValue placeholder="Platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="quora">Quora</SelectItem>
+                  <SelectItem value="all">All Platforms</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="high">
+                <SelectTrigger className="w-48 bg-background">
+                  <SelectValue placeholder="Intent Score" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </Card>
 
-          <Card className="overflow-hidden">
+          <Card className="bg-card border-border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Time</TableHead>
                   <TableHead>Platform</TableHead>
                   <TableHead>Author</TableHead>
-                  <TableHead>Question</TableHead>
+                  <TableHead>Comment</TableHead>
                   <TableHead>Intent</TableHead>
                   <TableHead>Sentiment</TableHead>
                   <TableHead>Reply</TableHead>
+                  <TableHead>Clicks</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
-                {filteredThreads.map((t) => (
-                  <TableRow
-                    key={t.id}
-                    onClick={() => setSelected(t)}
-                    className="cursor-pointer hover:bg-muted/50"
-                  >
-                    <TableCell>{t.timestamp}</TableCell>
-                    <TableCell>
-                      <Badge>{t.platform}</Badge>
-                    </TableCell>
-                    <TableCell>{t.user}</TableCell>
-                    <TableCell className="truncate max-w-xs">
-                      {t.content}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getIntentColor(t.intent)}>
-                        {t.intent}
-                      </Badge>
-                    </TableCell>
-                    <TableCell
-                      className={getSentimentColor(t.sentiment)}
-                    >
-                      {t.sentiment}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          t.replyStatus === "Sent" ? "bg-green-500" : ""
-                        }
-                      >
-                        {t.replyStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openExternalLink(t.url);
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelected(t);
-                          }}
-                        >
-                          <Sparkles className="h-3 w-3" />
-                        </Button>
-                      </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-6">
+                      Loading posts...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-sm text-destructive py-6">
+                      Error loading posts: {error}
+                    </TableCell>
+                  </TableRow>
+                ) : threads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-6">
+                      No posts available.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  threads.map((t) => (
+                    <TableRow
+                      key={t.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelected(t)}
+                    >
+                      <TableCell className="text-xs text-muted-foreground">
+                        {t.timestamp}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{t.platform}</Badge>
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {t.user}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate text-sm">
+                        {t.content}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getIntentColor(t.intent)}>
+                          {t.intent}
+                        </Badge>
+                      </TableCell>
+                      <TableCell
+                        className={`text-sm ${getSentimentColor(t.sentiment)}`}
+                      >
+                        {t.sentiment}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={t.replyStatus === "Sent" ? "default" : "secondary"}
+                          className={
+                            t.replyStatus === "Sent" ? "bg-green-500" : ""
+                          }
+                        >
+                          {t.replyStatus}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">{t.engagement?.likes ?? 0}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Open post URL in new tab so user can manually paste/post the suggested reply
+                              if (t.url) {
+                                openExternalLink(t.platform, t.url);
+                                toast({
+                                  title: "Opened post",
+                                  description: "The original post was opened in a new tab. Paste your reply there to post manually.",
+                                });
+                              } else {
+                                // Fallback to platform homepage if no specific URL is stored
+                                openExternalLink(t.platform);
+                                toast({
+                                  title: "No post URL",
+                                  description: "No direct post URL is available; opened platform instead.",
+                                });
+                              }
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-primary text-primary-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelected(t);
+                            }}
+                          >
+                            <Sparkles className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </Card>
         </div>
 
+        {/* DETAIL MODAL (replaces right-side pane) */}
         {selected && (
-          <div className="w-[600px] flex-shrink-0">
-            <DetailPane
-              comment={{
-                id: selected.id,
-                platform: selected.platform,
-                user: selected.user,
-                followers: selected.engagement.likes,
-                timestamp: selected.timestamp,
-                content: selected.content,
-                intent: selected.intent,
-                sentiment: selected.sentiment,
-                keywords: selected.keywords,
-                replyStatus: selected.replyStatus,
-              }}
-              onClose={() => setSelected(null)}
-              onSend={handleSendReply}
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setSelected(null)}
             />
+
+            <div className="relative w-[40%] h-screen mx-4">
+                <div className="bg-card rounded-lg shadow-lg overflow-hidden h-full">
+                  <div className="h-full overflow-y-auto">
+                    <DetailPane
+                      comment={{
+                        id: String(selected.id),
+                    platform: selected.platform,
+                    user: selected.user,
+                    followers: selected.engagement.likes,
+                    timestamp: selected.timestamp,
+                    content: selected.content,
+                    intent: selected.intent,
+                    sentiment: selected.sentiment,
+                    keywords: selected.keywords,
+                    replyStatus: selected.replyStatus,
+                  }}
+                  onClose={() => setSelected(null)}
+                  onSend={handleSendReply}
+                  />
+                  </div>
+                </div>
+              </div>
           </div>
         )}
       </div>

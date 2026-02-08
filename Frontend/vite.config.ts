@@ -10,6 +10,14 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173
+    port: 5173,
+    proxy: {
+      // Proxy API requests to local ai-service running on port 8000
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, "")
+      }
+    }
   }
 });

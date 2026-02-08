@@ -55,11 +55,39 @@ const DashboardOverview = () => {
   const navigate = useNavigate();
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  // 🔒 Coming Soon Modal (ADDED – SAFE)
-  const [showComingSoon, setShowComingSoon] = useState(true);
 
   const [range, setRange] = useState<"24h" | "7d" | "30d" | "custom">("7d");
   const [leads, setLeads] = useState<Lead[]>([]);
+
+  const exportCSV = () => {
+    const headers = ["_id","name","platform","intent","status","value","createdAt"];
+    const rows = leads.map(l => [l._id, l.name, l.platform, String(l.intent), l.status, String(l.value), l.createdAt].map(v => `"${String(v).replace(/"/g, '""')}"`).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "leads.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPDF = async () => {
+    if (!dashboardRef.current) return;
+    try {
+      const canvas = await html2canvas(dashboardRef.current);
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("dashboard.pdf");
+    } catch (e) {
+      // fallback noop
+      console.error("Failed to export PDF", e);
+    }
+  };
 
   /* ================= LOAD CSV ================= */
   useEffect(() => {
@@ -189,12 +217,8 @@ const DashboardOverview = () => {
   return (
     <>
       {/* ===== DASHBOARD (BLURRED WHEN MODAL ON) ===== */}
-      <div
-        ref={dashboardRef}
-        className={`p-8 space-y-8 bg-background ${
-          showComingSoon ? "dashboard-blur" : ""
-        }`}
-      >
+
+      <div ref={dashboardRef} className="p-8 space-y-8 bg-background">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -205,7 +229,7 @@ const DashboardOverview = () => {
           </div>
 
           <div className="flex gap-3">
-            <Select value={range} onValueChange={(v) => setRange(v as any)}>
+            <Select value={range} onValueChange={(v: string) => setRange(v as "24h" | "7d" | "30d" | "custom") }>
               <SelectTrigger className="w-32 bg-card">
                 <SelectValue />
               </SelectTrigger>
@@ -218,7 +242,7 @@ const DashboardOverview = () => {
             </Select>
 
             <Select
-              onValueChange={(v) => (v === "csv" ? exportCSV() : exportPDF())}
+              onValueChange={(v: string) => (v === "csv" ? exportCSV() : exportPDF())}
             >
               <SelectTrigger className="w-40 bg-primary text-primary-foreground">
                 <Download className="mr-2 h-4 w-4" />
@@ -358,113 +382,7 @@ const DashboardOverview = () => {
         </Card>
       </div>
 
-      {/* ===== COMING SOON MODAL ===== */}
-      {showComingSoon && (
-        <div className="dashboard-overlay">
-          <div className="dashboard-modal">
-            <span className="cs-badge">Pilot Access</span>
-            <h2>Important Update</h2>
-            <p>
-              Thank you for onboarding with LeadEquator. Due to an exceptionally
-              high volume of early access requests, our servers are currently
-              operating at limited capacity. We’re actively scaling the
-              infrastructure to ensure a stable, high-performance experience for
-              everyone.
-            </p>
-            <p>
-              We appreciate your patience during this brief phase. You’ll be
-              notified as soon as full access is enabled.{" "}
-            </p>
-            <p>Thank you for being an early supporter of LeadEquator.</p>
-            <button
-              className="cs-btn"
-              onClick={() => {
-                window.location.href = "/";
-              }}
-            >
-              Back to Home
-            </button>
-            {/* <button
-              className="cs-btn"
-              style={{
-                background: "linear-gradient(135deg, #22c55e, #4ade80)",
-              }}
-              onClick={() => {
-                setShowComingSoon(false); // close modal
-                navigate("/lead-discovery");
-              }}
-            >
-              Go to Lead Discovery
-            </button> */}
-          </div>
-        </div>
-      )}
-
-      {/* ===== CSS ===== */}
-      <style>{`
-        .dashboard-blur {
-          filter: blur(8px);
-          pointer-events: none;
-          user-select: none;
-        }
-
-        .dashboard-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 9999;
-          background: rgba(0, 0, 0, 0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .dashboard-modal {
-          max-width: 520px;
-          width: 92%;
-          padding: 36px;
-          background: #0f0f0f;
-          border-radius: 16px;
-          color: white;
-          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .cs-badge {
-          display: inline-block;
-          margin-bottom: 12px;
-          padding: 6px 14px;
-          font-size: 12px;
-          font-weight: 600;
-          border-radius: 999px;
-          background: rgba(250, 204, 21, 0.15);
-          color: #facc15;
-        }
-
-        .dashboard-modal h2 {
-          font-size: 26px;
-          margin-bottom: 14px;
-          color: #facc15;
-        }
-
-        .dashboard-modal p {
-          font-size: 15px;
-          line-height: 1.6;
-          color: #d1d5db;
-          margin-bottom: 12px;
-        }
-
-        .cs-btn {
-          margin-top: 22px;
-          width: 100%;
-          padding: 14px;
-          border-radius: 12px;
-          border: none;
-          background: linear-gradient(135deg, #facc15, #fde047);
-          color: #000;
-          font-weight: 600;
-          cursor: pointer;
-        }
-      `}</style>
+      
     </>
   );
 };

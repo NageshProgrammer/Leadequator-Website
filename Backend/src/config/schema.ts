@@ -123,3 +123,54 @@ export const aiReplies = pgTable("ai_replies", {
   approved: boolean("approved").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+/* =========================
+   QUORA POSTS
+   (NEW – SAFE ADDITION)
+========================= */
+/* =========================
+   QUORA POSTS
+========================= */
+export const quoraPosts = pgTable("quora_posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  userId: text("user_id").notNull(),
+
+  platform: text("platform")
+    .default("quora")
+    .notNull(),
+
+  question: text("question").notNull(),
+
+  url: text("url").notNull().unique(),
+
+  author: text("author"),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
+});
+
+
+/* =========================
+   QUORA AI REPLIES
+========================= */
+export const quoraAiReplies = pgTable("quora_ai_replies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  quoraPostId: uuid("quora_post_id")
+    .references(() => quoraPosts.id, { onDelete: "cascade" })
+    .notNull(),
+
+  replyOption1: text("reply_option_1").notNull(),
+
+  replyOption2: text("reply_option_2").notNull(),
+
+  approved: boolean("approved")
+    .default(false)
+    .notNull(),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
+});

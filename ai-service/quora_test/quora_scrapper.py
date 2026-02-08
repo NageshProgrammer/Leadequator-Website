@@ -9,12 +9,16 @@ COOKIE_FILE = Path(__file__).parent / "quora_cookies.json"
 
 
 def scrape_quora(user_id: str, keywords: list[str]):
-    cursor = get_cursor()
+    cursor, conn = get_cursor()
     inserted = 0
 
     if not keywords:
         print("⚠️ No keywords provided")
-        return
+        try:
+            conn.close()
+        except Exception:
+            pass
+        return 0
 
     if not COOKIE_FILE.exists():
         print("❌ Login required. Run quora_login.py first.")
@@ -97,12 +101,28 @@ def scrape_quora(user_id: str, keywords: list[str]):
                     )
                 )
 
-                inserted += 1
-                print("✅ INSERTED:", text[:80])
+                # Count only actual inserts (ON CONFLICT DO NOTHING may skip)
+                try:
+                    if cursor.rowcount and cursor.rowcount > 0:
+                        inserted += 1
+                        print("✅ INSERTED:", text[:80])
+                    else:
+                        print("⚠️ Skipped (exists):", text[:80])
+                except Exception:
+                    # Some psycopg2 drivers may not set rowcount reliably for
+                    # certain servers; assume success if no exception
+                    inserted += 1
+                    print("✅ INSERTED:", text[:80])
 
             except Exception as e:
                 print("❌ Skip error:", e)
 
         browser.close()
 
+    try:
+        conn.close()
+    except Exception:
+        pass
+
     print(f"🎉 Quora scraping finished — inserted {inserted} rows")
+    return inserted
