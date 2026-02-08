@@ -6,7 +6,7 @@ dist/
 .env
 .env.local
 Backend/.env
-Frontend/.env
+rontend/.env
 ai-service/.env
 
 # python
