@@ -1,12 +1,14 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db.js";
-import { buyerKeywords, usersTable, redditPosts, quoraPosts } from "../config/schema.js";
+// Added 'usersTable' to imports for the email lookup logic
+import { buyerKeywords, redditPosts, quoraPosts, usersTable } from "../config/schema.js";
 import { eq, desc } from "drizzle-orm";
 
 const router = Router();
 
 /* ===============================
-   GET BUYER KEYWORDS (Supports email or userId)
+   GET BUYER KEYWORDS (MERGED LOGIC)
+   Supports fetching by 'email' OR 'userId'
 ================================ */
 router.get("/keywords", async (req: Request, res: Response) => {
   try {
@@ -14,7 +16,7 @@ router.get("/keywords", async (req: Request, res: Response) => {
 
     let targetUserId = userId;
 
-    // If email is provided but no userId, resolve email to userId
+    // 1. If email is provided but no userId, look up the userId from the DB
     if (email && !targetUserId) {
       const userRecord = await db
         .select()
@@ -25,6 +27,7 @@ router.get("/keywords", async (req: Request, res: Response) => {
       if (userRecord.length > 0) {
         targetUserId = userRecord[0].id;
       } else {
+        // Fallback: If user not found by email, return empty or error
         return res.status(404).json({ error: "User not found with this email" });
       }
     }
@@ -33,13 +36,13 @@ router.get("/keywords", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing userId or email" });
     }
 
-    // Fetch keywords using the resolved userId
+    // 2. Fetch keywords using the resolved targetUserId
     const rows = await db
       .select()
       .from(buyerKeywords)
       .where(eq(buyerKeywords.userId, targetUserId));
 
-    res.json({ keywords: rows.map((r) => r.keyword) });
+    res.json({ keywords: rows.map(r => r.keyword) });
   } catch (err) {
     console.error("KEYWORDS ERROR:", err);
     res.status(500).json({ error: "Failed to fetch keywords" });
@@ -47,7 +50,7 @@ router.get("/keywords", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   RUN REDDIT SCRAPING
+   RUN REDDIT SCRAPING (TRIGGER)
 ================================ */
 router.post("/reddit/run", async (req: Request, res: Response) => {
   try {
@@ -65,26 +68,24 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
       .from(buyerKeywords)
       .where(eq(buyerKeywords.userId, userId));
 
-    const keywords = rows.map((r) => r.keyword);
+    const keywords = rows.map(r => r.keyword);
 
     if (!keywords.length) {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
-    // Trigger AI Service
-    if (process.env.AI_SERVICE_URL) {
-      fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          keywords,
-          force_login: !!forceLogin,
-        }),
-      }).catch((err) => {
-        console.error("AI SERVICE ERROR:", err);
-      });
-    }
+    // 🔥 Fire & forget AI service (BACKWARD SAFE)
+    fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        keywords,
+        force_login: !!forceLogin,
+      }),
+    }).catch(err => {
+      console.error("AI SERVICE ERROR:", err);
+    });
 
     return res.json({
       success: true,
@@ -97,7 +98,7 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   FETCH REDDIT POSTS
+   FETCH REDDIT POSTS (FOR UI)
 ================================ */
 router.get("/reddit/posts", async (req: Request, res: Response) => {
   const { userId } = req.query as { userId?: string };
@@ -117,7 +118,7 @@ router.get("/reddit/posts", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   RUN QUORA SCRAPING
+   RUN QUORA SCRAPING (TRIGGER)
 ================================ */
 router.post("/quora/run", async (req: Request, res: Response) => {
   try {
@@ -132,25 +133,23 @@ router.post("/quora/run", async (req: Request, res: Response) => {
       .from(buyerKeywords)
       .where(eq(buyerKeywords.userId, userId));
 
-    const keywords = rows.map((r) => r.keyword);
+    const keywords = rows.map(r => r.keyword);
 
     if (!keywords.length) {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
-    // Trigger AI Service
-    if (process.env.AI_SERVICE_URL) {
-      fetch(`${process.env.AI_SERVICE_URL}/quora/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          keywords,
-        }),
-      }).catch((err) => {
-        console.error("AI SERVICE QUORA ERROR:", err);
-      });
-    }
+    // 🔥 Fire & forget AI service (QUORA)
+    fetch(`${process.env.AI_SERVICE_URL}/quora/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        keywords,
+      }),
+    }).catch(err => {
+      console.error("AI SERVICE QUORA ERROR:", err);
+    });
 
     return res.json({
       success: true,
@@ -163,7 +162,7 @@ router.post("/quora/run", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   FETCH QUORA POSTS
+   FETCH QUORA POSTS (FOR UI)
 ================================ */
 router.get("/quora/posts", async (req: Request, res: Response) => {
   const { userId } = req.query as { userId?: string };
