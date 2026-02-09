@@ -17,8 +17,8 @@ import {
   Filter,
   Sparkles,
   RefreshCw,
-  AlertCircle,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { DetailPane } from "@/components/dashboard/DetailPane";
 import {
@@ -42,10 +42,14 @@ type Thread = {
   engagement: { likes: number };
   keywords: string[];
   replyStatus: "Not Sent" | "Sent";
-  url: string; // Add this line
+  url: string;
+  replyOption1?: string | null;
+  replyOption2?: string | null;
 };
 
 const API_BASE = "http://localhost:5000/api/lead-discovery";
+
+/* ================= COMPONENT ================= */
 
 const MonitorStream = () => {
   const { user, isLoaded } = useUser();
@@ -56,8 +60,10 @@ const MonitorStream = () => {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Thread | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   /* ================= FETCH POSTS ================= */
+
   const loadPosts = useCallback(async () => {
     if (!isLoaded || !user?.id) return;
 
@@ -65,13 +71,9 @@ const MonitorStream = () => {
       setLoading(true);
       setError(null);
 
-      const userId = user.id;
-
-      console.log("Fetching posts for user:", userId);
-
       const [redditRes, quoraRes] = await Promise.all([
-        fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(userId)}`),
-        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(userId)}`),
+        fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
+        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
       ]);
 
       if (!redditRes.ok || !quoraRes.ok) {
@@ -86,42 +88,51 @@ const MonitorStream = () => {
         ...(quoraData.posts || []),
       ];
 
-      const mapped = combined.map((p: any) => ({
-        id: String(p.id),
-        platform: "Quora",
-        user: p.author ?? "Unknown",
-        intent: 70, // Default since column was removed
-        sentiment: "Neutral", // Default since column was removed
-        timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString() : "",
-        post: p.question || "",
-        engagement: { likes: 0 },
-        keywords: [],
-        replyStatus: "Not Sent",
-        url: p.url || "",
-        // ADD THESE TWO LINES:
-        replyOption1: p.replyOption1 || null,
-        replyOption2: p.replyOption2 || null,
-      }));
+      const mapped: Thread[] = combined.map((p: any, idx: number) => {
+        const intent = 50 + (idx % 40);
+
+        return {
+          id: String(p.id),
+          platform: p.platform || "Quora",
+          user: p.author ?? "Unknown",
+          intent,
+          sentiment:
+            intent >= 80
+              ? "Positive"
+              : intent >= 60
+              ? "Neutral"
+              : "Negative",
+          timestamp: p.createdAt
+            ? new Date(p.createdAt).toLocaleString()
+            : "—",
+          post: p.question || p.content || "",
+          engagement: { likes: 0 },
+          keywords: Array.isArray(p.keywords) ? p.keywords : [],
+          replyStatus: p.replyStatus || "Not Sent",
+          url: p.url,
+          replyOption1: p.replyOption1 || null,
+          replyOption2: p.replyOption2 || null,
+        };
+      });
 
       setThreads(mapped);
     } catch (err: any) {
       setError(err.message);
+      toast({
+        title: "Failed to load posts",
+        description: err.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  }, [isLoaded, user?.id]);
+  }, [isLoaded, user?.id, toast]);
 
-  /* ================= INITIAL LOAD ================= */
-  // This hook ensures that as soon as the user is loaded, the table is populated
   useEffect(() => {
-    if (isLoaded && user?.id) {
-      loadPosts();
-    }
-  }, [isLoaded, user?.id, loadPosts]);
-  /* ================= RUN SCRAPER ================= */
-  /* ================= RUN SCRAPER (DIRECT HOSTINGER AI SERVICE) ================= */
+    loadPosts();
+  }, [loadPosts]);
 
-  /* ================= RUN SCRAPER (CORRECT FLOW) ================= */
+  /* ================= RUN SCRAPER ================= */
 
   const runScraper = async () => {
     if (!user?.id) return;
@@ -132,9 +143,7 @@ const MonitorStream = () => {
       const response = await fetch(`${API_BASE}/quora/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-        }),
+        body: JSON.stringify({ userId: user.id }),
       });
 
       if (!response.ok) {
@@ -142,20 +151,13 @@ const MonitorStream = () => {
         throw new Error(errorText || "Scraper failed");
       }
 
-      const data = await response.json();
-      console.log("Express → AI response:", data);
-
       toast({
         title: "Scraping Started 🚀",
         description: "Scraping using your onboarded keywords.",
       });
 
-      setTimeout(() => {
-        loadPosts();
-      }, 6000);
-    } catch (err) {
-      console.error("Scraper error:", err);
-
+      setTimeout(loadPosts, 6000);
+    } catch {
       toast({
         title: "Scraper Failed",
         description: "Check backend / AI service connection.",
@@ -166,9 +168,26 @@ const MonitorStream = () => {
     }
   };
 
+  const getSentimentColor = (sentiment: Thread["sentiment"]) => {
+    if (sentiment === "Positive") return "text-green-500";
+    if (sentiment === "Negative") return "text-destructive";
+    return "text-muted-foreground";
+  };
+
+  const handleSendReply = (id: string) => {
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, replyStatus: "Sent" } : t
+      )
+    );
+  };
+
+  /* ================= UI ================= */
+
   return (
     <div className="p-4 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
+
         {/* HEADER */}
         <div className="flex items-center justify-between">
           <div>
@@ -176,7 +195,7 @@ const MonitorStream = () => {
               Monitor <span className="text-yellow-400">Stream</span>
             </h1>
             <p className="text-sm text-muted-foreground">
-              Real-time feed of high-value conversations across platforms.
+              Real-time feed of high-value conversations.
             </p>
           </div>
 
@@ -190,44 +209,23 @@ const MonitorStream = () => {
               Run Scraper
             </Button>
 
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="mr-2 h-4 w-4" />
               Filters
             </Button>
           </div>
         </div>
 
-        {/* SEARCH + FILTER UI */}
+        {/* SEARCH */}
         <Card className="p-4">
-          <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search conversations, keywords, users..."
+                placeholder="Search conversations..."
                 className="pl-10"
               />
             </div>
-
-            <Select defaultValue="all">
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="All Platforms" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Platforms</SelectItem>
-                <SelectItem value="reddit">Reddit</SelectItem>
-                <SelectItem value="quora">Quora</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select defaultValue="all">
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Intent" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Intent</SelectItem>
-                <SelectItem value="high">High Intent</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </Card>
 
@@ -243,15 +241,14 @@ const MonitorStream = () => {
                 <TableHead>Intent</TableHead>
                 <TableHead>Sentiment</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Likes</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-10">
+                  <TableCell colSpan={8} className="text-center py-10">
                     Loading...
                   </TableCell>
                 </TableRow>
@@ -259,25 +256,19 @@ const MonitorStream = () => {
                 threads.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell>{t.timestamp}</TableCell>
-                    <TableCell>
-                      <Badge>{t.platform}</Badge>
-                    </TableCell>
+                    <TableCell><Badge>{t.platform}</Badge></TableCell>
                     <TableCell>{t.user}</TableCell>
                     <TableCell className="max-w-xs truncate">
                       {t.post}
                     </TableCell>
                     <TableCell>{t.intent}</TableCell>
-                    <TableCell>{t.sentiment}</TableCell>
+                    <TableCell className={getSentimentColor(t.sentiment)}>
+                      {t.sentiment}
+                    </TableCell>
                     <TableCell>{t.replyStatus}</TableCell>
-                    <TableCell>{t.engagement.likes}</TableCell>
-
-                    <TableCell
-                      className="text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <TableCell>
                       <Button
                         size="sm"
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black"
                         onClick={() => setSelected(t)}
                       >
                         <Sparkles className="h-4 w-4" />
@@ -289,38 +280,21 @@ const MonitorStream = () => {
             </TableBody>
           </Table>
         </Card>
+
+        {/* DETAIL OVERLAY */}
+        {selected && (
+          <DetailPane
+            comment={{
+              ...selected,
+              followers: selected.engagement.likes,
+              replyOption1: selected.replyOption1,
+              replyOption2: selected.replyOption2,
+            }}
+            onClose={() => setSelected(null)}
+            onSend={handleSendReply}
+          />
+        )}
       </div>
-
-      {/* DETAIL OVERLAY */}
-
-{selected && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
-    <div
-      className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-      onClick={() => setSelected(null)}
-    />
-    <div className="relative w-full md:w-[600px] lg:w-[40%] h-[90vh] bg-card rounded-xl shadow-2xl overflow-hidden">
-      <DetailPane
-        comment={{
-          ...selected,
-          followers: selected.engagement.likes,
-          // ENSURE THESE ARE PASSED EXPLICITLY
-          replyOption1: (selected as any).replyOption1, 
-          replyOption2: (selected as any).replyOption2,
-          url: selected.url
-        }}
-        onClose={() => setSelected(null)}
-        onSend={(id) => {
-          setThreads((prev) =>
-            prev.map((t) =>
-              t.id === id ? { ...t, replyStatus: "Sent" } : t,
-            )
-          );
-        }}
-      />
-    </div>
-  </div>
-)}
     </div>
   );
 };
