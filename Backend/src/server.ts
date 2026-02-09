@@ -53,7 +53,7 @@ app.get("/", (_req, res) => {
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
 /* ===============================
-   ONBOARDING
+   ONBOARDING (Preserved Logic)
 ================================ */
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
@@ -162,7 +162,7 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   USERS SYNC (CLERK)
+   USERS SYNC (CLERK) (Preserved Logic)
 ================================ */
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
