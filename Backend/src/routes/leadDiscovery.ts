@@ -1,37 +1,53 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db.js";
-// Ensure these imports match your schema.ts exports exactly
-import { buyerKeywords, redditPosts, quoraPosts } from "../config/schema.js"; 
+import { buyerKeywords, usersTable, redditPosts, quoraPosts } from "../config/schema.js";
 import { eq, desc } from "drizzle-orm";
 
 const router = Router();
 
 /* ===============================
-   GET BUYER KEYWORDS (Preserved Logic)
+   GET BUYER KEYWORDS (Supports email or userId)
 ================================ */
 router.get("/keywords", async (req: Request, res: Response) => {
-  const { userId } = req.query as { userId?: string };
-
-  if (!userId) {
-    return res.status(400).json({ error: "Missing userId" });
-  }
-
   try {
+    const { userId, email } = req.query as { userId?: string; email?: string };
+
+    let targetUserId = userId;
+
+    // If email is provided but no userId, resolve email to userId
+    if (email && !targetUserId) {
+      const userRecord = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.email, email))
+        .limit(1);
+
+      if (userRecord.length > 0) {
+        targetUserId = userRecord[0].id;
+      } else {
+        return res.status(404).json({ error: "User not found with this email" });
+      }
+    }
+
+    if (!targetUserId) {
+      return res.status(400).json({ error: "Missing userId or email" });
+    }
+
+    // Fetch keywords using the resolved userId
     const rows = await db
       .select()
       .from(buyerKeywords)
-      .where(eq(buyerKeywords.userId, userId));
+      .where(eq(buyerKeywords.userId, targetUserId));
 
     res.json({ keywords: rows.map((r) => r.keyword) });
-  } catch (error) {
-    console.error("Error fetching keywords:", error);
-    // Improvement: Send 500 instead of crashing
-    res.status(500).json({ error: "Database error" }); 
+  } catch (err) {
+    console.error("KEYWORDS ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch keywords" });
   }
 });
 
 /* ===============================
-   RUN REDDIT SCRAPING (Preserved Logic)
+   RUN REDDIT SCRAPING
 ================================ */
 router.post("/reddit/run", async (req: Request, res: Response) => {
   try {
@@ -55,7 +71,7 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
-    // Improvement: Check if URL exists before fetching
+    // Trigger AI Service
     if (process.env.AI_SERVICE_URL) {
       fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
         method: "POST",
@@ -68,8 +84,6 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
       }).catch((err) => {
         console.error("AI SERVICE ERROR:", err);
       });
-    } else {
-        console.warn("Skipping AI Trigger: AI_SERVICE_URL not set in .env");
     }
 
     return res.json({
@@ -83,7 +97,7 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   FETCH REDDIT POSTS (Preserved Logic)
+   FETCH REDDIT POSTS
 ================================ */
 router.get("/reddit/posts", async (req: Request, res: Response) => {
   const { userId } = req.query as { userId?: string };
@@ -92,23 +106,18 @@ router.get("/reddit/posts", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Missing userId" });
   }
 
-  try {
-    const posts = await db
-      .select()
-      .from(redditPosts)
-      .where(eq(redditPosts.userId, userId))
-      .orderBy(desc(redditPosts.createdAt))
-      .limit(20);
+  const posts = await db
+    .select()
+    .from(redditPosts)
+    .where(eq(redditPosts.userId, userId))
+    .orderBy(desc(redditPosts.createdAt))
+    .limit(20);
 
-    res.json({ posts });
-  } catch (err) {
-    console.error("REDDIT POSTS ERROR:", err);
-    res.status(500).json({ error: "Failed to load posts" });
-  }
+  res.json({ posts });
 });
 
 /* ===============================
-   RUN QUORA SCRAPING (Preserved Logic)
+   RUN QUORA SCRAPING
 ================================ */
 router.post("/quora/run", async (req: Request, res: Response) => {
   try {
@@ -129,6 +138,7 @@ router.post("/quora/run", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
+    // Trigger AI Service
     if (process.env.AI_SERVICE_URL) {
       fetch(`${process.env.AI_SERVICE_URL}/quora/run`, {
         method: "POST",
@@ -153,7 +163,7 @@ router.post("/quora/run", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   FETCH QUORA POSTS (Preserved Logic)
+   FETCH QUORA POSTS
 ================================ */
 router.get("/quora/posts", async (req: Request, res: Response) => {
   const { userId } = req.query as { userId?: string };
@@ -162,19 +172,14 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Missing userId" });
   }
 
-  try {
-    const posts = await db
-      .select()
-      .from(quoraPosts)
-      .where(eq(quoraPosts.userId, userId))
-      .orderBy(desc(quoraPosts.createdAt))
-      .limit(20);
+  const posts = await db
+    .select()
+    .from(quoraPosts)
+    .where(eq(quoraPosts.userId, userId))
+    .orderBy(desc(quoraPosts.createdAt))
+    .limit(20);
 
-    res.json({ posts });
-  } catch (err) {
-    console.error("QUORA POSTS ERROR:", err);
-    res.status(500).json({ error: "Failed to load posts" });
-  }
+  res.json({ posts });
 });
 
 export default router;

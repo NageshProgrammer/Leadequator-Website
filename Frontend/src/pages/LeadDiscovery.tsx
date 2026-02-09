@@ -57,7 +57,10 @@ export default function LeadDiscovery() {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
 
+  // Retrieve Credentials
   const userId = localStorage.getItem("userId");
+  // IMPORTANT: Ensure you are saving 'userEmail' in localStorage during login/signup!
+  const userEmail = localStorage.getItem("userEmail"); 
 
   /* --- ANIMATION LOOP --- */
   useEffect(() => {
@@ -82,11 +85,22 @@ export default function LeadDiscovery() {
 
   /* --- FETCH DATA --- */
   const loadKeywords = useCallback(async () => {
-    if (!userId) return;
     setLoadingKeywords(true);
     try {
-      const res = await fetch(`${API_BASE}/api/lead-discovery/keywords?userId=${userId}`);
+      // Logic: If we have an email, use it. Otherwise fallback to userId.
+      let queryParam = "";
+      if (userEmail) queryParam = `email=${encodeURIComponent(userEmail)}`;
+      else if (userId) queryParam = `userId=${userId}`;
+      else {
+        // No credentials found
+        setLoadingKeywords(false);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/lead-discovery/keywords?${queryParam}`);
+      
       if (!res.ok) throw new Error("Failed to fetch keywords");
+      
       const data = await res.json();
       setBuyerKeywords(data.keywords || []); 
     } catch (e) {
@@ -95,7 +109,7 @@ export default function LeadDiscovery() {
     } finally {
       setLoadingKeywords(false);
     }
-  }, [userId]);
+  }, [userId, userEmail]);
 
   const loadPosts = useCallback(async () => {
     if (!userId) return;
@@ -117,7 +131,7 @@ export default function LeadDiscovery() {
 
   /* --- MAIN ACTION --- */
   const handleDiscovery = async () => {
-    if (!userId) { setError("User ID missing."); return; }
+    if (!userId) { setError("User ID missing. Please re-login."); return; }
     
     setIsScanModalOpen(true);
     setScanStep("scanning");
@@ -125,16 +139,16 @@ export default function LeadDiscovery() {
     setError("");
 
     try {
+        const headers = { "Content-Type": "application/json" };
+        
         // Trigger both scrapers in parallel
         const redditReq = fetch(`${API_BASE}/api/lead-discovery/reddit/run`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: "POST", headers,
             body: JSON.stringify({ userId, forceLogin: true }),
         });
 
         const quoraReq = fetch(`${API_BASE}/api/lead-discovery/quora/run`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: "POST", headers,
             body: JSON.stringify({ userId }),
         });
 
@@ -142,9 +156,7 @@ export default function LeadDiscovery() {
         
     } catch (err: any) {
         console.error("Discovery error:", err);
-        // We continue the animation to show "partial success" or handle gracefully
     } finally {
-        // Wait 10 seconds to give the "Immersive" feeling before showing results
         setTimeout(() => {
             setScanStep("success");
             setIsRunning(false);
@@ -170,7 +182,7 @@ export default function LeadDiscovery() {
             Lead <span className="text-[#FFD700] drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]">Discovery</span>
           </h1>
           <p className="text-zinc-400 text-sm md:text-base max-w-2xl">
-            Deploy autonomous agents to scrape high-intent leads from Reddit & Quora using your configured keywords.
+            Deploy autonomous agents to scrape high-intent leads using your configured keywords.
           </p>
         </div>
 
@@ -195,17 +207,17 @@ export default function LeadDiscovery() {
                   <div className="h-8 w-20 bg-zinc-800 rounded-full" />
                </div>
                <p className="text-xs text-zinc-500 mt-2 flex items-center gap-2">
-                  <RefreshCw className="w-3 h-3 animate-spin" /> Fetching keywords from your profile...
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Fetching keywords for {userEmail || "user"}...
                </p>
             </div>
           ) : buyerKeywords.length === 0 ? (
             <div className="text-zinc-500 text-sm italic py-2 relative z-10">
-               No keywords found in database. Please complete onboarding.
+               No keywords found in database for <b>{userEmail}</b>. Please complete onboarding.
             </div>
           ) : (
             <div className="flex flex-wrap gap-2 relative z-10 animate-in fade-in duration-500">
-              {buyerKeywords.map((k) => (
-                <Badge key={k} className="bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20 px-3 py-1.5 text-sm font-medium hover:bg-[#FFD700]/20 transition-colors cursor-default">
+              {buyerKeywords.map((k, i) => (
+                <Badge key={i} className="bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20 px-3 py-1.5 text-sm font-medium hover:bg-[#FFD700]/20 transition-colors cursor-default">
                   {k}
                 </Badge>
               ))}
@@ -214,7 +226,7 @@ export default function LeadDiscovery() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
         </Card>
 
-        {/* --- CENTERED SINGLE ACTION BUTTON --- */}
+        {/* CENTERED ACTION BUTTON */}
         <div className="flex justify-center py-6">
           <Button 
             onClick={handleDiscovery} 
@@ -260,14 +272,11 @@ export default function LeadDiscovery() {
             <div className="p-6 space-y-6">
                 {scanStep === "scanning" ? (
                     <>
-                        {/* Radar Animation */}
                         <div className="relative h-32 w-full flex items-center justify-center overflow-hidden rounded-xl bg-black border border-zinc-800/50">
                              <div className="absolute border border-[#FFD700]/10 rounded-full h-64 w-64 animate-[spin_10s_linear_infinite]" />
                              <div className="absolute border border-[#FFD700]/20 rounded-full h-48 w-48 animate-[ping_3s_linear_infinite]" />
                              <Hash className="relative z-10 w-10 h-10 text-[#FFD700]" />
                         </div>
-
-                        {/* Progress Bar */}
                         <div className="space-y-2">
                              <div className="flex justify-between text-xs text-zinc-400 uppercase tracking-wider font-bold">
                                  <span>Scanning Infrastructure</span>
@@ -275,8 +284,6 @@ export default function LeadDiscovery() {
                              </div>
                              <Progress value={progress} className="h-2 bg-zinc-900" indicatorClassName="bg-[#FFD700]" />
                         </div>
-
-                        {/* Terminal Logs */}
                         <div className="bg-zinc-900/80 rounded-lg p-4 font-mono text-xs border border-zinc-800 h-32 flex flex-col justify-end overflow-hidden">
                             <div className="space-y-1 text-zinc-500">
                                 {logsHistory.slice().reverse().map((log, i) => (
@@ -304,13 +311,11 @@ export default function LeadDiscovery() {
                 )}
             </div>
 
-            {/* Footer */}
             {scanStep === "scanning" && (
                 <div className="bg-zinc-900/50 p-4 text-center border-t border-zinc-900">
                     <p className="text-xs text-zinc-500 flex items-center justify-center gap-2">
                         <Clock className="w-3 h-3" /> Estimated remaining time: ~14 mins
                     </p>
-                    <p className="text-[10px] text-zinc-600 mt-1">You can minimize this window.</p>
                 </div>
             )}
           </DialogContent>
@@ -353,36 +358,6 @@ export default function LeadDiscovery() {
             ))}
           </div>
         </div>
-
-        {/* Results Grid - Quora */}
-        {/* <div className="space-y-4">
-          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            Quora <span className="text-emerald-500">Results</span>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {quoraPosts.length === 0 && !loadingKeywords && (
-               <div className="col-span-1 md:col-span-2 text-center py-8 border border-dashed border-zinc-800 rounded-xl text-zinc-500 text-sm">
-                  No Quora leads found yet. Start a discovery scan.
-               </div>
-            )}
-            {quoraPosts.map((p) => (
-              <Card key={p.id} className="bg-zinc-900 border-zinc-800 p-5 flex flex-col justify-between hover:border-emerald-500/30 transition-colors">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-xs text-zinc-500">
-                    <span className="font-medium text-emerald-500">{p.author || "Anonymous"}</span>
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Today</span>
-                  </div>
-                  <p className="text-zinc-200 text-sm leading-relaxed line-clamp-3">{p.question}</p>
-                </div>
-                <div className="pt-4 mt-auto">
-                   <Button variant="outline" className="w-full border-zinc-700 bg-transparent hover:bg-emerald-500 hover:text-white transition-all text-xs h-9" onClick={() => window.open(p.url, "_blank")}>
-                    View Discussion <ExternalLink className="ml-2 w-3 h-3" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div> */}
 
       </div>
     </div>
