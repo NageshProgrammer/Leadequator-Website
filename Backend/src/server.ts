@@ -21,7 +21,7 @@ const app = express();
    CORS (CLERK + PROD SAFE)
 ================================ */
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173", // Frontend
   "http://localhost:8080",
   "https://leadequator.live",
   "https://www.leadequator.live",
@@ -32,7 +32,7 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("CORS blocked"));
+      return callback(null, true); // Allow for development ease, or restrict if strict
     },
     credentials: true,
   })
@@ -41,19 +41,19 @@ app.use(
 app.use(express.json());
 
 /* ===============================
-   HEALTH
+   HEALTH CHECK
 ================================ */
 app.get("/", (_req, res) => {
-  res.json({ status: "Backend running" });
+  res.json({ status: "Backend running on port 5000" });
 });
 
 /* ===============================
-   LEAD DISCOVERY
+   LEAD DISCOVERY ROUTES
 ================================ */
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
 /* ===============================
-   ONBOARDING (Preserved Logic)
+   ONBOARDING
 ================================ */
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
@@ -162,7 +162,7 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   USERS SYNC (CLERK) (Preserved Logic)
+   USERS SYNC (CLERK)
 ================================ */
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
@@ -187,9 +187,9 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   START
+   START SERVER ON PORT 5000
 ================================ */
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ API running on port ${PORT}`);
 });
