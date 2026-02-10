@@ -11,7 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+// FIX: Explicitly set port 5000 to match backend
+const API_BASE = "http://localhost:5000/api/lead-discovery";
 
 /* --- UNIFIED LOGS FOR DISCOVERY --- */
 const DISCOVERY_LOGS = [
@@ -57,10 +58,7 @@ export default function LeadDiscovery() {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
 
-  // Retrieve Credentials
   const userId = localStorage.getItem("userId");
-  // IMPORTANT: Ensure you are saving 'userEmail' in localStorage during login/signup!
-  const userEmail = localStorage.getItem("userEmail"); 
 
   /* --- ANIMATION LOOP --- */
   useEffect(() => {
@@ -85,19 +83,11 @@ export default function LeadDiscovery() {
 
   /* --- FETCH DATA --- */
   const loadKeywords = useCallback(async () => {
+    if (!userId) return;
     setLoadingKeywords(true);
     try {
-      // Logic: If we have an email, use it. Otherwise fallback to userId.
-      let queryParam = "";
-      if (userEmail) queryParam = `email=${encodeURIComponent(userEmail)}`;
-      else if (userId) queryParam = `userId=${userId}`;
-      else {
-        // No credentials found
-        setLoadingKeywords(false);
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/api/lead-discovery/keywords?${queryParam}`);
+      // Use userId directly as your API expects it
+      const res = await fetch(`${API_BASE}/keywords?userId=${userId}`);
       
       if (!res.ok) throw new Error("Failed to fetch keywords");
       
@@ -109,12 +99,12 @@ export default function LeadDiscovery() {
     } finally {
       setLoadingKeywords(false);
     }
-  }, [userId, userEmail]);
+  }, [userId]);
 
   const loadPosts = useCallback(async () => {
     if (!userId) return;
     try {
-        const res = await fetch(`${API_BASE}/api/lead-discovery/reddit/posts?userId=${userId}`);
+        const res = await fetch(`${API_BASE}/reddit/posts?userId=${userId}`);
         const data = await res.json();
         setPosts(data.posts || []);
     } catch (e) { console.error(e) }
@@ -123,7 +113,7 @@ export default function LeadDiscovery() {
   const loadQuoraPosts = useCallback(async () => {
     if (!userId) return;
     try {
-        const res = await fetch(`${API_BASE}/api/lead-discovery/quora/posts?userId=${userId}`);
+        const res = await fetch(`${API_BASE}/quora/posts?userId=${userId}`);
         const data = await res.json();
         setQuoraPosts(data.posts || []);
     } catch (e) { console.error(e) }
@@ -142,12 +132,12 @@ export default function LeadDiscovery() {
         const headers = { "Content-Type": "application/json" };
         
         // Trigger both scrapers in parallel
-        const redditReq = fetch(`${API_BASE}/api/lead-discovery/reddit/run`, {
+        const redditReq = fetch(`${API_BASE}/reddit/run`, {
             method: "POST", headers,
             body: JSON.stringify({ userId, forceLogin: true }),
         });
 
-        const quoraReq = fetch(`${API_BASE}/api/lead-discovery/quora/run`, {
+        const quoraReq = fetch(`${API_BASE}/quora/run`, {
             method: "POST", headers,
             body: JSON.stringify({ userId }),
         });
@@ -207,12 +197,12 @@ export default function LeadDiscovery() {
                   <div className="h-8 w-20 bg-zinc-800 rounded-full" />
                </div>
                <p className="text-xs text-zinc-500 mt-2 flex items-center gap-2">
-                  <RefreshCw className="w-3 h-3 animate-spin" /> Fetching keywords for {userEmail || "user"}...
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Fetching keywords...
                </p>
             </div>
           ) : buyerKeywords.length === 0 ? (
             <div className="text-zinc-500 text-sm italic py-2 relative z-10">
-               No keywords found in database for <b>{userEmail}</b>. Please complete onboarding.
+               No keywords found in database. Please complete onboarding.
             </div>
           ) : (
             <div className="flex flex-wrap gap-2 relative z-10 animate-in fade-in duration-500">

@@ -2,7 +2,6 @@ import { Router, Request, Response } from "express";
 import { db } from "../db.js";
 import { buyerKeywords, redditPosts, quoraPosts } from "../config/schema.js";
 import { eq, desc } from "drizzle-orm";
-import { quoraAiReplies } from "../config/schema.js"; // Update this path to your actual schema file
 
 const router = Router();
 
@@ -13,7 +12,7 @@ router.get("/keywords", async (req: Request, res: Response) => {
   try {
     const { userId } = req.query as { userId?: string };
 
-    if (!userId || typeof userId !== "string") {
+    if (!userId) {
       return res.status(400).json({ error: "Missing userId" });
     }
 
@@ -37,14 +36,9 @@ router.get("/keywords", async (req: Request, res: Response) => {
 ================================ */
 router.post("/reddit/run", async (req: Request, res: Response) => {
   try {
-    const { userId, forceLogin } = req.body as {
-      userId?: string;
-      forceLogin?: boolean;
-    };
+    const { userId, forceLogin } = req.body as { userId?: string; forceLogin?: boolean };
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(400).json({ error: "Missing userId" });
-    }
+    if (!userId) return res.status(400).json({ error: "Missing userId" });
 
     const rows = await db
       .select()
@@ -57,23 +51,16 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
-    // 🔥 Fire & forget AI service (no change)
-    fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        keywords,
-        force_login: !!forceLogin,
-      }),
-    }).catch((err) => {
-      console.error("AI SERVICE REDDIT ERROR:", err);
-    });
+    // 🔥 Fire & forget AI service
+    if (process.env.AI_SERVICE_URL) {
+      fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, keywords, force_login: !!forceLogin }),
+      }).catch((err) => console.error("AI SERVICE REDDIT ERROR:", err));
+    }
 
-    return res.json({
-      success: true,
-      message: "Reddit scraping triggered successfully",
-    });
+    return res.json({ success: true, message: "Reddit scraping started" });
   } catch (err) {
     console.error("REDDIT RUN ERROR:", err);
     return res.status(500).json({ error: "Reddit scraping failed" });
@@ -81,15 +68,12 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   FETCH REDDIT POSTS (USER SAFE)
+   FETCH REDDIT POSTS
 ================================ */
 router.get("/reddit/posts", async (req: Request, res: Response) => {
   try {
     const { userId } = req.query as { userId?: string };
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(400).json({ error: "Missing userId" });
-    }
+    if (!userId) return res.status(400).json({ error: "Missing userId" });
 
     const posts = await db
       .select()
@@ -98,10 +82,7 @@ router.get("/reddit/posts", async (req: Request, res: Response) => {
       .orderBy(desc(redditPosts.createdAt))
       .limit(50);
 
-    return res.json({
-      success: true,
-      posts,
-    });
+    return res.json({ success: true, posts });
   } catch (err) {
     console.error("FETCH REDDIT ERROR:", err);
     return res.status(500).json({ error: "Failed to fetch reddit posts" });
@@ -114,12 +95,8 @@ router.get("/reddit/posts", async (req: Request, res: Response) => {
 router.post("/quora/run", async (req: Request, res: Response) => {
   try {
     const { userId } = req.body as { userId?: string };
+    if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(400).json({ error: "Missing userId" });
-    }
-
-    // 1️⃣ Fetch keywords for this user
     const rows = await db
       .select()
       .from(buyerKeywords)
@@ -131,32 +108,16 @@ router.post("/quora/run", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No buyer keywords found" });
     }
 
-    // 2️⃣ WAIT for AI service (not fire & forget)
-    const aiResponse = await fetch(
-      `${process.env.AI_SERVICE_URL}/quora/run`,
-      {
+    // Fire & forget AI service
+    if (process.env.AI_SERVICE_URL) {
+      fetch(`${process.env.AI_SERVICE_URL}/quora/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          keywords,
-        }),
-      }
-    );
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("AI SERVICE ERROR:", errorText);
-      return res.status(500).json({ error: errorText });
+        body: JSON.stringify({ userId, keywords }),
+      }).catch((err) => console.error("AI SERVICE QUORA ERROR:", err));
     }
 
-    const aiData = await aiResponse.json();
-
-    return res.json({
-      success: true,
-      aiResult: aiData,
-    });
-
+    return res.json({ success: true, message: "Quora scraping started" });
   } catch (err) {
     console.error("QUORA RUN ERROR:", err);
     return res.status(500).json({ error: "Quora scraping failed" });
@@ -164,43 +125,21 @@ router.post("/quora/run", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   FETCH QUORA POSTS (USER SAFE)
+   FETCH QUORA POSTS
 ================================ */
 router.get("/quora/posts", async (req: Request, res: Response) => {
   try {
     const { userId } = req.query as { userId?: string };
+    if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(400).json({ error: "Missing userId" });
-    }
-
-    // Perform a Left Join to get AI replies along with the posts
-    const postsWithReplies = await db
-      .select({
-        // Select all post fields
-        id: quoraPosts.id,
-        userId: quoraPosts.userId,
-        author: quoraPosts.author,
-        question: quoraPosts.question,
-        url: quoraPosts.url, // Ensure this exists in your quoraPosts schema
-        createdAt: quoraPosts.createdAt,
-        // Select AI reply fields
-        replyOption1: quoraAiReplies.replyOption1,
-        replyOption2: quoraAiReplies.replyOption2,
-      })
+    const posts = await db
+      .select()
       .from(quoraPosts)
-      .leftJoin(
-        quoraAiReplies, 
-        eq(quoraPosts.id, quoraAiReplies.quoraPostId)
-      )
       .where(eq(quoraPosts.userId, userId))
       .orderBy(desc(quoraPosts.createdAt))
       .limit(50);
 
-    return res.json({
-      success: true,
-      posts: postsWithReplies,
-    });
+    return res.json({ success: true, posts });
   } catch (err) {
     console.error("FETCH QUORA ERROR:", err);
     return res.status(500).json({ error: "Failed to fetch quora posts" });
