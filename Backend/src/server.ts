@@ -18,11 +18,11 @@ import {
 const app = express();
 
 /* ===============================
-   CORS (ALLOW FRONTEND)
+   CORS CONFIGURATION
 ================================ */
 const allowedOrigins = [
-  "http://localhost:5173", // Vite default
-  "http://localhost:3000", // Next.js default
+  "http://localhost:5173", // Your Vite Frontend
+  "http://localhost:8080",
   "https://leadequator.live",
   "https://www.leadequator.live",
 ];
@@ -32,12 +32,8 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        return callback(null, true);
-      } else {
-        // Optional: Allow all during dev if needed, otherwise block
-        return callback(null, true); 
-      }
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(null, true); // Allow during dev
     },
     credentials: true,
   })
@@ -55,6 +51,7 @@ app.get("/", (_req, res) => {
 /* ===============================
    LEAD DISCOVERY ROUTES
 ================================ */
+// This mounts the routes at http://localhost:5000/api/lead-discovery
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
 /* ===============================
@@ -167,7 +164,7 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   USERS SYNC (CLERK)
+   USERS SYNC
 ================================ */
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
@@ -192,9 +189,10 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   START SERVER ON PORT 5000
+   START SERVER (FIXED PORT)
 ================================ */
-const PORT = process.env.PORT || 5000;
+// Changed from 4000 to 5000 to match your frontend requests
+const PORT = process.env.PORT || 5000; 
 app.listen(PORT, () => {
   console.log(`✅ API running on port ${PORT}`);
 });
