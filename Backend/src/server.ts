@@ -21,7 +21,7 @@ const app = express();
    CORS (CLERK + PROD SAFE)
 ================================ */
 const allowedOrigins = [
-  "http://localhost:5173", // Frontend
+  "http://localhost:5173",
   "http://localhost:8080",
   "https://leadequator.live",
   "https://www.leadequator.live",
@@ -32,7 +32,7 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(null, true); // Allow for development ease, or restrict if strict
+      return callback(new Error("CORS blocked"));
     },
     credentials: true,
   })
@@ -41,14 +41,14 @@ app.use(
 app.use(express.json());
 
 /* ===============================
-   HEALTH CHECK
+   HEALTH
 ================================ */
 app.get("/", (_req, res) => {
-  res.json({ status: "Backend running on port 5000" });
+  res.json({ status: "Backend running" });
 });
 
 /* ===============================
-   LEAD DISCOVERY ROUTES
+   LEAD DISCOVERY
 ================================ */
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
@@ -187,7 +187,7 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   START SERVER ON PORT 5000
+   START
 ================================ */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

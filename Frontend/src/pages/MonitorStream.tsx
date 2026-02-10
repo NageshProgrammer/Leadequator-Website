@@ -42,6 +42,7 @@ type Thread = {
   engagement: { likes: number };
   keywords: string[];
   replyStatus: "Not Sent" | "Sent";
+  url: string; // Add this line
 };
 
 const API_BASE = "http://localhost:5000/api/lead-discovery";
@@ -69,8 +70,8 @@ const MonitorStream = () => {
       console.log("Fetching posts for user:", userId);
 
       const [redditRes, quoraRes] = await Promise.all([
-          fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(userId)}`),
-          fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(userId)}`)
+        fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(userId)}`),
+        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(userId)}`),
       ]);
 
       if (!redditRes.ok || !quoraRes.ok) {
@@ -87,20 +88,19 @@ const MonitorStream = () => {
 
       const mapped = combined.map((p: any) => ({
         id: String(p.id),
-        platform: p.platform || (p.subreddit ? "Reddit" : "Quora"),
+        platform: "Quora",
         user: p.author ?? "Unknown",
-        intent: Number(p.intent ?? 50),
-        sentiment:
-          Number(p.intent ?? 50) >= 80
-            ? "Positive"
-            : Number(p.intent ?? 50) >= 60
-              ? "Neutral"
-              : "Negative",
+        intent: 70, // Default since column was removed
+        sentiment: "Neutral", // Default since column was removed
         timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString() : "",
-        post: p.title || p.question || p.description || "",
-        engagement: { likes: Number(p.likes ?? 0) },
-        keywords: Array.isArray(p.keywords) ? p.keywords : [],
-        replyStatus: p.replyStatus || "Not Sent",
+        post: p.question || "",
+        engagement: { likes: 0 },
+        keywords: [],
+        replyStatus: "Not Sent",
+        url: p.url || "",
+        // ADD THESE TWO LINES:
+        replyOption1: p.replyOption1 || null,
+        replyOption2: p.replyOption2 || null,
       }));
 
       setThreads(mapped);
@@ -292,23 +292,35 @@ const MonitorStream = () => {
       </div>
 
       {/* DETAIL OVERLAY */}
-      {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setSelected(null)}
-          />
-          <div className="relative w-full md:w-[600px] lg:w-[40%] h-[90vh] bg-card rounded-xl shadow-2xl overflow-hidden">
-            <DetailPane
-              comment={{
-                ...selected,
-                followers: selected.engagement.likes,
-              }}
-              onClose={() => setSelected(null)}
-            />
-          </div>
-        </div>
-      )}
+
+{selected && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      onClick={() => setSelected(null)}
+    />
+    <div className="relative w-full md:w-[600px] lg:w-[40%] h-[90vh] bg-card rounded-xl shadow-2xl overflow-hidden">
+      <DetailPane
+        comment={{
+          ...selected,
+          followers: selected.engagement.likes,
+          // ENSURE THESE ARE PASSED EXPLICITLY
+          replyOption1: (selected as any).replyOption1, 
+          replyOption2: (selected as any).replyOption2,
+          url: selected.url
+        }}
+        onClose={() => setSelected(null)}
+        onSend={(id) => {
+          setThreads((prev) =>
+            prev.map((t) =>
+              t.id === id ? { ...t, replyStatus: "Sent" } : t,
+            )
+          );
+        }}
+      />
+    </div>
+  </div>
+)}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { db } from "../db.js";
 import { buyerKeywords, redditPosts, quoraPosts } from "../config/schema.js";
 import { eq, desc } from "drizzle-orm";
+import { quoraAiReplies } from "../config/schema.js"; // Update this path to your actual schema file
 
 const router = Router();
 
@@ -173,16 +174,32 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing userId" });
     }
 
-    const posts = await db
-      .select()
+    // Perform a Left Join to get AI replies along with the posts
+    const postsWithReplies = await db
+      .select({
+        // Select all post fields
+        id: quoraPosts.id,
+        userId: quoraPosts.userId,
+        author: quoraPosts.author,
+        question: quoraPosts.question,
+        url: quoraPosts.url, // Ensure this exists in your quoraPosts schema
+        createdAt: quoraPosts.createdAt,
+        // Select AI reply fields
+        replyOption1: quoraAiReplies.replyOption1,
+        replyOption2: quoraAiReplies.replyOption2,
+      })
       .from(quoraPosts)
+      .leftJoin(
+        quoraAiReplies, 
+        eq(quoraPosts.id, quoraAiReplies.quoraPostId)
+      )
       .where(eq(quoraPosts.userId, userId))
       .orderBy(desc(quoraPosts.createdAt))
       .limit(50);
 
     return res.json({
       success: true,
-      posts,
+      posts: postsWithReplies,
     });
   } catch (err) {
     console.error("FETCH QUORA ERROR:", err);
