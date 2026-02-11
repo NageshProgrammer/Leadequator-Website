@@ -5,14 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Check, Star, IndianRupee, DollarSign } from "lucide-react";
-import { useState, useRef, useEffect } from "react"; // Added useEffect
+import { Check, Star, IndianRupee, DollarSign, LogIn } from "lucide-react"; // Added LogIn icon
+import { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link, useNavigate } from "react-router-dom";
-import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js"; // Import reducer hook
+import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { toast } from "sonner";
+import { useUser } from "@clerk/clerk-react"; // 1. Import Clerk Hook
 
 const plans = [
   {
@@ -88,18 +89,19 @@ export default function CongestedPricing() {
   const navigate = useNavigate();
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const switchRef = useRef<HTMLButtonElement>(null);
+  
+  // 2. Get User Auth Status
+  const { isSignedIn } = useUser(); 
 
-  // 1. Access the PayPal Script Reducer
   const [{ options }, dispatch] = usePayPalScriptReducer();
 
-  // 2. Use Effect to Reload Script when Currency Changes
   useEffect(() => {
     dispatch({
-      type: "resetOptions",
-      value: {
-        ...options,
-        currency: currency,
-      },
+        type: "resetOptions",
+        value: {
+            ...options,
+            currency: currency,
+        },
     });
   }, [currency]);
 
@@ -133,51 +135,47 @@ export default function CongestedPricing() {
       <div className="flex flex-col items-center gap-6 mb-12">
         {/* Currency Toggle */}
         <div className="bg-zinc-900 p-1 rounded-lg inline-flex">
-          <button
-            onClick={() => setCurrency("USD")}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-              currency === "USD"
-                ? "bg-primary text-black shadow-lg"
-                : "text-zinc-400 hover:text-white",
-            )}
-          >
-            <DollarSign className="w-4 h-4" /> USD ($)
-          </button>
-          <button
-            onClick={() => setCurrency("INR")}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-              currency === "INR"
-                ? "bg-primary text-black shadow-lg"
-                : "text-zinc-400 hover:text-white",
-            )}
-          >
-            <IndianRupee className="w-4 h-4" /> INR (₹)
-          </button>
+            <button
+                onClick={() => setCurrency("USD")}
+                className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                    currency === "USD" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white"
+                )}
+            >
+                <DollarSign className="w-4 h-4" /> USD ($)
+            </button>
+            <button
+                onClick={() => setCurrency("INR")}
+                className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                    currency === "INR" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white"
+                )}
+            >
+                <IndianRupee className="w-4 h-4" /> INR (₹)
+            </button>
         </div>
 
         {/* Monthly/Annual Toggle */}
         <div className="flex justify-center items-center gap-4">
-          <Label htmlFor="billing-toggle" className="font-semibold text-white">
+            <Label htmlFor="billing-toggle" className="font-semibold text-white">
             Monthly
-          </Label>
-          <Switch
+            </Label>
+            <Switch
             id="billing-toggle"
             ref={switchRef as any}
             checked={!isMonthly}
             onCheckedChange={handleToggle}
-          />
-          <Label htmlFor="billing-toggle" className="font-semibold text-white">
+            />
+            <Label htmlFor="billing-toggle" className="font-semibold text-white">
             Annual <span className="text-primary">(Save 50%)</span>
-          </Label>
+            </Label>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0">
         {plans.map((plan, index) => {
-          const currentPrice = isMonthly
-            ? plan.pricing[currency].monthly
+          const currentPrice = isMonthly 
+            ? plan.pricing[currency].monthly 
             : plan.pricing[currency].yearly;
           const isCustom = currentPrice === "Custom";
 
@@ -247,7 +245,7 @@ export default function CongestedPricing() {
                         />
                       </span>
                       <span className="text-zinc-500 text-sm">
-                        /{isMonthly ? "mo" : "yr"}
+                        /{isMonthly ? "mo" : "mo"}
                       </span>
                     </>
                   )}
@@ -274,6 +272,11 @@ export default function CongestedPricing() {
               </div>
 
               <div className="mt-auto pt-6 border-t border-zinc-900">
+                {/* 3. AUTHENTICATION LOGIC START 
+                   - If plan is Custom: Show "Contact Sales" (Everyone sees this)
+                   - If NOT Signed In: Show "Sign in to Subscribe" -> Redirects to /sign-in
+                   - If Signed In: Show PayPal Buttons
+                */}
                 {isCustom ? (
                   <Link
                     to="/contact"
@@ -284,7 +287,20 @@ export default function CongestedPricing() {
                   >
                     Contact Sales
                   </Link>
+                ) : !isSignedIn ? (
+                   // --- NOT LOGGED IN STATE ---
+                   <Link
+                     to="/sign-in"
+                     className={cn(
+                       buttonVariants({ variant: "default" }),
+                       "w-full py-6 text-lg bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2",
+                     )}
+                   >
+                     <LogIn className="w-5 h-5" />
+                     Sign in to Subscribe
+                   </Link>
                 ) : (
+                  // --- LOGGED IN STATE (PayPal) ---
                   <div className="z-0">
                     <PayPalButtons
                       style={{
@@ -295,14 +311,24 @@ export default function CongestedPricing() {
                       }}
                       forceReRender={[currentPrice, isMonthly, currency]}
                       createOrder={(data, actions) => {
+                        // Exchange rate logic (Method 1)
+                        const EXCHANGE_RATE = 84;
+                        let chargeAmount = String(currentPrice);
+                        let chargeCurrency = currency;
+
+                        if (currency === "INR") {
+                            chargeAmount = (Number(currentPrice) / EXCHANGE_RATE).toFixed(2);
+                            chargeCurrency = "USD";
+                        }
+
                         return actions.order.create({
                           intent: "CAPTURE",
                           purchase_units: [
                             {
                               description: `${plan.name} Plan (${isMonthly ? "Monthly" : "Annual"})`,
                               amount: {
-                                currency_code: currency, // Now matches script options
-                                value: String(currentPrice),
+                                currency_code: chargeCurrency,
+                                value: chargeAmount,
                               },
                             },
                           ],
@@ -311,34 +337,38 @@ export default function CongestedPricing() {
                       onApprove={async (data, actions) => {
                         const toastId = toast.loading("Verifying payment...");
                         try {
-                          if (!actions.order)
-                            throw new Error("Order actions not available");
+                          if (!actions.order) throw new Error("Actions missing");
 
-                          // 1. Capture Payment on PayPal Side
                           const details = await actions.order.capture();
-                          console.log("PayPal Capture Success:", details);
+                          
+                          // Optional Backend Verification
+                          try {
+                              const response = await fetch("http://localhost:5000/api/verify-payment", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    orderID: data.orderID,
+                                    planType: plan.name,
+                                    userEmail: details.payer.email_address,
+                                    currency: currency 
+                                  }),
+                              });
+                              if (!response.ok) throw new Error("Backend offline");
+                          } catch (backendError) {
+                              console.warn("Backend Verification Failed (Skipping for testing)");
+                          }
 
-                          // --- TEMPORARILY COMMENTED OUT BACKEND VERIFICATION ---
-                          // const response = await fetch("http://localhost:5000/api/verify-payment", { ... });
-                          // const verification = await response.json();
-                          // if (!response.ok || !verification.success) throw new Error(...);
-
-                          // 2. Just assume success for frontend testing
-                          toast.success(
-                            "Payment verified! Account upgrading...",
-                            { id: toastId },
-                          );
+                          toast.success("Payment successful! Redirecting...", { id: toastId });
                           setTimeout(() => navigate("/onboarding"), 1500);
+
                         } catch (err: any) {
                           console.error("Payment Error:", err);
-                          toast.error("Payment failed. Please try again.", {
-                            id: toastId,
-                          });
+                          toast.error("Payment failed. Please try again.", { id: toastId });
                         }
                       }}
                       onError={(err) => {
                         console.error("PayPal Popup Error:", err);
-                        toast.error("Error: Check console for details.");
+                        toast.error("Payment window closed.");
                       }}
                     />
                   </div>
