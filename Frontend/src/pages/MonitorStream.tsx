@@ -227,7 +227,7 @@ const MonitorStream = () => {
               <TableRow>
                 <TableHead>Time</TableHead>
                 <TableHead>Platform</TableHead>
-                <TableHead>Author</TableHead>
+                <TableHead>Username</TableHead>
                 <TableHead>Post</TableHead>
                 <TableHead>Intent</TableHead>
                 <TableHead>Sentiment</TableHead>
