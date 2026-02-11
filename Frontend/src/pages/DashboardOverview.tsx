@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useUser } from "@clerk/clerk-react"; // Import Clerk
+import { useUser } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,22 @@ import {
   ThumbsUp,
   AlertCircle,
   Download,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
@@ -58,6 +69,7 @@ const DashboardOverview = () => {
         setLoading(true);
         const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
 
+        // We fetch independently to avoid one platform slowing down the other
         const [redditRes, quoraRes] = await Promise.all([
           fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
           fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
@@ -71,14 +83,15 @@ const DashboardOverview = () => {
           ...(quoraData.posts || []),
         ];
 
+        // Map data using the exact same logic as MonitorStream for consistency
         const mapped: Lead[] = combined.map((p: any, idx: number) => {
-          const intent = 50 + (idx % 40); // Matches MonitorStream Logic
+          const intent = 50 + (idx % 40); 
           return {
             _id: String(p.id),
             name: p.author ?? "Unknown",
             platform: p.platform || (p.question ? "Quora" : "Reddit"),
             intent: intent,
-            status: p.replyStatus || "New",
+            status: p.replyStatus || "Not Sent",
             value: 0,
             createdAt: p.createdAt || new Date().toISOString(),
           };
@@ -95,7 +108,7 @@ const DashboardOverview = () => {
     fetchLiveLeads();
   }, [isLoaded, user?.id]);
 
-  /* ================= DERIVED DATA ================= */
+  /* ================= DERIVED DATA (KPIs) ================= */
   const totalLeads = leads.length;
   const highIntent = leads.filter((l) => l.intent >= 70).length;
   const repliesSent = leads.filter((l) => l.status === "Sent").length;
@@ -103,10 +116,19 @@ const DashboardOverview = () => {
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
 
   const sentimentData = [
-    { name: "Positive", value: highIntent, color: "#FACC15" }, // Yellow to match UI
+    { name: "Positive", value: highIntent, color: "#FACC15" }, 
     { name: "Neutral", value: Math.max(0, totalLeads - highIntent), color: "#4B5563" },
     { name: "Negative", value: 0, color: "#EF4444" },
   ];
+
+  const platformStats = Object.values(
+    leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
+      if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
+      acc[l.platform].threads += 1;
+      acc[l.platform].leads += l.intent >= 70 ? 1 : 0;
+      return acc;
+    }, {})
+  );
 
   const kpiData = [
     { icon: MessageSquare, label: "TOTAL POST", value: totalLeads.toString() },
@@ -117,73 +139,161 @@ const DashboardOverview = () => {
     { icon: Activity, label: "AVG REPLY TIME", value: "—" },
   ];
 
-  // Logic for the line chart (simulated based on lead count)
-  const chartData = [
-    { date: "Mon", engagements: totalLeads * 2, leads: totalLeads },
-    { date: "Tue", engagements: totalLeads * 2.5, leads: highIntent },
-    // ... you can map actual dates from leads here
-  ];
+  /* ================= EXPORT FUNCTIONS ================= */
+  const exportPDF = async () => {
+    if (!dashboardRef.current) return;
+    try {
+      const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("dashboard-overview.pdf");
+    } catch (e) {
+      console.error("Failed to export PDF", e);
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-yellow-400" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-10 w-10 animate-spin text-yellow-400 mx-auto" />
+          <p className="text-muted-foreground animate-pulse">Synchronizing live stream data...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div ref={dashboardRef} className="p-4 md:p-8 space-y-6 bg-background min-h-screen">
-       {/* Header and Selectors remain same as your original code */}
-       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+      {/* HEADER */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">Dashboard Overview</h1>
-          <p className="text-sm text-muted-foreground">Real-time analytics from Monitor Stream</p>
+          <p className="text-sm text-muted-foreground">Real-time analytics and metrics</p>
         </div>
-        {/* Export Buttons... */}
+
+        <div className="flex flex-wrap gap-2">
+          <Select value={range} onValueChange={(v: any) => setRange(v)}>
+            <SelectTrigger className="w-[120px] bg-card border-muted">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="24h">Last 24h</SelectItem>
+              <SelectItem value="7d">Last 7d</SelectItem>
+              <SelectItem value="30d">Last 30d</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button 
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold"
+            onClick={exportPDF}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+        </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {kpiData.map((kpi, index) => (
           <KPICard key={index} {...kpi} />
         ))}
       </div>
 
-      {/* Charts use the live 'leads' state now */}
+      {/* CHARTS ROW 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         <Card className="p-4 md:p-6 bg-card border-muted">
           <h3 className="text-lg font-bold mb-4 text-white">Sentiment Analysis</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={sentimentData} dataKey="value" innerRadius={60} outerRadius={80} paddingAngle={5}>
+                <Pie 
+                  data={sentimentData} 
+                  dataKey="value" 
+                  innerRadius={60} 
+                  outerRadius={80} 
+                  paddingAngle={5}
+                >
                   {sentimentData.map((e, i) => <Cell key={i} fill={e.color} />)}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                   contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </Card>
-        
-        {/* Other charts (Platform Performance, Intent score) follow the same logic using leads.filter */}
+
+        <Card className="p-4 md:p-6 bg-card border-muted">
+          <h3 className="text-lg font-bold mb-4 text-white">Platform Performance</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={platformStats}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                <XAxis dataKey="platform" fontSize={12} tick={{fill: '#9ca3af'}} />
+                <YAxis fontSize={12} tick={{fill: '#9ca3af'}} />
+                <Tooltip 
+                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                />
+                <Legend />
+                <Bar dataKey="threads" name="Total Posts" fill="#FACC15" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name="High Intent" fill="#4B5563" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
 
-      {/* Recent High-Intent Leads Section */}
-      <Card className="p-4 md:p-6 bg-card">
-        <h3 className="text-lg font-bold mb-4">Recent High-Intent Leads</h3>
+      {/* RECENT HIGH-INTENT LEADS */}
+      <Card className="p-4 md:p-6 bg-card border-muted">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-white">Recent High-Intent Leads</h3>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/monitor-stream")} className="text-yellow-400">
+            View All
+          </Button>
+        </div>
         <div className="space-y-3">
-          {leads.filter(l => l.intent >= 80).slice(0, 5).map((lead) => (
-            <div key={lead._id} className="flex items-center gap-3 p-4 rounded-lg border border-muted bg-background/50">
-               <Badge className="bg-yellow-400 text-black">{lead.intent}</Badge>
-               <div className="flex-1">
-                 <div className="font-semibold">{lead.name}</div>
-                 <div className="text-xs text-muted-foreground">via {lead.platform}</div>
-               </div>
-               <Button size="sm" variant="secondary" onClick={() => navigate("/monitor-stream")}>Engage</Button>
+          {leads
+            .filter((l) => l.intent >= 80)
+            .sort((a, b) => b.intent - a.intent)
+            .slice(0, 5)
+            .map((lead) => (
+              <div 
+                key={lead._id} 
+                className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border border-muted bg-background/40 hover:border-yellow-400/50 transition-all"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="bg-yellow-400 text-black font-bold px-2 py-1 rounded text-sm min-w-[35px] text-center">
+                    {lead.intent}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate text-white">{lead.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      via {lead.platform} • {new Date(lead.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="w-full sm:w-auto"
+                  onClick={() => navigate("/monitor-stream")}
+                >
+                  Engage
+                </Button>
+              </div>
+            ))}
+          {leads.filter(l => l.intent >= 80).length === 0 && (
+            <div className="text-center py-10 text-muted-foreground border border-dashed rounded-lg">
+              No high-intent leads detected yet. Run the scraper in Monitor Stream to start.
             </div>
-          ))}
+          )}
         </div>
       </Card>
     </div>
