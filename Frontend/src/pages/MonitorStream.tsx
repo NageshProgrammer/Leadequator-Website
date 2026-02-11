@@ -94,7 +94,7 @@ const MonitorStream = () => {
         return {
           id: String(p.id),
           platform: p.platform || "Quora",
-          user: p.author ?? "Unknown",
+          user: p.userId ?? "Unknown",
           intent,
           sentiment:
             intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
