@@ -97,14 +97,8 @@ const MonitorStream = () => {
           user: p.author ?? "Unknown",
           intent,
           sentiment:
-            intent >= 80
-              ? "Positive"
-              : intent >= 60
-              ? "Neutral"
-              : "Negative",
-          timestamp: p.createdAt
-            ? new Date(p.createdAt).toLocaleString()
-            : "—",
+            intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
+          timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString() : "—",
           post: p.question || p.content || "",
           engagement: { likes: 0 },
           keywords: Array.isArray(p.keywords) ? p.keywords : [],
@@ -176,9 +170,7 @@ const MonitorStream = () => {
 
   const handleSendReply = (id: string) => {
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, replyStatus: "Sent" } : t
-      )
+      prev.map((t) => (t.id === id ? { ...t, replyStatus: "Sent" } : t)),
     );
   };
 
@@ -187,7 +179,6 @@ const MonitorStream = () => {
   return (
     <div className="p-4 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-
         {/* HEADER */}
         <div className="flex items-center justify-between">
           <div>
@@ -209,7 +200,10 @@ const MonitorStream = () => {
               Run Scraper
             </Button>
 
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+            >
               <Filter className="mr-2 h-4 w-4" />
               Filters
             </Button>
@@ -221,10 +215,7 @@ const MonitorStream = () => {
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search conversations..."
-                className="pl-10"
-              />
+              <Input placeholder="Search conversations..." className="pl-10" />
             </div>
           </div>
         </Card>
@@ -256,7 +247,9 @@ const MonitorStream = () => {
                 threads.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell>{t.timestamp}</TableCell>
-                    <TableCell><Badge>{t.platform}</Badge></TableCell>
+                    <TableCell>
+                      <Badge>{t.platform}</Badge>
+                    </TableCell>
                     <TableCell>{t.user}</TableCell>
                     <TableCell className="max-w-xs truncate">
                       {t.post}
@@ -267,10 +260,7 @@ const MonitorStream = () => {
                     </TableCell>
                     <TableCell>{t.replyStatus}</TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        onClick={() => setSelected(t)}
-                      >
+                      <Button size="sm" onClick={() => setSelected(t)}>
                         <Sparkles className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -282,17 +272,24 @@ const MonitorStream = () => {
         </Card>
 
         {/* DETAIL OVERLAY */}
+        {/* DETAIL MODAL */}
         {selected && (
-          <DetailPane
-            comment={{
-              ...selected,
-              followers: selected.engagement.likes,
-              replyOption1: selected.replyOption1,
-              replyOption2: selected.replyOption2,
-            }}
-            onClose={() => setSelected(null)}
-            onSend={handleSendReply}
-          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-[50vw] h-[100vh] flex items-center justify-center">
+              <div className="w-full h-full overflow-y-auto bg-background rounded-lg shadow-xl">
+                <DetailPane
+                  comment={{
+                    ...selected,
+                    followers: selected.engagement.likes,
+                    replyOption1: selected.replyOption1,
+                    replyOption2: selected.replyOption2,
+                  }}
+                  onClose={() => setSelected(null)}
+                  onSend={handleSendReply}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
