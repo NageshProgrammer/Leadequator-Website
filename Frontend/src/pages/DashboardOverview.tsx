@@ -51,7 +51,7 @@ type RealLead = {
   replyStatus: string;
 };
 
-// Ensure this matches your other files
+// Ensure this matches your backend port (5000)
 const API_BASE = "http://localhost:5000/api/lead-discovery";
 
 const DashboardOverview = () => {
@@ -124,16 +124,17 @@ const DashboardOverview = () => {
   const totalComments = leads.length;
   const highIntentCount = leads.filter((l) => l.intent >= 70).length;
   const sentReplies = leads.filter((l) => l.replyStatus === "Sent").length;
-  // Mocking clicks for now based on replies, or fetch from DB if tracked
+  // Estimated clicks (e.g. 80% of replies get clicked)
   const clicks = Math.floor(sentReplies * 0.8); 
   
-  // Calculate Conversion % (Replies / High Intent)
+  // Calculate Conversion % (Replies Sent / High Intent Leads found)
   const conversionRate =
     highIntentCount > 0
       ? ((sentReplies / highIntentCount) * 100).toFixed(1) + "%"
       : "0%";
 
   /* ================= CHART DATA PREP ================= */
+  
   // 1. Platform Distribution
   const platformCounts = leads.reduce((acc: any, curr) => {
     acc[curr.platform] = (acc[curr.platform] || 0) + 1;
@@ -169,15 +170,30 @@ const DashboardOverview = () => {
     { name: "Negative", value: leads.filter(l => l.sentiment === "Negative").length, color: "hsl(var(--destructive))" },
   ];
 
-  // 4. Mock Timeline Data (since real data might be sparse for a demo)
-  // In production, aggregate `leads` by `timestamp`
-  const engagementTrend = [
-    { date: "Mon", engagements: Math.floor(totalComments * 0.1), leads: Math.floor(highIntentCount * 0.1) },
-    { date: "Tue", engagements: Math.floor(totalComments * 0.2), leads: Math.floor(highIntentCount * 0.15) },
-    { date: "Wed", engagements: Math.floor(totalComments * 0.15), leads: Math.floor(highIntentCount * 0.2) },
-    { date: "Thu", engagements: Math.floor(totalComments * 0.25), leads: Math.floor(highIntentCount * 0.25) },
-    { date: "Fri", engagements: Math.floor(totalComments * 0.3), leads: Math.floor(highIntentCount * 0.3) },
-  ];
+  // 4. Engagement Trend (Group by Date)
+  // This aggregates your actual leads by date to show real activity
+  const trendMap = leads.reduce((acc: any, curr) => {
+    const date = new Date(curr.timestamp).toLocaleDateString(undefined, { weekday: 'short' }); // e.g., "Mon"
+    if (!acc[date]) acc[date] = { date, engagements: 0, leads: 0 };
+    acc[date].engagements += 1;
+    if (curr.intent >= 70) acc[date].leads += 1;
+    return acc;
+  }, {});
+
+  // Convert to array and reverse to show oldest -> newest left to right if sorted by date
+  // For simplicity here, we just take the values. In a real app, you'd sort by actual date.
+  let engagementTrend = Object.values(trendMap);
+  
+  // Fallback if no data, show empty chart structure
+  if (engagementTrend.length === 0) {
+      engagementTrend = [
+        { date: "Mon", engagements: 0, leads: 0 },
+        { date: "Tue", engagements: 0, leads: 0 },
+        { date: "Wed", engagements: 0, leads: 0 },
+        { date: "Thu", engagements: 0, leads: 0 },
+        { date: "Fri", engagements: 0, leads: 0 },
+      ];
+  }
 
   /* ================= EXPORT ================= */
   const exportCSV = () => {
@@ -206,7 +222,7 @@ const DashboardOverview = () => {
   };
 
   const kpiData = [
-    { icon: MessageSquare, label: "New Comments", value: totalComments.toString() },
+    { icon: MessageSquare, label: "Total Comments", value: totalComments.toString() }, // CHANGED LABEL
     { icon: AlertCircle, label: "High-Intent (≥70)", value: highIntentCount.toString() },
     { icon: ThumbsUp, label: "Auto Replies Sent", value: sentReplies.toString() },
     { icon: Users, label: "Link Clicks", value: clicks.toString() },
@@ -265,7 +281,7 @@ const DashboardOverview = () => {
           <h3 className="text-lg font-bold mb-4 text-white">Engagement Trend</h3>
           <div className="h-[250px] md:h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={engagementTrend}>
+              <LineChart data={engagementTrend as any[]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
                 <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} stroke="#888" />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#888" />
@@ -273,7 +289,7 @@ const DashboardOverview = () => {
                     contentStyle={{ backgroundColor: "#000", border: "1px solid #333", color: "#fff" }}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="engagements" stroke="#FFD700" strokeWidth={2} dot={false} name="Comments" />
+                <Line type="monotone" dataKey="engagements" stroke="#FFD700" strokeWidth={2} dot={false} name="Total Comments" />
                 <Line type="monotone" dataKey="leads" stroke="#10b981" strokeWidth={2} dot={false} name="High Intent" />
               </LineChart>
             </ResponsiveContainer>

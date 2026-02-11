@@ -297,7 +297,7 @@ export default function CongestedPricing() {
                      )}
                    >
                      <LogIn className="w-5 h-5" />
-                     Sign in to Subscribe
+                      Start A Free Trial
                    </Link>
                 ) : (
                   // --- LOGGED IN STATE (PayPal) ---
