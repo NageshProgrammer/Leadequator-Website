@@ -24,17 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  ExternalLink, 
-  Download, 
-  RefreshCcw, 
-  User2, 
-  Link as LinkIcon, 
+import {
+  ExternalLink,
+  Download,
+  RefreshCcw,
+  User2,
+  Link as LinkIcon,
   Loader2,
   Search,
   Filter,
   Copy,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast"; // Assuming you have this hook
@@ -47,7 +47,7 @@ type Lead = {
   platform: string;
   intent: number;
   status: string;
-  url: string; 
+  url: string;
   createdAt: string;
 };
 
@@ -63,13 +63,13 @@ const STATUSES = [
 
 const LeadsPipeline = () => {
   const { user, isLoaded } = useUser();
-  const { toast } = useToast(); 
-  
+  const { toast } = useToast();
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCopied, setIsCopied] = useState(false);
-  
+
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
@@ -77,11 +77,11 @@ const LeadsPipeline = () => {
   /* ================= FETCH DATA ================= */
   const fetchLiveLeads = useCallback(async () => {
     if (!isLoaded || !user?.id) return;
-    
+
     setLoading(true);
     try {
       const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
-      
+
       const [redditRes, quoraRes] = await Promise.all([
         fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
         fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
@@ -133,7 +133,11 @@ const LeadsPipeline = () => {
   const exportCSV = () => {
     if (!leads.length) return;
     const headers = ["Lead ID", "Username", "Platform", "Status", "Link"];
-    const rows = leads.map((l) => [l.leadId, l.name, l.platform, l.status, l.url].map(v => `"${v}"`).join(","));
+    const rows = leads.map((l) =>
+      [l.leadId, l.name, l.platform, l.status, l.url]
+        .map((v) => `"${v}"`)
+        .join(","),
+    );
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -144,11 +148,12 @@ const LeadsPipeline = () => {
   };
 
   const filteredLeads = useMemo(() => {
-    return leads.filter(lead => {
-      const matchesSearch = 
-        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    return leads.filter((lead) => {
+      const matchesSearch =
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.leadId.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "All" || lead.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" || lead.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [leads, searchQuery, statusFilter]);
@@ -156,25 +161,32 @@ const LeadsPipeline = () => {
   return (
     <div className="min-h-screen pt-8 pb-12 bg-background">
       <div className="container mx-auto px-4 max-w-7xl space-y-6">
-        
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Leads <span className="text-yellow-400">Pipeline</span></h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Leads <span className="text-yellow-400">Pipeline</span>
+            </h1>
             <p className="text-muted-foreground mt-1">
               Track and convert high-intent leads from your streams.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
-            <Button variant="outline" onClick={exportCSV} className="flex-1 md:flex-none">
+            <Button
+              variant="outline"
+              onClick={exportCSV}
+              className="flex-1 md:flex-none"
+            >
               <Download className="h-4 w-4 mr-2" /> Export
             </Button>
-            <Button 
-                onClick={fetchLiveLeads} 
-                disabled={loading} 
-                className="flex-1 md:flex-none bg-yellow-400 text-black hover:bg-yellow-500"
+            <Button
+              onClick={fetchLiveLeads}
+              disabled={loading}
+              className="flex-1 md:flex-none bg-yellow-400 text-black hover:bg-yellow-500"
             >
-              <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCcw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               {loading ? "Syncing..." : "Sync Pipeline"}
             </Button>
           </div>
@@ -184,8 +196,8 @@ const LeadsPipeline = () => {
         <div className="flex flex-col sm:flex-row gap-3 items-center bg-card/50 p-3 rounded-lg border border-border/50">
           <div className="relative w-full sm:w-[300px]">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by ID or username..." 
+            <Input
+              placeholder="Search by ID or username..."
               className="pl-9 bg-background"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -200,7 +212,11 @@ const LeadsPipeline = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Statuses</SelectItem>
-              {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <div className="ml-auto text-sm text-muted-foreground hidden sm:block">
@@ -210,16 +226,27 @@ const LeadsPipeline = () => {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 space-y-4 border rounded-lg border-dashed">
-             <Loader2 className="h-10 w-10 animate-spin text-yellow-400" />
-             <p className="text-muted-foreground animate-pulse">Synchronizing leads...</p>
+            <Loader2 className="h-10 w-10 animate-spin text-yellow-400" />
+            <p className="text-muted-foreground animate-pulse">
+              Synchronizing leads...
+            </p>
           </div>
         ) : filteredLeads.length === 0 ? (
-           <div className="p-12 text-center border rounded-lg bg-card/50">
-             <p className="text-muted-foreground">No leads found matching your filters.</p>
-             <Button variant="link" onClick={() => {setSearchQuery(""); setStatusFilter("All")}} className="text-yellow-400">
-               Clear Filters
-             </Button>
-           </div>
+          <div className="p-12 text-center border rounded-lg bg-card/50">
+            <p className="text-muted-foreground">
+              No leads found matching your filters.
+            </p>
+            <Button
+              variant="link"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("All");
+              }}
+              className="text-yellow-400"
+            >
+              Clear Filters
+            </Button>
+          </div>
         ) : (
           <>
             {/* --- DESKTOP VIEW: TABLE --- */}
@@ -237,11 +264,14 @@ const LeadsPipeline = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead) => (
-                    <TableRow key={lead._id} className="group hover:bg-muted/40 transition-colors">
+                    <TableRow
+                      key={lead._id}
+                      className="group hover:bg-muted/40 transition-colors"
+                    >
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {lead.leadId}
                       </TableCell>
-                      
+
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
@@ -249,12 +279,21 @@ const LeadsPipeline = () => {
                           </div>
                           <div className="min-w-0">
                             <div className="font-medium text-sm flex items-center gap-1">
-                              <span className="truncate max-w-[140px]" title={lead.name}>
+                              <span
+                                className="truncate max-w-[140px]"
+                                title={lead.name}
+                              >
                                 {lead.name}
                               </span>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              <span className={lead.intent >= 70 ? "text-green-500 font-bold" : "text-yellow-500"}>
+                              <span
+                                className={
+                                  lead.intent >= 70
+                                    ? "text-green-500 font-bold"
+                                    : "text-yellow-500"
+                                }
+                              >
                                 {lead.intent}% Intent
                               </span>
                             </div>
@@ -263,41 +302,49 @@ const LeadsPipeline = () => {
                       </TableCell>
 
                       <TableCell>
-                        <Badge variant="secondary" className="font-normal capitalize">
+                        <Badge
+                          variant="secondary"
+                          className="font-normal capitalize"
+                        >
                           {lead.platform}
                         </Badge>
                       </TableCell>
 
                       <TableCell>
-                         <a 
-                            href={lead.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 hover:underline"
-                          >
-                            <LinkIcon className="h-3 w-3" />
-                            <span className="hidden lg:inline">View Source</span>
-                            <span className="lg:hidden">Link</span>
-                          </a>
+                        <a
+                          href={lead.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 hover:underline"
+                        >
+                          <LinkIcon className="h-3 w-3" />
+                          <span className="hidden lg:inline">View Source</span>
+                          <span className="lg:hidden">Link</span>
+                        </a>
                       </TableCell>
 
                       <TableCell>
-                        <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
+                        <Select
+                          value={lead.status}
+                          onValueChange={(v) => updateStatus(lead._id, v)}
+                        >
                           <SelectTrigger className="w-[140px] h-8 text-xs bg-background/50">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {STATUSES.map((s) => (
-                              <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                              <SelectItem key={s} value={s} className="text-xs">
+                                {s}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </TableCell>
 
                       <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => setSelectedLead(lead)}
                         >
                           Details
@@ -312,21 +359,49 @@ const LeadsPipeline = () => {
             {/* --- MOBILE VIEW: CARDS --- */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
               {filteredLeads.map((lead) => (
-                <Card key={lead._id} className="p-4 space-y-4 border-l-4 border-l-yellow-400">
+                <Card
+                  key={lead._id}
+                  className="p-4 space-y-4 border-l-4 border-l-yellow-400"
+                >
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <div className="text-xs font-mono text-muted-foreground">{lead.leadId}</div>
-                      <div className="font-semibold truncate max-w-[200px]">{lead.name}</div>
+                      <div className="text-xs font-mono text-muted-foreground">
+                        {lead.leadId}
+                      </div>
+                      <div className="font-semibold truncate max-w-[200px]">
+                        {lead.name}
+                      </div>
                     </div>
-                    <Badge variant="outline" className="bg-yellow-400/10 text-yellow-500 border-yellow-400/20">
+                    <Badge
+                      variant="outline"
+                      className="bg-yellow-400/10 text-yellow-500 border-yellow-400/20"
+                    >
                       {lead.intent}% Intent
                     </Badge>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedLead(lead)}>Details</Button>
-                    <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
-                      <SelectTrigger className="flex-1 h-9 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setSelectedLead(lead)}
+                    >
+                      Details
+                    </Button>
+                    <Select
+                      value={lead.status}
+                      onValueChange={(v) => updateStatus(lead._id, v)}
+                    >
+                      <SelectTrigger className="flex-1 h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                 </Card>
@@ -336,54 +411,78 @@ const LeadsPipeline = () => {
         )}
 
         {/* --- LEAD DETAILS MODAL (FIXED) --- */}
-        <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
+        <Dialog
+          open={!!selectedLead}
+          onOpenChange={() => setSelectedLead(null)}
+        >
           <DialogContent className="max-w-md bg-card border border-border p-6 shadow-xl">
             <DialogHeader className="mb-4">
               <DialogTitle className="flex items-center justify-between">
                 <span className="text-xl font-bold">Lead Overview</span>
-                <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
-                   {selectedLead?.leadId}
+                <Badge
+                  variant="outline"
+                  className="font-mono text-xs text-muted-foreground"
+                >
+                  {selectedLead?.leadId}
                 </Badge>
               </DialogTitle>
             </DialogHeader>
-            
+
             {selectedLead && (
               <div className="space-y-6">
-                {/* Stats Grid */}
+                {/* Stats Grid - Fixed Alignment */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Intent Score</span>
-                    <span className="text-3xl font-bold text-yellow-400">{selectedLead.intent}%</span>
+                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      Intent Score
+                    </span>
+                    <span className="text-3xl font-bold text-yellow-400">
+                      {selectedLead.intent}%
+                    </span>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Platform</span>
-                    <span className="text-xl font-semibold capitalize">{selectedLead.platform}</span>
+                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      Platform
+                    </span>
+                    <span className="text-xl font-semibold capitalize text-foreground">
+                      {selectedLead.platform}
+                    </span>
                   </div>
                 </div>
 
                 {/* Username Field */}
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Username / Author</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                    Username / Author
+                  </label>
                   <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm">
-                    <User2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-mono truncate flex-1">{selectedLead.name}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 hover:text-yellow-400" 
+                    <User2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-mono truncate flex-1">
+                      {selectedLead.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:text-yellow-400 shrink-0"
                       onClick={() => copyToClipboard(selectedLead.name)}
                     >
-                      {isCopied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      {isCopied ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
                     </Button>
                   </div>
                 </div>
 
                 {/* Source URL Field */}
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Source URL</label>
-                  <a 
-                    href={selectedLead.url} 
-                    target="_blank" 
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                    Source URL
+                  </label>
+                  <a
+                    href={selectedLead.url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group"
                   >
@@ -391,7 +490,7 @@ const LeadsPipeline = () => {
                     <span className="text-sm text-blue-400 truncate flex-1 underline-offset-4 group-hover:underline">
                       {selectedLead.url}
                     </span>
-                    <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100" />
+                    <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100 shrink-0" />
                   </a>
                 </div>
 
@@ -405,7 +504,6 @@ const LeadsPipeline = () => {
             )}
           </DialogContent>
         </Dialog>
-
       </div>
     </div>
   );
