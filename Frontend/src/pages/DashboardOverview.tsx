@@ -116,9 +116,9 @@ const DashboardOverview = () => {
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
 
   const sentimentData = [
-    { name: "Neutral", value: highIntent, color: "#FACC15" }, 
-    { name: "Negative", value: Math.max(0, totalLeads - highIntent), color: "#4B5563" },
-    { name: "Positive", value: 0, color: "#EF4444" },
+    { name: "Positive", value: highIntent, color: "#FACC15" }, 
+    { name: "Neutral", value: Math.max(0, totalLeads - highIntent), color: "#4B5563" },
+    { name: "Negative", value: 0, color: "#EF4444" },
   ];
 
   const platformStats = Object.values(
