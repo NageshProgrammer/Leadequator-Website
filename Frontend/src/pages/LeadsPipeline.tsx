@@ -50,7 +50,7 @@ type Lead = {
   status: string;
   url: string;
   createdAt: string;
-  post: string;
+  postTitle: string;
 };
 
 const STATUSES = [
@@ -106,6 +106,9 @@ const LeadsPipeline = () => {
         status: p.replyStatus === "Sent" ? "Contacted" : "New",
         url: p.url || "#",
         createdAt: p.createdAt || new Date().toISOString(),
+        // Capture the content (try common API fields)
+        postTitle:
+          p.title || p.question || p.body || p.content || "Content unavailable",
       }));
 
       setLeads(mapped);
@@ -412,13 +415,14 @@ const LeadsPipeline = () => {
           </>
         )}
 
-        {/* --- LEAD DETAILS MODAL (FIXED) --- */}
+        
+        {/* --- LEAD DETAILS MODAL --- */}
         <Dialog
           open={!!selectedLead}
           onOpenChange={() => setSelectedLead(null)}
         >
           <DialogContent className="max-w-md bg-card border border-border p-6 shadow-xl">
-            <DialogHeader className="mb-4">
+            <DialogHeader className="mb-2">
               <DialogTitle className="flex items-center justify-between">
                 <span className="text-xl font-bold">Lead Overview</span>
                 <Badge
@@ -431,10 +435,10 @@ const LeadsPipeline = () => {
             </DialogHeader>
 
             {selectedLead && (
-              <div className="space-y-6">
-                {/* Stats Grid - Fixed Alignment */}
+              <div className="space-y-5">
+                {/* 1. Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[100px]">
+                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[90px]">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                       Intent Score
                     </span>
@@ -442,9 +446,9 @@ const LeadsPipeline = () => {
                       {selectedLead.intent}%
                     </span>
                   </div>
-                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[100px]">
+                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[90px]">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                      Platforms
+                      Platform
                     </span>
                     <span className="text-xl font-semibold capitalize text-foreground truncate w-full">
                       {selectedLead.platform}
@@ -452,53 +456,67 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* Username Field */}
+                {/* 2. Post Context (NEW SECTION) */}
                 <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase block">
-                    Username / Author
+                   <span className="text-xs font-semibold text-muted-foreground uppercase block">
+                    Post Context
                   </span>
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm overflow-hidden">
-                    <User2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-mono truncate flex-1 min-w-0">
-                      {selectedLead.name}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 hover:text-yellow-400 shrink-0"
-                      onClick={() => copyToClipboard(selectedLead.name)}
-                    >
-                      {isCopied ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
+                  <div className="relative p-4 rounded-md bg-muted/30 border border-border/50">
+                    <div className="text-sm italic text-foreground/90 leading-relaxed max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
+                      "{selectedLead.postTitle}"
+                    </div>
                   </div>
                 </div>
 
-                {/* Source URL Field */}
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase block">
-                    Source URL
-                  </span>
-                  <a
-                    href={selectedLead.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group overflow-hidden"
-                  >
-                    <LinkIcon className="h-4 w-4 text-blue-400 shrink-0" />
-                    <span className="text-sm text-blue-400 truncate flex-1 min-w-0 underline-offset-4 group-hover:underline">
-                      {selectedLead.url}
+                <div className="grid grid-cols-1 gap-4">
+                  {/* 3. Username Field */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase block">
+                      Username / Author
                     </span>
-                    <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100 shrink-0" />
-                  </a>
+                    <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm overflow-hidden">
+                      <User2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-mono truncate flex-1 min-w-0">
+                        {selectedLead.name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:text-yellow-400 shrink-0"
+                        onClick={() => copyToClipboard(selectedLead.name)}
+                      >
+                        {isCopied ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 4. Source URL Field */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase block">
+                      Source URL
+                    </span>
+                    <a
+                      href={selectedLead.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group overflow-hidden"
+                    >
+                      <LinkIcon className="h-4 w-4 text-blue-400 shrink-0" />
+                      <span className="text-sm text-blue-400 truncate flex-1 min-w-0 underline-offset-4 group-hover:underline">
+                        {selectedLead.url}
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100 shrink-0" />
+                    </a>
+                  </div>
                 </div>
 
-                {/* Action Button */}
+                {/* 5. Action Button */}
                 <div className="pt-2">
-                  <Button className="w-full h-12 text-base font-bold bg-yellow-400 text-black hover:bg-yellow-500 shadow-lg shadow-yellow-400/20">
+                  <Button className="w-full h-12 text-base font-bold bg-yellow-400 text-black hover:bg-yellow-500 shadow-lg shadow-yellow-400/20 transition-all active:scale-[0.98]">
                     Engage on {selectedLead.platform}
                   </Button>
                 </div>
