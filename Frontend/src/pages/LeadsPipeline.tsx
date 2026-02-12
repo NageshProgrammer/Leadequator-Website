@@ -35,6 +35,7 @@ import {
   Filter,
   Copy,
   CheckCircle2,
+  MessageSquareQuote,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast"; // Assuming you have this hook
@@ -49,6 +50,7 @@ type Lead = {
   status: string;
   url: string;
   createdAt: string;
+  post: string;
 };
 
 const STATUSES = [
@@ -432,7 +434,7 @@ const LeadsPipeline = () => {
               <div className="space-y-6">
                 {/* Stats Grid - Fixed Alignment */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[100px]">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                       Intent Score
                     </span>
@@ -440,11 +442,11 @@ const LeadsPipeline = () => {
                       {selectedLead.intent}%
                     </span>
                   </div>
-                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[100px]">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                       Platform
                     </span>
-                    <span className="text-xl font-semibold capitalize text-foreground">
+                    <span className="text-xl font-semibold capitalize text-foreground truncate w-full">
                       {selectedLead.platform}
                     </span>
                   </div>
@@ -452,12 +454,12 @@ const LeadsPipeline = () => {
 
                 {/* Username Field */}
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase block">
                     Username / Author
-                  </label>
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm">
+                  </span>
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm overflow-hidden">
                     <User2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-mono truncate flex-1">
+                    <span className="text-sm font-mono truncate flex-1 min-w-0">
                       {selectedLead.name}
                     </span>
                     <Button
@@ -477,17 +479,17 @@ const LeadsPipeline = () => {
 
                 {/* Source URL Field */}
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase block">
                     Source URL
-                  </label>
+                  </span>
                   <a
                     href={selectedLead.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group"
+                    className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group overflow-hidden"
                   >
                     <LinkIcon className="h-4 w-4 text-blue-400 shrink-0" />
-                    <span className="text-sm text-blue-400 truncate flex-1 underline-offset-4 group-hover:underline">
+                    <span className="text-sm text-blue-400 truncate flex-1 min-w-0 underline-offset-4 group-hover:underline">
                       {selectedLead.url}
                     </span>
                     <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100 shrink-0" />
