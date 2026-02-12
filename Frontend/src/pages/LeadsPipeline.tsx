@@ -37,7 +37,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast"; // Assuming you have this, otherwise remove
+import { useToast } from "@/hooks/use-toast"; // Assuming you have this hook
 
 /* -------------------- Types -------------------- */
 type Lead = {
@@ -63,11 +63,12 @@ const STATUSES = [
 
 const LeadsPipeline = () => {
   const { user, isLoaded } = useUser();
-  const { toast } = useToast(); // Optional: for copy feedback
+  const { toast } = useToast(); 
   
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
   
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,8 +125,9 @@ const LeadsPipeline = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Optional toast notification
-    // toast({ title: "Copied!", description: "Username copied to clipboard." });
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+    toast({ title: "Copied", description: "Username copied to clipboard" });
   };
 
   const exportCSV = () => {
@@ -141,7 +143,6 @@ const LeadsPipeline = () => {
     a.click();
   };
 
-  // Filtered Leads
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const matchesSearch = 
@@ -221,48 +222,6 @@ const LeadsPipeline = () => {
            </div>
         ) : (
           <>
-            {/* --- MOBILE VIEW: CARDS --- */}
-            <div className="grid grid-cols-1 gap-4 md:hidden">
-              {filteredLeads.map((lead) => (
-                <Card key={lead._id} className="p-4 space-y-4 border-l-4 border-l-yellow-400">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="text-xs font-mono text-muted-foreground">{lead.leadId}</div>
-                      <div className="font-semibold truncate max-w-[200px]">{lead.name}</div>
-                    </div>
-                    <Badge variant="outline" className="bg-yellow-400/10 text-yellow-500 border-yellow-400/20">
-                      {lead.intent}% Intent
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="bg-muted/30 p-2 rounded">
-                      <span className="text-xs text-muted-foreground block">Platform</span>
-                      <span className="capitalize">{lead.platform}</span>
-                    </div>
-                    <div className="bg-muted/30 p-2 rounded">
-                      <span className="text-xs text-muted-foreground block">Status</span>
-                      <span className="truncate">{lead.status}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedLead(lead)}>
-                      Details
-                    </Button>
-                    <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
-                      <SelectTrigger className="flex-1 h-9 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
             {/* --- DESKTOP VIEW: TABLE --- */}
             <Card className="hidden md:block overflow-hidden border-border bg-card">
               <Table>
@@ -293,14 +252,8 @@ const LeadsPipeline = () => {
                               <span className="truncate max-w-[140px]" title={lead.name}>
                                 {lead.name}
                               </span>
-                              <button 
-                                onClick={() => copyToClipboard(lead.name)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-white"
-                              >
-                                <Copy className="h-3 w-3" />
-                              </button>
                             </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <div className="text-xs text-muted-foreground">
                               <span className={lead.intent >= 70 ? "text-green-500 font-bold" : "text-yellow-500"}>
                                 {lead.intent}% Intent
                               </span>
@@ -355,66 +308,96 @@ const LeadsPipeline = () => {
                 </TableBody>
               </Table>
             </Card>
+
+            {/* --- MOBILE VIEW: CARDS --- */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {filteredLeads.map((lead) => (
+                <Card key={lead._id} className="p-4 space-y-4 border-l-4 border-l-yellow-400">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <div className="text-xs font-mono text-muted-foreground">{lead.leadId}</div>
+                      <div className="font-semibold truncate max-w-[200px]">{lead.name}</div>
+                    </div>
+                    <Badge variant="outline" className="bg-yellow-400/10 text-yellow-500 border-yellow-400/20">
+                      {lead.intent}% Intent
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedLead(lead)}>Details</Button>
+                    <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
+                      <SelectTrigger className="flex-1 h-9 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </>
         )}
 
-        {/* --- LEAD DETAILS MODAL --- */}
+        {/* --- LEAD DETAILS MODAL (FIXED) --- */}
         <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-          <DialogContent className="max-w-md border-yellow-400/20">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <span className="text-yellow-400">Lead Overview</span>
-                <Badge variant="outline" className="ml-auto text-xs font-normal text-muted-foreground">
-                  {selectedLead?.leadId}
+          <DialogContent className="max-w-md bg-card border border-border p-6 shadow-xl">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="flex items-center justify-between">
+                <span className="text-xl font-bold">Lead Overview</span>
+                <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
+                   {selectedLead?.leadId}
                 </Badge>
               </DialogTitle>
             </DialogHeader>
             
             {selectedLead && (
-              <div className="space-y-6 pt-2">
-                {/* Stats Row */}
+              <div className="space-y-6">
+                {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-muted/20 rounded-lg border border-border/50 text-center">
-                    <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Intent</div>
-                    <div className="text-2xl font-bold text-yellow-400">{selectedLead.intent}%</div>
+                  <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Intent Score</span>
+                    <span className="text-3xl font-bold text-yellow-400">{selectedLead.intent}%</span>
                   </div>
-                  <div className="p-3 bg-muted/20 rounded-lg border border-border/50 text-center">
-                    <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Platform</div>
-                    <div className="text-xl font-semibold capitalize mt-1">{selectedLead.platform}</div>
-                  </div>
-                </div>
-
-                {/* Info Block */}
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                     <label className="text-xs font-medium text-muted-foreground">Username / Author</label>
-                     <div className="flex items-center gap-2 p-2 bg-muted/30 rounded border border-border/50 text-sm font-mono break-all">
-                        {selectedLead.name}
-                        <Copy 
-                          className="h-3 w-3 ml-auto cursor-pointer hover:text-white" 
-                          onClick={() => copyToClipboard(selectedLead.name)}
-                        />
-                     </div>
-                  </div>
-
-                  <div className="space-y-1">
-                     <label className="text-xs font-medium text-muted-foreground">Source URL</label>
-                     <a 
-                       href={selectedLead.url} 
-                       target="_blank" 
-                       rel="noreferrer"
-                       className="flex items-center gap-2 p-2 bg-blue-500/10 text-blue-400 rounded border border-blue-500/20 text-xs hover:bg-blue-500/20 transition-colors"
-                     >
-                        <LinkIcon className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{selectedLead.url}</span>
-                        <ExternalLink className="h-3 w-3 ml-auto shrink-0" />
-                     </a>
+                  <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/40 border border-border/50">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Platform</span>
+                    <span className="text-xl font-semibold capitalize">{selectedLead.platform}</span>
                   </div>
                 </div>
 
-                {/* Footer Action */}
+                {/* Username Field */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">Username / Author</label>
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm">
+                    <User2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-mono truncate flex-1">{selectedLead.name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 hover:text-yellow-400" 
+                      onClick={() => copyToClipboard(selectedLead.name)}
+                    >
+                      {isCopied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Source URL Field */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">Source URL</label>
+                  <a 
+                    href={selectedLead.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group"
+                  >
+                    <LinkIcon className="h-4 w-4 text-blue-400 shrink-0" />
+                    <span className="text-sm text-blue-400 truncate flex-1 underline-offset-4 group-hover:underline">
+                      {selectedLead.url}
+                    </span>
+                    <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100" />
+                  </a>
+                </div>
+
+                {/* Action Button */}
                 <div className="pt-2">
-                  <Button className="w-full bg-yellow-400 text-black hover:bg-yellow-500 font-bold h-11">
+                  <Button className="w-full h-12 text-base font-bold bg-yellow-400 text-black hover:bg-yellow-500 shadow-lg shadow-yellow-400/20">
                     Engage on {selectedLead.platform}
                   </Button>
                 </div>
@@ -422,6 +405,7 @@ const LeadsPipeline = () => {
             )}
           </DialogContent>
         </Dialog>
+
       </div>
     </div>
   );
