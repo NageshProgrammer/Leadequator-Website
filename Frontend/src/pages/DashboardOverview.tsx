@@ -110,7 +110,7 @@ const DashboardOverview = () => {
 
   /* ================= DERIVED DATA (KPIs) ================= */
   const totalLeads = leads.length;
-  const highIntent = leads.filter((l) => l.intent >= 70).length;
+  const highIntent = leads.filter((l) => l.intent >= 60).length;
   const repliesSent = leads.filter((l) => l.status === "Sent").length;
   const impressions = totalLeads * 3; // Simulated metric
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
@@ -125,14 +125,14 @@ const DashboardOverview = () => {
     leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
       if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
       acc[l.platform].threads += 1;
-      acc[l.platform].leads += l.intent >= 70 ? 1 : 0;
+      acc[l.platform].leads += l.intent >= 60 ? 1 : 0;
       return acc;
     }, {})
   );
 
   const kpiData = [
     { icon: MessageSquare, label: "TOTAL POST", value: totalLeads.toString() },
-    { icon: AlertCircle, label: "HIGH-INTENT (≥70)", value: highIntent.toString() },
+    { icon: AlertCircle, label: "HIGH-INTENT (60)", value: highIntent.toString() },
     { icon: ThumbsUp, label: "REPLY SENT", value: repliesSent.toString() },
     { icon: Users, label: "IMPRESSIONS", value: impressions.toString() },
     { icon: TrendingUp, label: "ENGAGE→LEAD %", value: `${engageRate}%` },
