@@ -260,7 +260,7 @@ const DashboardOverview = () => {
         </div>
         <div className="space-y-3">
           {leads
-            .filter((l) => l.intent >= 80)
+            .filter((l) => l.intent >= 60)
             .sort((a, b) => b.intent - a.intent)
             .slice(0, 5)
             .map((lead) => (
