@@ -12,6 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   LayoutDashboard,
   Radio,
   Clock,
@@ -62,8 +68,8 @@ export const DashboardLayout = () => {
     <div className="min-h-screen bg-background flex overflow-x-hidden">
       {/* 1. MOBILE OVERLAY: Closes sidebar when clicking outside */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -75,13 +81,13 @@ export const DashboardLayout = () => {
         `}
       >
         <div className="p-4 border-b border-border flex items-center justify-between pb-6">
-          {(sidebarOpen) && (
+          {sidebarOpen && (
             <h1 className="text-xl font-bold text-foreground">Leadequator</h1>
           )}
           <Button
             variant="ghost"
             size="sm"
-            className="lg:flex" 
+            className="lg:flex"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -89,29 +95,52 @@ export const DashboardLayout = () => {
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/dashboard"}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors ${
-                !sidebarOpen ? "lg:justify-center" : ""
-              }`}
-              activeClassName="bg-muted text-primary font-medium"
-              onClick={() => { if(window.innerWidth < 1024) setSidebarOpen(false) }}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {(sidebarOpen) && <span>{item.label}</span>}
-            </NavLink>
-          ))}
+          <TooltipProvider delayDuration={0}>
+            {navItems.map((item) => (
+              <Tooltip key={item.path}>
+                <TooltipTrigger asChild>
+                  {/* We need a span or div wrapper sometimes if NavLink doesn't forward refs properly, 
+                      but usually asChild works fine with React Router Link if configured correctly. */}
+                  <NavLink
+                    to={item.path}
+                    end={item.path === "/dashboard"}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors ${
+                      !sidebarOpen ? "lg:justify-center" : ""
+                    }`}
+                    activeClassName="bg-muted text-primary font-medium"
+                    onClick={() => {
+                      if (window.innerWidth < 1024) setSidebarOpen(false);
+                    }}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    {sidebarOpen && <span>{item.label}</span>}
+                  </NavLink>
+                </TooltipTrigger>
+                
+                {/* Only show tooltip content if sidebar is CLOSED (!sidebarOpen) */}
+                {!sidebarOpen && (
+                  <TooltipContent side="right" className="ml-2 font-medium">
+                    {item.label}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
+          </TooltipProvider>
         </nav>
 
-        <div className={`p-4 border-t border-border mt-auto flex flex-col gap-6 ${!sidebarOpen ? "lg:items-center" : ""}`}>
+        <div
+          className={`p-4 border-t border-border mt-auto flex flex-col gap-6 ${
+            !sidebarOpen ? "lg:items-center" : ""
+          }`}
+        >
           <Link to="/pricings" className="w-full flex justify-center">
-            <Button 
-              variant="default" 
+            {/* Wrapped in Tooltip for the Upgrade button too if desired, currently left as is */}
+            <Button
+              variant="default"
               className={`bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-dashed border border-primary/50 transition-all ${
-                sidebarOpen ? "w-full justify-start gap-3" : "h-10 w-10 p-0 justify-center rounded-full"
+                sidebarOpen
+                  ? "w-full justify-start gap-3"
+                  : "h-10 w-10 p-0 justify-center rounded-full"
               }`}
             >
               <ArrowUpCircle className="h-5 w-5 flex-shrink-0" />
@@ -130,19 +159,32 @@ export const DashboardLayout = () => {
                     {Math.round(remainingPercentage)}%
                   </span>
                 </div>
-                <Progress 
-                  value={creditPercentageUsed} 
-                  className={`h-1.5 bg-muted [&>div]:${getBarColor()}`} 
+                <Progress
+                  value={creditPercentageUsed}
+                  className={`h-1.5 bg-muted [&>div]:${getBarColor()}`}
                 />
               </div>
             ) : (
               <div className="relative h-10 w-10 flex items-center justify-center">
                 <svg className="h-full w-full transform -rotate-90">
-                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-muted/20" />
                   <circle
-                    cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent"
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    className="text-muted/20"
+                  />
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
                     strokeDasharray={100}
-                    strokeDashoffset={100 - remainingPercentage} 
+                    strokeDashoffset={100 - remainingPercentage}
                     strokeLinecap="round"
                     className={`transition-all duration-500 ${getStatusColor()}`}
                   />
@@ -152,8 +194,15 @@ export const DashboardLayout = () => {
             )}
           </div>
 
-          <div className={`flex items-center w-full ${sidebarOpen ? "gap-3 px-2" : "justify-center"}`}>
-            <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }} />
+          <div
+            className={`flex items-center w-full ${
+              sidebarOpen ? "gap-3 px-2" : "justify-center"
+            }`}
+          >
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }}
+            />
             {sidebarOpen && (
               <div className="flex flex-col overflow-hidden">
                 <p className="text-sm font-medium text-foreground truncate">My Account</p>
@@ -174,13 +223,22 @@ export const DashboardLayout = () => {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               {/* Hamburger for Mobile Only */}
-              <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
                 <Menu className="h-5 w-5" />
               </Button>
-              <h2 className="text-lg font-semibold text-foreground hidden sm:block">Lead Equator</h2>
-              <Badge variant="secondary" className="bg-primary/20 text-primary">Pilot</Badge>
+              <h2 className="text-lg font-semibold text-foreground hidden sm:block">
+                Lead Equator
+              </h2>
+              <Badge variant="secondary" className="bg-primary/20 text-primary">
+                Pilot
+              </Badge>
             </div>
-            
+
             <div className="flex items-center gap-4 flex-1 max-w-2xl justify-end">
               <div className="relative flex-1 hidden md:block">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
