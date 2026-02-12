@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { UserButton } from "@clerk/clerk-react";
+// 1. Import useUser hook
+import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +36,11 @@ import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 
 export const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Default closed for mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // 2. Get the current user data from Clerk
+  // This maps to the 'name' field in your usersTable automatically if you synced them.
+  const { user, isLoaded } = useUser();
 
   const creditsUsed = 800;
   const totalCredits = 1000;
@@ -66,7 +71,7 @@ export const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen bg-background flex overflow-x-hidden">
-      {/* 1. MOBILE OVERLAY: Closes sidebar when clicking outside */}
+      {/* MOBILE OVERLAY */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -74,7 +79,7 @@ export const DashboardLayout = () => {
         />
       )}
 
-      {/* 2. SIDEBAR: Uses translate-x for smooth mobile transitions */}
+      {/* SIDEBAR */}
       <aside
         className={`fixed left-0 top-0 h-screen z-50 bg-card border-r border-border transition-transform duration-300 ease-in-out flex flex-col
           ${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-20"}
@@ -82,7 +87,15 @@ export const DashboardLayout = () => {
       >
         <div className="p-4 border-b border-border flex items-center justify-between pb-6">
           {sidebarOpen && (
-            <h1 className="text-xl font-bold text-foreground">Leadequator</h1>
+            // 3. Display the User's Name here
+            <div className="flex flex-col">
+               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                 Welcome back,
+               </span>
+               <h1 className="text-2xl font-bold text-amber-400 truncate max-w-[180px]" title={user?.fullName || ""}>
+                 {isLoaded ? (user?.firstName || "User") : "..."}
+               </h1>
+            </div>
           )}
           <Button
             variant="ghost"
@@ -99,8 +112,6 @@ export const DashboardLayout = () => {
             {navItems.map((item) => (
               <Tooltip key={item.path}>
                 <TooltipTrigger asChild>
-                  {/* We need a span or div wrapper sometimes if NavLink doesn't forward refs properly, 
-                      but usually asChild works fine with React Router Link if configured correctly. */}
                   <NavLink
                     to={item.path}
                     end={item.path === "/dashboard"}
@@ -117,7 +128,6 @@ export const DashboardLayout = () => {
                   </NavLink>
                 </TooltipTrigger>
                 
-                {/* Only show tooltip content if sidebar is CLOSED (!sidebarOpen) */}
                 {!sidebarOpen && (
                   <TooltipContent side="right" className="ml-2 font-medium">
                     {item.label}
@@ -134,7 +144,6 @@ export const DashboardLayout = () => {
           }`}
         >
           <Link to="/pricings" className="w-full flex justify-center">
-            {/* Wrapped in Tooltip for the Upgrade button too if desired, currently left as is */}
             <Button
               variant="default"
               className={`bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-dashed border border-primary/50 transition-all ${
@@ -205,15 +214,20 @@ export const DashboardLayout = () => {
             />
             {sidebarOpen && (
               <div className="flex flex-col overflow-hidden">
-                <p className="text-sm font-medium text-foreground truncate">My Account</p>
-                <p className="text-xs text-muted-foreground truncate">Manage Settings</p>
+                {/* 4. Update the account footer as well */}
+                <p className="text-sm font-medium text-foreground truncate">
+                    {user?.fullName || "My Account"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                    {user?.primaryEmailAddress?.emailAddress || "Manage Settings"}
+                </p>
               </div>
             )}
           </div>
         </div>
       </aside>
 
-      {/* 3. MAIN CONTENT: Uses lg:ml to only indent on desktop */}
+      {/* MAIN CONTENT */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-20"
@@ -222,7 +236,6 @@ export const DashboardLayout = () => {
         <header className="bg-card border-b border-border px-4 lg:px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {/* Hamburger for Mobile Only */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -231,8 +244,9 @@ export const DashboardLayout = () => {
               >
                 <Menu className="h-5 w-5" />
               </Button>
+              {/* 5. Updated Header Title */}
               <h2 className="text-lg font-semibold text-foreground hidden sm:block">
-                Lead Equator
+                LEADEQUATOR
               </h2>
               <Badge variant="secondary" className="bg-primary/20 text-primary">
                 Pilot
