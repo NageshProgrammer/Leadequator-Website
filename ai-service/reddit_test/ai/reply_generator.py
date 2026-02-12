@@ -1,70 +1,71 @@
-from dotenv import load_dotenv
-load_dotenv()
+from typing import Optional
+from reddit_test.db.neon import get_cursor
+from reddit_test.ai.reply_generator import generate_replies
 
-import os
-from mistralai import Mistral
 
-api_key = os.getenv("MISTRAL_API_KEY")
-if not api_key:
-    raise ValueError("MISTRAL_API_KEY not found")
+MAX_REPLIES_PER_RUN = 5  # 🔥 match scraper limit
 
-client = Mistral(api_key=api_key)
 
-SYSTEM_PROMPT = (
-    "You are an Indian human representing a company on social media. "
-    "You reply in short, crisp English sentences (1–3 lines max). "
-    "Your replies feel like Reddit/Twitter comments, not essays. "
-    "You sound friendly, natural, and human — never corporate or salesy. "
-    "You acknowledge the point first, then add one useful thought. "
-    "Avoid over-explaining. "
-    "If one sentence is enough, use only one. "
-    "You are a real Reddit user. "
-    "You do not promote products or companies. "
-    "You reply in a neutral, experience-based tone. "
-    "You never recommend specific brands. "
-    "You focus on sharing perspective, not selling."
-)
+def generate_reddit_replies(user_id: Optional[str] = None):
+    cursor = get_cursor()
 
-def generate_replies(text: str, platform: str = "reddit") -> list[str]:
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": f"""
-Platform: {platform}
+    if user_id:
+        cursor.execute("""
+            SELECT id, text, url
+            FROM reddit_posts
+            WHERE user_id = %s
+              AND id NOT IN (
+                  SELECT reddit_post_id FROM reddit_ai_replies
+              )
+            ORDER BY created_at DESC
+            LIMIT %s
+        """, (user_id, MAX_REPLIES_PER_RUN))
+    else:
+        cursor.execute("""
+            SELECT id, text, url
+            FROM reddit_posts
+            WHERE id NOT IN (
+                SELECT reddit_post_id FROM reddit_ai_replies
+            )
+            ORDER BY created_at DESC
+            LIMIT %s
+        """, (MAX_REPLIES_PER_RUN,))
 
-User post:
-{text}
+    posts = cursor.fetchall()
 
-Write TWO different natural reply options.
-Keep them short.
-Number them as:
-Option 1:
-Option 2:
-"""
-        }
-    ]
+    if not posts:
+        print("⚠️ No new Reddit posts found.")
+        return
 
-    response = client.chat.complete(
-        model="open-mistral-7b",
-        messages=messages
-    )
+    for post_id, text, url in posts:
+        text = (text or "").strip()
+        if not text:
+            continue
 
-    raw = response.choices[0].message.content.strip()
+        print("🧠 Generating reply for:", text[:70])
 
-    # 🧠 Parse options safely
-    replies = []
+        replies = generate_replies(
+            text=text,
+            platform="reddit"
+        )
 
-    for line in raw.splitlines():
-        line = line.strip()
-        if line.lower().startswith("option"):
-            reply = line.split(":", 1)[-1].strip()
-            if reply:
-                replies.append(reply)
+        if not replies:
+            continue
 
-    # Fallback (just in case model formatting changes)
-    if len(replies) < 2:
-        parts = raw.split("\n\n")
-        replies = [p.strip() for p in parts if p.strip()][:2]
+        for reply in replies:
+            cursor.execute(
+                """
+                INSERT INTO reddit_ai_replies
+                (reddit_post_id, intent, generated_reply)
+                VALUES (%s, %s, %s)
+                """,
+                (
+                    post_id,
+                    "lead_generation",
+                    reply
+                )
+            )
 
-    return replies
+        print("✅ Replies stored")
+
+    print("🎉 Reddit reply generation complete")

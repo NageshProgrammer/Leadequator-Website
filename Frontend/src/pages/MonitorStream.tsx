@@ -129,38 +129,40 @@ const MonitorStream = () => {
   /* ================= RUN SCRAPER ================= */
 
   const runScraper = async () => {
-    if (!user?.id) return;
+  if (!user?.id) return;
 
-    try {
-      setRunning(true);
+  try {
+    setRunning(true);
 
-      const response = await fetch(`${API_BASE}/quora/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
-      });
+    const response = await fetch(`${API_BASE}/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id }),
+    });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Scraper failed");
-      }
-
-      toast({
-        title: "Scraping Started 🚀",
-        description: "Scraping using your onboarded keywords.",
-      });
-
-      setTimeout(loadPosts, 6000);
-    } catch {
-      toast({
-        title: "Scraper Failed",
-        description: "Check backend / AI service connection.",
-        variant: "destructive",
-      });
-    } finally {
-      setRunning(false);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Scraper failed");
     }
-  };
+
+    toast({
+      title: "Scraping Started 🚀",
+      description: "Reddit and Quora scraping in progress.",
+    });
+
+    // wait a bit then reload
+    setTimeout(loadPosts, 6000);
+
+  } catch (err: any) {
+    toast({
+      title: "Scraper Failed",
+      description: err.message || "Check backend / AI service.",
+      variant: "destructive",
+    });
+  } finally {
+    setRunning(false);
+  }
+};
 
   const getSentimentColor = (sentiment: Thread["sentiment"]) => {
     if (sentiment === "Positive") return "text-green-500";

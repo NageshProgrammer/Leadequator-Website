@@ -163,6 +163,8 @@ router.post("/quora/run", async (req: Request, res: Response) => {
   }
 });
 
+
+
 /* ===============================
    FETCH QUORA POSTS (USER SAFE)
 ================================ */
@@ -204,6 +206,68 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("FETCH QUORA ERROR:", err);
     return res.status(500).json({ error: "Failed to fetch quora posts" });
+  }
+});
+
+/* ===============================
+   RUN BOTH SCRAPERS (TRANSCRIPTPER)
+================================ */
+router.post("/run", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body as { userId?: string };
+
+    if (!userId || typeof userId !== "string") {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    // 1️⃣ Fetch keywords
+    const rows = await db
+      .select()
+      .from(buyerKeywords)
+      .where(eq(buyerKeywords.userId, userId));
+
+    const keywords = rows.map((r) => r.keyword);
+
+    if (!keywords.length) {
+      return res.status(400).json({ error: "No buyer keywords found" });
+    }
+
+    // 2️⃣ Run Reddit scraper (WAIT)
+    const redditResponse = await fetch(
+      `${process.env.AI_SERVICE_URL}/reddit/run`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, keywords }),
+      }
+    );
+
+    if (!redditResponse.ok) {
+      console.error("Reddit scraper failed");
+    }
+
+    // 3️⃣ Run Quora scraper (WAIT)
+    const quoraResponse = await fetch(
+      `${process.env.AI_SERVICE_URL}/quora/run`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, keywords }),
+      }
+    );
+
+    if (!quoraResponse.ok) {
+      console.error("Quora scraper failed");
+    }
+
+    return res.json({
+      success: true,
+      message: "Reddit and Quora scraping completed",
+    });
+
+  } catch (err) {
+    console.error("LEAD DISCOVERY RUN ERROR:", err);
+    return res.status(500).json({ error: "Scraping failed" });
   }
 });
 

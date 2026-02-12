@@ -245,7 +245,7 @@ export const DashboardLayout = () => {
                 <Menu className="h-5 w-5" />
               </Button>
               {/* 5. Updated Header Title */}
-              <h2 className="text-lg font-semibold text-foreground hidden sm:block">
+              <h2 className="text-lg font-semibold text-foreground  sm:block">
                 LEADEQUATOR
               </h2>
               <Badge variant="secondary" className="bg-primary/20 text-primary">

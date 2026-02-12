@@ -1,7 +1,6 @@
-from playwright.sync_api import sync_playwright
+import requests
 from typing import List, Optional
-from pathlib import Path
-from urllib.parse import quote_plus
+from datetime import datetime
 from reddit_test.db.neon import get_cursor
 import time
 
@@ -9,8 +8,11 @@ import time
 # CONFIG
 # ----------------------------------------
 
-SESSION_FILE = Path(__file__).parent / "auth" / "reddit_state.json"
-SUBREDDIT = "startups"
+MAX_POSTS_PER_RUN = 5
+
+HEADERS = {
+    "User-Agent": "LeadEquatorApp/1.0 by NageshY"
+}
 
 # ----------------------------------------
 # MAIN SCRAPER
@@ -23,73 +25,56 @@ def scrape_reddit(
     cursor = get_cursor()
     inserted = 0
 
-    if not SESSION_FILE.exists():
-        print("❌ reddit_state.json not found. Login first.")
+    if not keywords:
+        print("⚠️ No keywords provided.")
         return
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
+    collected_urls = set()
 
-        # ✅ Load saved session
-        context = browser.new_context(
-            storage_state=str(SESSION_FILE),
-            viewport={"width": 1280, "height": 800},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
+    for keyword in keywords:
+        if inserted >= MAX_POSTS_PER_RUN:
+            break
 
-        page = context.new_page()
-
-        # ----------------------------------------
-        # BUILD SEARCH URL
-        # ----------------------------------------
-
-        if keywords:
-            query = quote_plus(" ".join(keywords))
-            url = f"https://www.reddit.com/search/?q={query}&sort=new"
-            print("🔍 Searching Reddit:", keywords)
-        else:
-            url = f"https://www.reddit.com/r/{SUBREDDIT}/"
-            print("📂 Scraping subreddit:", SUBREDDIT)
-
-        page.goto(url, timeout=60000)
-
-        time.sleep(5)
-
-        print("Current URL:", page.url)
-        print("Page title:", page.title())
-
-        # ----------------------------------------
-        # WAIT FOR POSTS
-        # ----------------------------------------
+        params = {
+            "q": keyword,
+            "sort": "new",
+            "limit": 25
+        }
 
         try:
-            page.wait_for_selector("shreddit-post", timeout=15000)
-        except:
-            print("⚠️ No shreddit-post found. Possibly blocked or not logged in.")
-            browser.close()
-            return
+            response = requests.get(
+                "https://www.reddit.com/search.json",
+                headers=HEADERS,
+                params=params,
+                timeout=10
+            )
 
-        posts = page.locator("shreddit-post")
-        total = posts.count()
+            if response.status_code != 200:
+                print("❌ Reddit API error:", response.status_code)
+                continue
 
-        print("📊 Found shreddit-post elements:", total)
+            data = response.json()
 
-        # ----------------------------------------
-        # LOOP POSTS
-        # ----------------------------------------
+            for item in data["data"]["children"]:
+                if inserted >= MAX_POSTS_PER_RUN:
+                    break
 
-        for i in range(min(total, 20)):
-            try:
-                post = posts.nth(i)
+                post = item["data"]
 
-                title = post.get_attribute("post-title")
-                permalink = post.get_attribute("permalink")
-                author = post.get_attribute("author")
+                title = post.get("title")
+                permalink = post.get("permalink")
+                author = post.get("author")
 
                 if not title or not permalink:
                     continue
 
-                full_url = f"https://www.reddit.com{permalink}"
+                full_url = "https://www.reddit.com" + permalink
+
+                # Avoid duplicate inserts in same run
+                if full_url in collected_urls:
+                    continue
+
+                collected_urls.add(full_url)
 
                 cursor.execute(
                     """
@@ -110,9 +95,9 @@ def scrape_reddit(
                 inserted += 1
                 print("✅ INSERTED:", title[:80])
 
-            except Exception as e:
-                print("❌ Insert error:", e)
+            time.sleep(1)  # rate limiting
 
-        browser.close()
+        except Exception as e:
+            print("❌ Reddit request error:", e)
 
-    print(f"🎉 Reddit scraping finished — inserted {inserted} rows")
+    print(f"🎉 Reddit scraping finished — inserted {inserted} posts (MAX {MAX_POSTS_PER_RUN})")

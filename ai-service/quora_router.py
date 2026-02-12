@@ -19,40 +19,40 @@ class QuoraRunRequest(BaseModel):
 
 @router.post("/run")
 def run_quora_pipeline(payload: QuoraRunRequest):
-    # Use provided keywords; fall back to sensible defaults if empty
+    if not payload.userId:
+        raise HTTPException(status_code=400, detail="Missing userId")
+
     keywords = payload.keywords or []
+
     if not keywords:
         keywords = ["startup", "crm", "lead", "generation"]
 
     try:
+        print(f"🚀 Starting Quora pipeline for user: {payload.userId}")
+
+        # 1️⃣ Scrape (must internally limit to 5)
         inserted_count = scrape_quora(payload.userId, keywords)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Scrape error: {e}")
 
-    try:
+        # 2️⃣ Auto generate replies
         replies_count = generate_quora_replies(payload.userId)
-    except Exception as e:
-        replies_count = 0
-        ai_error = str(e)
-    else:
-        ai_error = None
 
-    return {
-        "status": "success",
-        "message": "Quora scrape completed",
-        "insertedPosts": int(inserted_count or 0),
-        "generatedReplies": int(replies_count or 0),
-        "aiError": ai_error,
-    }
+        print(f"✅ Quora pipeline completed for user: {payload.userId}")
+
+        return {
+            "status": "success",
+            "message": "Quora scrape completed",
+            "insertedPosts": int(inserted_count or 0),
+            "generatedReplies": int(replies_count or 0),
+            "aiError": None,
+        }
+
+    except Exception as e:
+        print("❌ Quora pipeline error:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/posts")
 def get_quora_posts(userId: str | None = Query(None)):
-    """
-    Return quora posts from the database.
-    If `userId` is provided filter by it.
-    """
-
     try:
         cursor, conn = get_cursor()
 
@@ -111,7 +111,7 @@ def get_quora_posts(userId: str | None = Query(None)):
                 "content": r[3],
                 "url": r[4],
                 "author": r[5],
-                "createdAt": r[6],  # ✅ ADDED
+                "createdAt": r[6],
                 "replyOption1": r[7],
                 "replyOption2": r[8],
                 "replyApproved": bool(r[9]) if r[9] is not None else None,

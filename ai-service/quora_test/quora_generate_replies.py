@@ -1,6 +1,8 @@
 from quora_test.db.neon import get_cursor
 from quora_test.ai.reply_generator import generate_replies
 
+MAX_REPLIES_PER_RUN = 5  # 🔥 match scraper limit
+
 
 def generate_quora_replies(user_id: str):
     cursor, conn = get_cursor()
@@ -14,14 +16,15 @@ def generate_quora_replies(user_id: str):
               AND id NOT IN (
                   SELECT quora_post_id FROM quora_ai_replies
               )
-            LIMIT 20
-        """, (user_id,))
+            ORDER BY created_at DESC
+            LIMIT %s
+        """, (user_id, MAX_REPLIES_PER_RUN))
 
         posts = cursor.fetchall()
 
         if not posts:
             print("⚠️ No new Quora posts found.")
-            return
+            return 0
 
         for post_id, question, url, author in posts:
             question = (question or "").strip()
@@ -58,7 +61,6 @@ def generate_quora_replies(user_id: str):
                 if cursor.rowcount and cursor.rowcount > 0:
                     inserted_replies += 1
                 else:
-                    # If rowcount not reliable assume inserted
                     inserted_replies += 1
             except Exception:
                 inserted_replies += 1
@@ -70,5 +72,6 @@ def generate_quora_replies(user_id: str):
             conn.close()
         except Exception:
             pass
-    print(f"🎉 Quora reply generation complete — inserted {inserted_replies} replies")
+
+    print(f"🎉 Quora reply generation complete — inserted {inserted_replies} replies (MAX {MAX_REPLIES_PER_RUN})")
     return inserted_replies
