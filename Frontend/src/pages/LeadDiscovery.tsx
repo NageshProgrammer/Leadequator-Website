@@ -191,7 +191,7 @@ export default function LeadDiscovery() {
           <div className="flex items-center justify-between mb-4 relative z-10">
             <div className="flex items-center gap-2">
               <Hash className="w-5 h-5 text-[#FFD700]" />
-              <h2 className="text-lg font-semibold text-white">Target Buyer Keywords</h2>
+              <h2 className="text-lg font-semibold text-white">Targeted Buyer Keywords</h2>
             </div>
             <div className="text-xs flex items-center gap-2 text-zinc-500">
                 <div className={`w-2 h-2 rounded-full ${loadingKeywords ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'}`} />
