@@ -456,7 +456,7 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* 2. Post Context (NEW SECTION) */}
+                
                 <div className="space-y-2">
                    <span className="text-xs font-semibold text-muted-foreground uppercase block">
                     Post Context
@@ -482,7 +482,7 @@ const LeadsPipeline = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 hover:text-yellow-400 shrink-0"
+                        className="h-6 w-6 shrink-0"
                         onClick={() => copyToClipboard(selectedLead.name)}
                       >
                         {isCopied ? (
