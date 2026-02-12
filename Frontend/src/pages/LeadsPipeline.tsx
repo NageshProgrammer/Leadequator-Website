@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -29,9 +30,14 @@ import {
   RefreshCcw, 
   User2, 
   Link as LinkIcon, 
-  Loader2 
+  Loader2,
+  Search,
+  Filter,
+  Copy,
+  CheckCircle2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast"; // Assuming you have this, otherwise remove
 
 /* -------------------- Types -------------------- */
 type Lead = {
@@ -57,11 +63,17 @@ const STATUSES = [
 
 const LeadsPipeline = () => {
   const { user, isLoaded } = useUser();
+  const { toast } = useToast(); // Optional: for copy feedback
+  
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
 
-  /* ================= FETCH DATA FROM MONITOR STREAM LOGIC ================= */
+  /* ================= FETCH DATA ================= */
   const fetchLiveLeads = useCallback(async () => {
     if (!isLoaded || !user?.id) return;
     
@@ -69,15 +81,10 @@ const LeadsPipeline = () => {
     try {
       const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
       
-      // Fetching from the same endpoints as MonitorStream
       const [redditRes, quoraRes] = await Promise.all([
         fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
         fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
       ]);
-
-      if (!redditRes.ok || !quoraRes.ok) {
-        throw new Error("Failed to fetch posts from stream");
-      }
 
       const redditData = await redditRes.json();
       const quoraData = await quoraRes.json();
@@ -87,21 +94,16 @@ const LeadsPipeline = () => {
         ...(quoraData.posts || []),
       ];
 
-      // Mapping Stream data to Pipeline leads
-      const mapped: Lead[] = combined.map((p: any, idx: number) => {
-        const intent = 50 + (idx % 40);
-        return {
-          _id: String(p.id),
-          leadId: `LD-${idx + 1000}`, // Generating unique Lead ID
-          name: p.author ?? p.userId ?? "Unknown User",
-          platform: p.platform || (p.question ? "Quora" : "Reddit"),
-          intent: intent,
-          // Initial status logic: if a reply was sent in stream, mark as Contacted
-          status: p.replyStatus === "Sent" ? "Contacted" : "New",
-          url: p.url || "#",
-          createdAt: p.createdAt || new Date().toISOString(),
-        };
-      });
+      const mapped: Lead[] = combined.map((p: any, idx: number) => ({
+        _id: String(p.id),
+        leadId: `LD-${1000 + idx}`,
+        name: p.author ?? p.userId ?? "Unknown User",
+        platform: p.platform || (p.question ? "Quora" : "Reddit"),
+        intent: 50 + (idx % 40),
+        status: p.replyStatus === "Sent" ? "Contacted" : "New",
+        url: p.url || "#",
+        createdAt: p.createdAt || new Date().toISOString(),
+      }));
 
       setLeads(mapped);
     } catch (err) {
@@ -115,8 +117,15 @@ const LeadsPipeline = () => {
     fetchLiveLeads();
   }, [fetchLiveLeads]);
 
+  /* ================= HELPERS ================= */
   const updateStatus = (id: string, status: string) => {
     setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, status } : l)));
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Optional toast notification
+    // toast({ title: "Copied!", description: "Username copied to clipboard." });
   };
 
   const exportCSV = () => {
@@ -132,27 +141,37 @@ const LeadsPipeline = () => {
     a.click();
   };
 
+  // Filtered Leads
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      const matchesSearch = 
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        lead.leadId.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "All" || lead.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [leads, searchQuery, statusFilter]);
+
   return (
-    <div className="min-h-screen pt-10 pb-12 bg-background">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <div className="min-h-screen pt-8 pb-12 bg-background">
+      <div className="container mx-auto px-4 max-w-7xl space-y-6">
         
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold">Leads <span className="text-yellow-400">Pipeline</span></h1>
-            <p className="text-muted-foreground text-sm md:text-base">
-              Manage and track high-intent leads from your monitor stream.
+            <h1 className="text-3xl font-bold tracking-tight">Leads <span className="text-yellow-400">Pipeline</span></h1>
+            <p className="text-muted-foreground mt-1">
+              Track and convert high-intent leads from your streams.
             </p>
           </div>
-          <div className="flex w-full md:w-auto gap-2">
-            <Button variant="secondary" onClick={exportCSV} className="flex-1 md:flex-none h-11">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <Button variant="outline" onClick={exportCSV} className="flex-1 md:flex-none">
+              <Download className="h-4 w-4 mr-2" /> Export
             </Button>
             <Button 
                 onClick={fetchLiveLeads} 
                 disabled={loading} 
-                className="flex-1 md:flex-none h-11 bg-yellow-400 text-black hover:bg-yellow-500 font-semibold"
+                className="flex-1 md:flex-none bg-yellow-400 text-black hover:bg-yellow-500"
             >
               <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {loading ? "Syncing..." : "Sync Pipeline"}
@@ -160,126 +179,245 @@ const LeadsPipeline = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex flex-col items-center justify-center p-20 space-y-4">
-             <Loader2 className="h-10 w-10 animate-spin text-yellow-400" />
-             <p className="text-muted-foreground">Synchronizing pipeline with live stream...</p>
+        {/* FILTERS TOOLBAR */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center bg-card/50 p-3 rounded-lg border border-border/50">
+          <div className="relative w-full sm:w-[300px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by ID or username..." 
+              className="pl-9 bg-background"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px] bg-background">
+              <div className="flex items-center">
+                <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+                <SelectValue placeholder="Filter Status" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Statuses</SelectItem>
+              {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="ml-auto text-sm text-muted-foreground hidden sm:block">
+            Showing {filteredLeads.length} leads
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center p-20 space-y-4 border rounded-lg border-dashed">
+             <Loader2 className="h-10 w-10 animate-spin text-yellow-400" />
+             <p className="text-muted-foreground animate-pulse">Synchronizing leads...</p>
+          </div>
+        ) : filteredLeads.length === 0 ? (
+           <div className="p-12 text-center border rounded-lg bg-card/50">
+             <p className="text-muted-foreground">No leads found matching your filters.</p>
+             <Button variant="link" onClick={() => {setSearchQuery(""); setStatusFilter("All")}} className="text-yellow-400">
+               Clear Filters
+             </Button>
+           </div>
         ) : (
-          <Card className="overflow-hidden border-muted bg-card">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead className="w-[120px]">Lead ID</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>User Link</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leads.map((lead) => (
-                  <TableRow key={lead._id} className="hover:bg-muted/30 transition-colors">
-                    {/* 1. Lead ID */}
-                    <TableCell className="font-mono text-xs text-yellow-500">
-                      {lead.leadId}
-                    </TableCell>
+          <>
+            {/* --- MOBILE VIEW: CARDS --- */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {filteredLeads.map((lead) => (
+                <Card key={lead._id} className="p-4 space-y-4 border-l-4 border-l-yellow-400">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <div className="text-xs font-mono text-muted-foreground">{lead.leadId}</div>
+                      <div className="font-semibold truncate max-w-[200px]">{lead.name}</div>
+                    </div>
+                    <Badge variant="outline" className="bg-yellow-400/10 text-yellow-500 border-yellow-400/20">
+                      {lead.intent}% Intent
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="bg-muted/30 p-2 rounded">
+                      <span className="text-xs text-muted-foreground block">Platform</span>
+                      <span className="capitalize">{lead.platform}</span>
+                    </div>
+                    <div className="bg-muted/30 p-2 rounded">
+                      <span className="text-xs text-muted-foreground block">Status</span>
+                      <span className="truncate">{lead.status}</span>
+                    </div>
+                  </div>
 
-                    {/* 2. Username */}
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <User2 className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-semibold">{lead.name}</div>
-                          <Badge variant="outline" className="text-[10px] py-0 h-4">
-                            {lead.platform}
-                          </Badge>
-                        </div>
-                      </div>
-                    </TableCell>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedLead(lead)}>
+                      Details
+                    </Button>
+                    <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
+                      <SelectTrigger className="flex-1 h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </Card>
+              ))}
+            </div>
 
-                    {/* 3. User Link */}
-                    <TableCell>
-                      <a 
-                        href={lead.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex items-center text-blue-400 hover:text-blue-300 transition-colors text-sm"
-                      >
-                        <LinkIcon className="h-3 w-3 mr-1" />
-                        Source Link
-                      </a>
-                    </TableCell>
-
-                    {/* 4. Status */}
-                    <TableCell>
-                      <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
-                        <SelectTrigger className="w-36 h-8 text-xs bg-background">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {STATUSES.map((s) => (
-                            <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-
-                    {/* 5. Action */}
-                    <TableCell className="text-right">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="hover:text-yellow-400"
-                        onClick={() => setSelectedLead(lead)}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
-                    </TableCell>
+            {/* --- DESKTOP VIEW: TABLE --- */}
+            <Card className="hidden md:block overflow-hidden border-border bg-card">
+              <Table>
+                <TableHeader className="bg-muted/40">
+                  <TableRow>
+                    <TableHead className="w-[100px]">ID</TableHead>
+                    <TableHead className="w-[250px]">Lead Source</TableHead>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>Link</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {leads.length === 0 && (
-                <div className="p-10 text-center text-muted-foreground italic">
-                    No leads found. Run the scraper in Monitor Stream to populate this list.
-                </div>
-            )}
-          </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredLeads.map((lead) => (
+                    <TableRow key={lead._id} className="group hover:bg-muted/40 transition-colors">
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {lead.leadId}
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
+                            <User2 className="h-4 w-4 text-yellow-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              <span className="truncate max-w-[140px]" title={lead.name}>
+                                {lead.name}
+                              </span>
+                              <button 
+                                onClick={() => copyToClipboard(lead.name)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-white"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span className={lead.intent >= 70 ? "text-green-500 font-bold" : "text-yellow-500"}>
+                                {lead.intent}% Intent
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge variant="secondary" className="font-normal capitalize">
+                          {lead.platform}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                         <a 
+                            href={lead.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 hover:underline"
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            <span className="hidden lg:inline">View Source</span>
+                            <span className="lg:hidden">Link</span>
+                          </a>
+                      </TableCell>
+
+                      <TableCell>
+                        <Select value={lead.status} onValueChange={(v) => updateStatus(lead._id, v)}>
+                          <SelectTrigger className="w-[140px] h-8 text-xs bg-background/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUSES.map((s) => (
+                              <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setSelectedLead(lead)}
+                        >
+                          Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </>
         )}
 
-        {/* Lead Details Dialog */}
+        {/* --- LEAD DETAILS MODAL --- */}
         <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-          <DialogContent className="max-w-[400px] border-yellow-400/20">
+          <DialogContent className="max-w-md border-yellow-400/20">
             <DialogHeader>
-              <DialogTitle className="text-yellow-400">Lead Overview</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="text-yellow-400">Lead Overview</span>
+                <Badge variant="outline" className="ml-auto text-xs font-normal text-muted-foreground">
+                  {selectedLead?.leadId}
+                </Badge>
+              </DialogTitle>
             </DialogHeader>
+            
             {selectedLead && (
-              <div className="space-y-4 pt-4">
+              <div className="space-y-6 pt-2">
+                {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Intent Score</p>
-                    <p className="text-sm font-bold text-yellow-400">{selectedLead.intent}%</p>
+                  <div className="p-3 bg-muted/20 rounded-lg border border-border/50 text-center">
+                    <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Intent</div>
+                    <div className="text-2xl font-bold text-yellow-400">{selectedLead.intent}%</div>
                   </div>
-                  <div>
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Platform</p>
-                    <Badge variant="secondary">{selectedLead.platform}</Badge>
+                  <div className="p-3 bg-muted/20 rounded-lg border border-border/50 text-center">
+                    <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Platform</div>
+                    <div className="text-xl font-semibold capitalize mt-1">{selectedLead.platform}</div>
                   </div>
                 </div>
-                <div className="space-y-1">
-                   <p className="text-[10px] uppercase text-muted-foreground font-bold">Created At</p>
-                   <p className="text-xs">{new Date(selectedLead.createdAt).toLocaleString()}</p>
+
+                {/* Info Block */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                     <label className="text-xs font-medium text-muted-foreground">Username / Author</label>
+                     <div className="flex items-center gap-2 p-2 bg-muted/30 rounded border border-border/50 text-sm font-mono break-all">
+                        {selectedLead.name}
+                        <Copy 
+                          className="h-3 w-3 ml-auto cursor-pointer hover:text-white" 
+                          onClick={() => copyToClipboard(selectedLead.name)}
+                        />
+                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                     <label className="text-xs font-medium text-muted-foreground">Source URL</label>
+                     <a 
+                       href={selectedLead.url} 
+                       target="_blank" 
+                       rel="noreferrer"
+                       className="flex items-center gap-2 p-2 bg-blue-500/10 text-blue-400 rounded border border-blue-500/20 text-xs hover:bg-blue-500/20 transition-colors"
+                     >
+                        <LinkIcon className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{selectedLead.url}</span>
+                        <ExternalLink className="h-3 w-3 ml-auto shrink-0" />
+                     </a>
+                  </div>
                 </div>
-                <div className="p-3 bg-muted/30 rounded-lg border border-muted">
-                   <p className="text-[10px] uppercase text-muted-foreground font-bold mb-1">Source URL</p>
-                   <p className="text-[11px] truncate text-blue-400 font-mono">{selectedLead.url}</p>
+
+                {/* Footer Action */}
+                <div className="pt-2">
+                  <Button className="w-full bg-yellow-400 text-black hover:bg-yellow-500 font-bold h-11">
+                    Engage on {selectedLead.platform}
+                  </Button>
                 </div>
-                <Button className="w-full bg-yellow-400 text-black hover:bg-yellow-500 font-bold">
-                  Engage on {selectedLead.platform}
-                </Button>
               </div>
             )}
           </DialogContent>
