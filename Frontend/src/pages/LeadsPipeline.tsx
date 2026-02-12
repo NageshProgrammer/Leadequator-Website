@@ -444,7 +444,7 @@ const LeadsPipeline = () => {
                   </div>
                   <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[100px]">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                      Platform
+                      Platforms
                     </span>
                     <span className="text-xl font-semibold capitalize text-foreground truncate w-full">
                       {selectedLead.platform}
