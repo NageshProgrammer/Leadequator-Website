@@ -20,11 +20,9 @@ const SettingsIntegrations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 👇 FIX: Use relative path for production
-  // This ensures requests automatically match your current domain (www or non-www)
-  const API_BASE_URL = import.meta.env.MODE === "development"
-    ? "http://localhost:5000"  // Keep localhost for dev
-    : "";                      // Empty string = Use current domain
+  // 👇 FIX: Use relative path. 
+  // Vite proxy handles this in dev. Nginx/Server handles it in prod.
+  const API_BASE_URL = ""; 
 
   // Form State
   const [formData, setFormData] = useState({
@@ -48,12 +46,17 @@ const SettingsIntegrations = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // This effectively becomes "/api/settings?..." in production
+        // Request goes to: /api/settings?userId=...
         const res = await fetch(`${API_BASE_URL}/api/settings?userId=${user.id}`);
         
+        // Handle HTML response error (The "Unexpected token <" error)
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") === -1) {
+             throw new Error("Received HTML instead of JSON. Check your server proxy settings.");
+        }
+
         if (!res.ok) {
-            // If user doesn't exist yet (404), we just let them stay on empty form
-            if(res.status === 404) return;
+            if(res.status === 404) return; // New user, ignore
             throw new Error("Failed to fetch");
         }
         
@@ -75,8 +78,7 @@ const SettingsIntegrations = () => {
         });
       } catch (error) {
         console.error("Failed to fetch settings", error);
-        // Optional: Only show toast if it's a real error, not just a network blip
-        // toast.error("Could not load settings."); 
+        // Optional: toast.error("Could not load settings.");
       } finally {
         setIsLoading(false);
       }
@@ -340,12 +342,10 @@ const SettingsIntegrations = () => {
           </Card>
         </TabsContent>
 
-        {/* Placeholder Tabs */}
         <TabsContent value="tracking" className="mt-4"><Card className="p-6">Tracking Settings Placeholder</Card></TabsContent>
         <TabsContent value="webhooks" className="mt-4"><Card className="p-6">Webhooks Settings Placeholder</Card></TabsContent>
         <TabsContent value="integrations" className="mt-4"><Card className="p-6">Integrations Settings Placeholder</Card></TabsContent>
         <TabsContent value="security" className="mt-4"><Card className="p-6">Security Settings Placeholder</Card></TabsContent>
-
       </Tabs>
     </div>
   );

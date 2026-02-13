@@ -1,23 +1,23 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from "path"
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src")
-    }
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
   server: {
-    port: 5173,
     proxy: {
-      // Proxy API requests to local ai-service running on port 8000
-      "/api": {
-        target: "http://localhost:8000",
+      // ⚡ This forwards /api requests to your backend automatically
+      '/api': {
+        target: 'http://localhost:5000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "")
-      }
-    }
-  }
-});
+        secure: false,
+      },
+    },
+  },
+})
