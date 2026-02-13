@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner"; // Or "react-hot-toast"
+import { toast } from "sonner"; 
 import {
   Webhook, Database, Mail, MessageSquare, Settings2, Lock,
   User, Upload, Globe, Briefcase, Loader2
@@ -19,6 +19,11 @@ const SettingsIntegrations = () => {
   const { user, isLoaded } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // 👇 DYNAMIC URL LOGIC
+  const API_BASE_URL = import.meta.env.MODE === "development"
+    ? "http://localhost:5000"           // Local development URL
+    : "https://leadequator.live";       // Production URL
 
   // Form State
   const [formData, setFormData] = useState({
@@ -42,13 +47,18 @@ const SettingsIntegrations = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Make sure this URL matches your backend port
-        const res = await fetch(`http://localhost:5000/api/settings?userId=${user.id}`);
-        if (!res.ok) throw new Error("Failed to fetch");
+        // 👇 UPDATED FETCH URL
+        const res = await fetch(`${API_BASE_URL}/api/settings?userId=${user.id}`);
+        
+        if (!res.ok) {
+            // If new user, just ignore error and let them save new data
+            if(res.status === 404) return;
+            throw new Error("Failed to fetch");
+        }
         
         const data = await res.json();
         
-        // Populate state with fetched data or defaults
+        // Populate state
         setFormData({
           name: data.user?.name || user.fullName || "",
           email: data.user?.email || user.primaryEmailAddress?.emailAddress || "",
@@ -111,7 +121,8 @@ const SettingsIntegrations = () => {
     if (!user) return;
     setIsSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/settings', {
+      // 👇 UPDATED FETCH URL
+      const res = await fetch(`${API_BASE_URL}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
