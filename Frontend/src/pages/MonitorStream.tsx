@@ -134,7 +134,7 @@ const MonitorStream = () => {
   try {
     setRunning(true);
 
-    const response = await fetch(`${API_BASE}/run`, {
+    const response = await fetch(`${API_BASE}/api/lead-discovery/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: user.id }),
