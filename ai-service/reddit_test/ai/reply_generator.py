@@ -1,70 +1,58 @@
-from typing import Optional
-from reddit_test.db.neon import get_cursor
+from dotenv import load_dotenv
+load_dotenv()
 
+import os
+from mistralai import Mistral
 
-MAX_REPLIES_PER_RUN = 5  # 🔥 match scraper limit
+api_key = os.getenv("MISTRAL_API_KEY")
+if not api_key:
+    raise ValueError("MISTRAL_API_KEY not found")
 
+client = Mistral(api_key=api_key)
 
-def generate_reddit_replies(user_id: Optional[str] = None):
-    cursor = get_cursor()
+SYSTEM_PROMPT = (
+    "You are an Indian human representing a company on social media. "
+    "You reply in short, crisp English sentences (1–3 lines max). "
+    "You sound friendly, natural, and human — never corporate."
+)
 
-    if user_id:
-        cursor.execute("""
-            SELECT id, text, url
-            FROM reddit_posts
-            WHERE user_id = %s
-              AND id NOT IN (
-                  SELECT reddit_post_id FROM reddit_ai_replies
-              )
-            ORDER BY created_at DESC
-            LIMIT %s
-        """, (user_id, MAX_REPLIES_PER_RUN))
-    else:
-        cursor.execute("""
-            SELECT id, text, url
-            FROM reddit_posts
-            WHERE id NOT IN (
-                SELECT reddit_post_id FROM reddit_ai_replies
-            )
-            ORDER BY created_at DESC
-            LIMIT %s
-        """, (MAX_REPLIES_PER_RUN,))
+def generate_replies(text: str, platform: str = "reddit") -> list[str]:
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": f"""
+Platform: {platform}
 
-    posts = cursor.fetchall()
+User post:
+{text}
 
-    if not posts:
-        print("⚠️ No new Reddit posts found.")
-        return
+Write TWO different natural reply options.
+Number them as:
+Option 1:
+Option 2:
+"""
+        }
+    ]
 
-    for post_id, text, url in posts:
-        text = (text or "").strip()
-        if not text:
-            continue
+    response = client.chat.complete(
+        model="open-mistral-7b",
+        messages=messages
+    )
 
-        print("🧠 Generating reply for:", text[:70])
+    raw = response.choices[0].message.content.strip()
 
-        replies = generate_replies(
-            text=text,
-            platform="reddit"
-        )
+    replies = []
 
-        if not replies:
-            continue
+    for line in raw.splitlines():
+        line = line.strip()
+        if line.lower().startswith("option"):
+            reply = line.split(":", 1)[-1].strip()
+            if reply:
+                replies.append(reply)
 
-        for reply in replies:
-            cursor.execute(
-                """
-                INSERT INTO reddit_ai_replies
-                (reddit_post_id, intent, generated_reply)
-                VALUES (%s, %s, %s)
-                """,
-                (
-                    post_id,
-                    "lead_generation",
-                    reply
-                )
-            )
+    if len(replies) < 2:
+        parts = raw.split("\n\n")
+        replies = [p.strip() for p in parts if p.strip()][:2]
 
-        print("✅ Replies stored")
-
-    print("🎉 Reddit reply generation complete")
+    return replies
