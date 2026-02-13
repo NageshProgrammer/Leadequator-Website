@@ -20,10 +20,11 @@ const SettingsIntegrations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 👇 DYNAMIC URL LOGIC
+  // 👇 FIX: Use relative path for production
+  // This ensures requests automatically match your current domain (www or non-www)
   const API_BASE_URL = import.meta.env.MODE === "development"
-    ? "http://localhost:5000"           // Local development URL
-    : "https://leadequator.live";       // Production URL
+    ? "http://localhost:5000"  // Keep localhost for dev
+    : "";                      // Empty string = Use current domain
 
   // Form State
   const [formData, setFormData] = useState({
@@ -47,18 +48,17 @@ const SettingsIntegrations = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // 👇 UPDATED FETCH URL
+        // This effectively becomes "/api/settings?..." in production
         const res = await fetch(`${API_BASE_URL}/api/settings?userId=${user.id}`);
         
         if (!res.ok) {
-            // If new user, just ignore error and let them save new data
+            // If user doesn't exist yet (404), we just let them stay on empty form
             if(res.status === 404) return;
             throw new Error("Failed to fetch");
         }
         
         const data = await res.json();
         
-        // Populate state
         setFormData({
           name: data.user?.name || user.fullName || "",
           email: data.user?.email || user.primaryEmailAddress?.emailAddress || "",
@@ -75,7 +75,8 @@ const SettingsIntegrations = () => {
         });
       } catch (error) {
         console.error("Failed to fetch settings", error);
-        toast.error("Could not load settings.");
+        // Optional: Only show toast if it's a real error, not just a network blip
+        // toast.error("Could not load settings."); 
       } finally {
         setIsLoading(false);
       }
@@ -121,7 +122,6 @@ const SettingsIntegrations = () => {
     if (!user) return;
     setIsSaving(true);
     try {
-      // 👇 UPDATED FETCH URL
       const res = await fetch(`${API_BASE_URL}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -340,7 +340,7 @@ const SettingsIntegrations = () => {
           </Card>
         </TabsContent>
 
-        {/* OTHER TABS (Placeholder content to keep layout intact) */}
+        {/* Placeholder Tabs */}
         <TabsContent value="tracking" className="mt-4"><Card className="p-6">Tracking Settings Placeholder</Card></TabsContent>
         <TabsContent value="webhooks" className="mt-4"><Card className="p-6">Webhooks Settings Placeholder</Card></TabsContent>
         <TabsContent value="integrations" className="mt-4"><Card className="p-6">Integrations Settings Placeholder</Card></TabsContent>
