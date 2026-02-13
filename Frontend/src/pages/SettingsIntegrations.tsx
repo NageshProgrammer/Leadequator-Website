@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner"; // Ensure you have this or use your own toast lib
+import { toast } from "sonner";
 import {
   Webhook,
   Database,
@@ -21,7 +21,8 @@ import {
   Upload,
   Globe,
   Briefcase,
-  Loader2
+  Loader2,
+  X // Added X icon for removing keywords
 } from "lucide-react";
 
 // ==========================================
@@ -37,6 +38,9 @@ const SettingsIntegrations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Local state for the keyword input field
+  const [keywordInput, setKeywordInput] = useState("");
+
   // Form State matching your DB Schema
   const [profileData, setProfileData] = useState({
     // User Table
@@ -50,11 +54,14 @@ const SettingsIntegrations = () => {
     website: "",
     services: "", // maps to product_description
     
+    // Keywords Table
+    keywords: [] as string[],
+
     // Platforms Table
     platforms: {
       quora: false,
       reddit: false,
-      twitter: false, // Schema has 'twitter', UI might say X
+      twitter: false, 
       linkedin: false,
       facebook: false,
       youtube: false
@@ -70,9 +77,7 @@ const SettingsIntegrations = () => {
     const fetchProfile = async () => {
       setIsLoading(true);
       try {
-        // Fetch from our new endpoint
         const res = await fetch(`${API_BASE}/api/settings/profile?userId=${clerkUser.id}`);
-        
         if (!res.ok) throw new Error("Failed to fetch profile");
 
         const data = await res.json();
@@ -88,6 +93,9 @@ const SettingsIntegrations = () => {
             website: data.company?.websiteUrl || "",
             services: data.company?.productDescription || "",
             
+            // Map keywords from backend
+            keywords: data.keywords || [],
+
             platforms: {
               quora: data.platforms?.quora ?? false,
               reddit: data.platforms?.reddit ?? false,
@@ -110,27 +118,51 @@ const SettingsIntegrations = () => {
   }, [clerkUser]);
 
   // ==========================================
-  // 2. SAVE DATA
+  // 2. KEYWORD LOGIC
+  // ==========================================
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const trimmed = keywordInput.trim();
+      if (trimmed && !profileData.keywords.includes(trimmed)) {
+        setProfileData(prev => ({
+          ...prev,
+          keywords: [...prev.keywords, trimmed]
+        }));
+        setKeywordInput(""); // Clear input
+      }
+    }
+  };
+
+  const removeKeyword = (keywordToRemove: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      keywords: prev.keywords.filter(k => k !== keywordToRemove)
+    }));
+  };
+
+  // ==========================================
+  // 3. SAVE DATA
   // ==========================================
   const handleSave = async () => {
     if (!clerkUser?.id) return;
     setIsSaving(true);
 
     try {
-      // Construct payload matching server.ts expectation
       const payload = {
         userId: clerkUser.id,
         userData: { 
             name: profileData.name 
         },
         companyData: {
-          companyName: profileData.companyName || profileData.name + "'s Company", // Fallback if empty
+          companyName: profileData.companyName || profileData.name + "'s Company",
           phoneNumber: profileData.phone,
           industry: profileData.industry,
           websiteUrl: profileData.website,
           productDescription: profileData.services
         },
-        platformsData: profileData.platforms
+        platformsData: profileData.platforms,
+        keywords: profileData.keywords // Send keywords to backend
       };
 
       const res = await fetch(`${API_BASE}/api/settings/profile`, {
@@ -241,7 +273,7 @@ const SettingsIntegrations = () => {
                                 </div>
                             </div>
 
-                            {/* Photo Upload Area (Visual Only) */}
+                            {/* Photo Upload Area */}
                             <div className="h-full">
                                 <Label className="text-xs text-zinc-400 mb-2 block">Profile Photo</Label>
                                 <div className="border-2 border-dashed border-zinc-800 rounded-lg h-[calc(100%-28px)] flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-colors cursor-pointer group">
@@ -253,19 +285,36 @@ const SettingsIntegrations = () => {
                             </div>
                         </div>
 
-                        {/* Suggestions Tags */}
+                        {/* KEYWORDS SECTION (Replaced Suggested Industries) */}
                         <div className="mt-8 space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-xs text-zinc-400">Suggested Industries</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {["AI", "Web3", "Healthcare", "Fintech", "Marketing"].map(tag => (
+                                <Label className="text-xs text-zinc-400 uppercase tracking-wider font-bold">Monitor Keywords</Label>
+                                <Input 
+                                    className="bg-black/40 border-zinc-800 focus-visible:ring-[#FFD700]/50" 
+                                    placeholder="Type keyword & press Enter (e.g. 'cold outreach', 'seo tools')"
+                                    value={keywordInput}
+                                    onChange={(e) => setKeywordInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                />
+                                <p className="text-[10px] text-zinc-500 italic">These keywords will be used to find potential leads.</p>
+                                
+                                <div className="flex flex-wrap gap-2 mt-3 p-4 bg-black/20 rounded-lg min-h-[60px] border border-zinc-800/50">
+                                    {profileData.keywords.length === 0 && (
+                                        <span className="text-zinc-600 text-xs self-center">No keywords added yet.</span>
+                                    )}
+                                    {profileData.keywords.map((keyword, index) => (
                                         <Badge 
-                                            key={tag} 
-                                            variant="outline" 
-                                            className="cursor-pointer hover:border-[#FFD700] hover:text-[#FFD700] bg-transparent border-zinc-700 text-zinc-400"
-                                            onClick={() => setProfileData({...profileData, industry: tag})}
+                                            key={index} 
+                                            variant="secondary" 
+                                            className="pl-3 pr-2 py-1 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-zinc-700 flex items-center gap-1 group transition-all"
                                         >
-                                            {tag}
+                                            {keyword}
+                                            <button 
+                                                onClick={() => removeKeyword(keyword)}
+                                                className="ml-1 p-0.5 rounded-full hover:bg-red-500/20 text-zinc-400 hover:text-red-400 transition-colors"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
                                         </Badge>
                                     ))}
                                 </div>

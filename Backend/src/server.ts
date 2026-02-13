@@ -10,7 +10,7 @@ import {
   onboardingProgress,
   companyDetails,
   targetMarket,
-  buyerKeywords,
+  buyerKeywords, // Ensure this is imported
   platformsToMonitor,
   usersTable,
 } from "./config/schema.js";
@@ -162,25 +162,51 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   SETTINGS & PROFILE
+   SETTINGS & PROFILE (Consolidated)
 ================================ */
+
 // 1. GET Profile Data
 app.get("/api/settings/profile", async (req, res) => {
   try {
     const { userId } = req.query as { userId?: string };
-    if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    // Fetch all related data in parallel
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-    const [company] = await db.select().from(companyDetails).where(eq(companyDetails.userId, userId)).limit(1);
-    const [platforms] = await db.select().from(platformsToMonitor).where(eq(platformsToMonitor.userId, userId)).limit(1);
-    
-    // Construct the response object matching your UI needs
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    // Run fetches in parallel for speed
+    const [userData] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    const [companyData] = await db
+      .select()
+      .from(companyDetails)
+      .where(eq(companyDetails.userId, userId))
+      .limit(1);
+
+    const [platformsData] = await db
+      .select()
+      .from(platformsToMonitor)
+      .where(eq(platformsToMonitor.userId, userId))
+      .limit(1);
+
+    // Fetch keywords
+    const keywordsRaw = await db
+      .select()
+      .from(buyerKeywords)
+      .where(eq(buyerKeywords.userId, userId));
+
+    // Return combined object
     res.json({
-      user: user || {},
-      company: company || {},
-      platforms: platforms || {},
+      user: userData || {},
+      company: companyData || {},
+      platforms: platformsData || {},
+      keywords: keywordsRaw.map(k => k.keyword) || []
     });
+
   } catch (err) {
     console.error("Error fetching profile:", err);
     res.status(500).json({ error: "Failed to fetch profile" });
@@ -190,7 +216,7 @@ app.get("/api/settings/profile", async (req, res) => {
 // 2. UPDATE Profile Data
 app.put("/api/settings/profile", async (req, res) => {
   try {
-    const { userId, userData, companyData, platformsData } = req.body;
+    const { userId, userData, companyData, platformsData, keywords } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId" });
 
     // 1. Update User Table (Name)
@@ -223,54 +249,24 @@ app.put("/api/settings/profile", async (req, res) => {
         });
     }
 
+    // 4. Update Keywords (Delete All -> Re-insert)
+    if (keywords) {
+      await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
+      
+      if (keywords.length > 0) {
+        await db.insert(buyerKeywords).values(
+          keywords.map((k: string) => ({
+            userId,
+            keyword: k,
+          }))
+        );
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("Error updating profile:", err);
     res.status(500).json({ error: "Failed to update profile" });
-  }
-});
-
-
-/* ===============================
-   GET PROFILE DATA
-================================ */
-app.get("/api/settings/profile", async (req, res) => {
-  try {
-    const { userId } = req.query as { userId?: string };
-
-    if (!userId) {
-      return res.status(400).json({ error: "Missing userId" });
-    }
-
-    // Run fetches in parallel for speed
-    const [userData] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, userId))
-      .limit(1);
-
-    const [companyData] = await db
-      .select()
-      .from(companyDetails)
-      .where(eq(companyDetails.userId, userId))
-      .limit(1);
-
-    const [platformsData] = await db
-      .select()
-      .from(platformsToMonitor)
-      .where(eq(platformsToMonitor.userId, userId))
-      .limit(1);
-
-    // Return combined object
-    res.json({
-      user: userData || {},
-      company: companyData || {},
-      platforms: platformsData || {},
-    });
-
-  } catch (err) {
-    console.error("Error fetching profile:", err);
-    res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
 
