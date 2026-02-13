@@ -137,7 +137,7 @@ export default function App() {
                   <Route path="/automations-builder" element={<AutomationsBuilder />} />
                   <Route path="/competitor-watch" element={<CompetitorWatch />} />
                   <Route path="/reports" element={<Reports />} />
-                  <Route path="/settings" element={<SettingsIntegrations />} />
+                  <Route path="/user-profile" element={<SettingsIntegrations />} />
                   <Route path="/pricings" element={<CongestedPricing />} />
                 </Route>
 

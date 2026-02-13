@@ -31,6 +31,7 @@ import {
   ArrowUpCircle,
   Zap,
   X,
+  UserCog2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
@@ -66,7 +67,7 @@ export const DashboardLayout = () => {
     { icon: Clock, label: "Comment Timeline", path: "/comment-timeline" },
     { icon: Users, label: "Leads & Tracking", path: "/leads-pipeline" },
     { icon: FileText, label: "Reports", path: "/reports" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: UserCog2, label: "Settings", path: "/user-profile" },
   ];
 
   return (
