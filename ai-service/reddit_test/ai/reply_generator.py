@@ -1,6 +1,5 @@
 from typing import Optional
 from reddit_test.db.neon import get_cursor
-from reddit_test.ai.reply_generator import generate_replies
 
 
 MAX_REPLIES_PER_RUN = 5  # 🔥 match scraper limit

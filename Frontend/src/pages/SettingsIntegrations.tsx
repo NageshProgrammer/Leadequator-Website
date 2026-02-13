@@ -202,7 +202,7 @@ const SettingsIntegrations = () => {
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-white">
           <Settings2 className="h-6 w-6 text-[#FFD700]" />
-          Settings <span className="text-[#FFD700]">&</span> Integrations
+          User Profile <span className="text-[#FFD700]">&</span> Settings
         </h1>
         <p className="text-sm md:text-base text-zinc-400">
           Manage your profile, company details, and system configurations.
