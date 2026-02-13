@@ -56,7 +56,7 @@ const Navigation = () => {
               </SignedOut>
               <SignedIn>
                 <Link to="/onboarding">
-                  <Button variant="outline" className="border-primary/20 hover:bg-primary/10">Dashboard</Button>
+                  <Button variant="outline" className="border-primary/50 hover:bg-primary/90">Dashboard</Button>
                 </Link>
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>

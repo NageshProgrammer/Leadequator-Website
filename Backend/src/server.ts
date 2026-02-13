@@ -57,7 +57,7 @@ app.use("/api/lead-discovery", leadDiscoveryRoutes);
 ================================ */
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
-    const { userId } = req.query as { userId?: string };
+    const { userId } = req.query;
     if (!userId) return res.status(400).json({});
 
     const result = await db
@@ -129,7 +129,7 @@ app.post("/api/onboarding", async (req, res) => {
     await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
     if (keywordsData?.keywords?.length) {
       await db.insert(buyerKeywords).values(
-        keywordsData.keywords.map((k: string) => ({
+        keywordsData.keywords.map((k) => ({
           userId,
           keyword: k,
         }))
@@ -184,6 +184,115 @@ app.post("/api/users/sync", async (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+/* ===============================
+   SETTINGS API (NEW ADDITION)
+================================ */
+
+// 1. GET SETTINGS
+app.get("/api/settings", async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Run queries in parallel for performance
+    const [user, company, platforms, keywords] = await Promise.all([
+      db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+      db.select().from(companyDetails).where(eq(companyDetails.userId, userId)).limit(1),
+      db.select().from(platformsToMonitor).where(eq(platformsToMonitor.userId, userId)).limit(1),
+      db.select().from(buyerKeywords).where(eq(buyerKeywords.userId, userId))
+    ]);
+
+    res.json({
+      user: user[0] || null,
+      company: company[0] || {},
+      platforms: platforms[0] || {},
+      keywords: keywords.map(k => k.keyword) || []
+    });
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// 2. SAVE SETTINGS
+app.post("/api/settings", async (req, res) => {
+  try {
+    const { userId, name, companyName, website, phone, industry, description, platforms, keywords } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Use a transaction to ensure all updates succeed or fail together
+    await db.transaction(async (tx) => {
+      
+      // A. Update User Name
+      if (name) {
+        await tx.update(usersTable)
+          .set({ name })
+          .where(eq(usersTable.id, userId));
+      }
+
+      // B. Update Company Details
+      // We use onConflictDoUpdate to handle both insert (if new) and update
+      await tx.insert(companyDetails)
+        .values({
+           userId,
+           companyName: companyName || "My Company",
+           websiteUrl: website,
+           phoneNumber: phone,
+           industry: industry,
+           productDescription: description
+        })
+        .onConflictDoUpdate({
+           target: companyDetails.userId,
+           set: { 
+             companyName, 
+             websiteUrl: website, 
+             phoneNumber: phone, 
+             industry: industry, 
+             productDescription: description 
+           }
+        });
+
+      // C. Update Platforms
+      await tx.insert(platformsToMonitor)
+        .values({
+          userId,
+          quora: platforms?.quora || false,
+          reddit: platforms?.reddit || false,
+        })
+        .onConflictDoUpdate({
+           target: platformsToMonitor.userId,
+           set: {
+             quora: platforms?.quora || false,
+             reddit: platforms?.reddit || false,
+           }
+        });
+
+      // D. Update Keywords
+      // Strategy: Delete all old keywords for this user, then insert the new list
+      await tx.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
+      
+      if (keywords && Array.isArray(keywords) && keywords.length > 0) {
+        // Drizzle insert accepts an array of objects
+        await tx.insert(buyerKeywords).values(
+          keywords.map((k) => ({ userId, keyword: k }))
+        );
+      }
+    });
+
+    res.json({ success: true, message: "Profile updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 /* ===============================
