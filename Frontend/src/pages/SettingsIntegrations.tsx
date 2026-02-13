@@ -165,7 +165,7 @@ const SettingsIntegrations = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-black/95 min-h-screen text-zinc-100">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-background min-h-screen text-zinc-100">
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-white">

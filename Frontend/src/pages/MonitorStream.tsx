@@ -47,7 +47,7 @@ type Thread = {
   replyOption2?: string | null;
 };
 
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/run`;
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
 
 /* ================= COMPONENT ================= */
 
@@ -134,7 +134,7 @@ const MonitorStream = () => {
   try {
     setRunning(true);
 
-    const response = await fetch(`${API_BASE}/api/lead-discovery/run`, {
+    const response = await fetch(`${API_BASE}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: user.id }),
