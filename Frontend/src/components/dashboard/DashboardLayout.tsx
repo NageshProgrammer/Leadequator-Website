@@ -67,7 +67,7 @@ export const DashboardLayout = () => {
     { icon: Clock, label: "Comment Timeline", path: "/comment-timeline" },
     { icon: Users, label: "Leads & Tracking", path: "/leads-pipeline" },
     { icon: FileText, label: "Reports", path: "/reports" },
-    { icon: UserCog2, label: "Settings", path: "/user-profile" },
+    { icon: UserCog2, label: "User Profile", path: "/user-profile" },
   ];
 
   return (
