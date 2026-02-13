@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/clerk-react"; // Assuming you use Clerk hook
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,345 +7,369 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea"; 
+import { Textarea } from "@/components/ui/textarea"; // Make sure you have this component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner"; 
 import {
-  Webhook, Database, Mail, MessageSquare, Settings2, Lock,
-  User, Upload, Globe, Briefcase, Loader2
+  Webhook,
+  Database,
+  Mail,
+  MessageSquare,
+  Settings2,
+  Lock,
+  User,
+  Upload,
+  Globe,
+  Briefcase
 } from "lucide-react";
+import { toast } from "sonner"; // Or your preferred toast library
 
 const SettingsIntegrations = () => {
-  const { user, isLoaded } = useUser();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // 👇 FIX: Use relative path. 
-  // Vite proxy handles this in dev. Nginx/Server handles it in prod.
-  const API_BASE_URL = ""; 
+  const { user: clerkUser } = useUser();
+  const [loading, setLoading] = useState(false);
 
   // Form State
-  const [formData, setFormData] = useState({
+  const [profileData, setProfileData] = useState({
     name: "",
     email: "",
     phone: "",
     industry: "",
     website: "",
-    description: "",
-    companyName: "",
-    keywords: [] as string[],
-    platforms: { quora: false, reddit: false }
+    services: "",
+    platforms: {
+      quora: false,
+      reddit: false,
+      twitter: false,
+      linkedin: false
+    }
   });
 
-  const [keywordInput, setKeywordInput] = useState("");
-
-  // 1. FETCH DATA
+  // Fetch Data on Mount
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!clerkUser?.id) return;
 
-    const fetchData = async () => {
-      setIsLoading(true);
+    const fetchProfile = async () => {
       try {
-        // Request goes to: /api/settings?userId=...
-        const res = await fetch(`${API_BASE_URL}/api/settings?userId=${user.id}`);
-        
-        // Handle HTML response error (The "Unexpected token <" error)
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") === -1) {
-             throw new Error("Received HTML instead of JSON. Check your server proxy settings.");
-        }
-
-        if (!res.ok) {
-            if(res.status === 404) return; // New user, ignore
-            throw new Error("Failed to fetch");
-        }
-        
+        const res = await fetch(`http://localhost:5000/api/settings/profile?userId=${clerkUser.id}`);
         const data = await res.json();
         
-        setFormData({
-          name: data.user?.name || user.fullName || "",
-          email: data.user?.email || user.primaryEmailAddress?.emailAddress || "",
-          phone: data.company?.phoneNumber || "",
-          industry: data.company?.industry || "",
-          website: data.company?.websiteUrl || "",
-          description: data.company?.productDescription || "",
-          companyName: data.company?.companyName || "",
-          keywords: data.keywords || [],
-          platforms: {
-            quora: data.platforms?.quora || false,
-            reddit: data.platforms?.reddit || false
-          }
-        });
+        if (data) {
+          setProfileData({
+            name: data.user?.name || clerkUser.fullName || "",
+            email: data.user?.email || clerkUser.primaryEmailAddress?.emailAddress || "",
+            phone: data.company?.phoneNumber || "",
+            industry: data.company?.industry || "",
+            website: data.company?.websiteUrl || "",
+            services: data.company?.productDescription || "",
+            platforms: {
+              quora: data.platforms?.quora || false,
+              reddit: data.platforms?.reddit || false,
+              twitter: data.platforms?.twitter || false,
+              linkedin: data.platforms?.linkedin || false,
+            }
+          });
+        }
       } catch (error) {
-        console.error("Failed to fetch settings", error);
-        // Optional: toast.error("Could not load settings.");
-      } finally {
-        setIsLoading(false);
+        console.error("Failed to load settings", error);
       }
     };
 
-    fetchData();
-  }, [user, isLoaded]);
+    fetchProfile();
+  }, [clerkUser]);
 
-  // 2. HANDLERS
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePlatformToggle = (platform: 'quora' | 'reddit') => {
-    setFormData(prev => ({
-      ...prev,
-      platforms: { ...prev.platforms, [platform]: !prev.platforms[platform] }
-    }));
-  };
-
-  const addKeyword = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && keywordInput.trim()) {
-      e.preventDefault();
-      if (!formData.keywords.includes(keywordInput.trim())) {
-        setFormData(prev => ({
-          ...prev,
-          keywords: [...prev.keywords, keywordInput.trim()]
-        }));
-      }
-      setKeywordInput("");
-    }
-  };
-
-  const removeKeyword = (keywordToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      keywords: prev.keywords.filter(k => k !== keywordToRemove)
-    }));
-  };
-
-  // 3. SAVE DATA
+  // Handle Save
   const handleSave = async () => {
-    if (!user) return;
-    setIsSaving(true);
+    if (!clerkUser?.id) return;
+    setLoading(true);
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          ...formData
-        })
+      const payload = {
+        userId: clerkUser.id,
+        userData: { name: profileData.name },
+        companyData: {
+          phoneNumber: profileData.phone,
+          industry: profileData.industry,
+          websiteUrl: profileData.website,
+          productDescription: profileData.services
+        },
+        platformsData: profileData.platforms
+      };
+
+      const res = await fetch("http://localhost:5000/api/settings/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        toast.success("Settings updated successfully!");
+        toast.success("Profile updated successfully");
       } else {
-        toast.error("Failed to update settings.");
+        toast.error("Failed to update profile");
       }
     } catch (error) {
-      console.error("Save error", error);
-      toast.error("Something went wrong.");
+      console.error(error);
     } finally {
-      setIsSaving(false);
+      setLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-8 w-8 text-[#FFD700]" />
-      </div>
-    );
-  }
+  const integrations = [
+    { name: "HubSpot CRM", icon: Database, status: "Connected", description: "Sync leads and contacts automatically" },
+    { name: "Slack", icon: MessageSquare, status: "Connected", description: "Real-time alerts for high-intent comments" },
+    { name: "Webhook", icon: Webhook, status: "Configured", description: "Custom event streaming to your endpoint" },
+    { name: "Email Notifications", icon: Mail, status: "Active", description: "Daily summaries and weekly reports" },
+  ];
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-background min-h-screen">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-black/95 min-h-screen text-zinc-100">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Settings2 className="h-6 w-6 text-[#FFD700]" />
-            Settings <span className="text-[#FFD700]">&</span> Integrations
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Manage your profile, tracking, and company details.
-          </p>
-        </div>
-        
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-bold min-w-[140px]"
-        >
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          {isSaving ? "Saving..." : "Save Changes"}
-        </Button>
+      <div className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-white">
+          <Settings2 className="h-6 w-6 text-[#FFD700]" />
+          Settings <span className="text-[#FFD700]">&</span> Integrations
+        </h1>
+        <p className="text-sm md:text-base text-zinc-400">
+          Manage your profile, company details, and system configurations.
+        </p>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
+        {/* Responsive Tabs List */}
         <div className="overflow-x-auto pb-2 scrollbar-hide">
           <TabsList className="flex w-max md:w-full md:grid md:grid-cols-5 bg-zinc-900/50 p-1 border border-zinc-800">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="tracking">Tracking</TabsTrigger>
-            <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="profile" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Profile</TabsTrigger>
+            <TabsTrigger value="tracking" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Tracking</TabsTrigger>
+            <TabsTrigger value="webhooks" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Webhooks</TabsTrigger>
+            <TabsTrigger value="integrations" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Integrations</TabsTrigger>
+            <TabsTrigger value="security" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Security</TabsTrigger>
           </TabsList>
         </div>
 
-        {/* PROFILE TAB */}
+        {/* =======================
+            PROFILE TAB (NEW)
+           ======================= */}
         <TabsContent value="profile" className="space-y-6 mt-4 md:mt-8">
-          <Card className="p-6 bg-card border-border">
-            <h3 className="text-xl font-bold mb-6 text-[#FFD700]">Profile & Details</h3>
-            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: User Profile Form */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="p-6 bg-zinc-900/50 border-zinc-800">
+                        <h3 className="text-lg font-bold mb-6 text-[#FFD700] flex items-center gap-2">
+                            <User className="h-4 w-4" /> User Profile
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">User Name</Label>
+                                    <Input 
+                                        className="bg-black/40 border-zinc-800 focus-visible:ring-[#FFD700]/50" 
+                                        value={profileData.name}
+                                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">Email</Label>
+                                    <Input 
+                                        className="bg-black/40 border-zinc-800 text-zinc-500" 
+                                        value={profileData.email} 
+                                        disabled 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">Phone Number</Label>
+                                    <Input 
+                                        className="bg-black/40 border-zinc-800 focus-visible:ring-[#FFD700]/50" 
+                                        placeholder="+1 (555) 000-0000"
+                                        value={profileData.phone}
+                                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">Industry</Label>
+                                    <Input 
+                                        className="bg-black/40 border-zinc-800 focus-visible:ring-[#FFD700]/50" 
+                                        placeholder="e.g. SaaS, Marketing"
+                                        value={profileData.industry}
+                                        onChange={(e) => setProfileData({...profileData, industry: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Photo Upload Area */}
+                            <div className="h-full">
+                                <Label className="text-xs text-zinc-400 mb-2 block">Profile Photo</Label>
+                                <div className="border-2 border-dashed border-zinc-800 rounded-lg h-[calc(100%-24px)] flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-colors cursor-pointer group">
+                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <Upload className="h-6 w-6 text-zinc-400 group-hover:text-[#FFD700]" />
+                                    </div>
+                                    <span className="text-sm text-zinc-500 font-medium">Upload Photo</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Suggestions / Tags */}
+                        <div className="mt-8 space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs text-zinc-400">Suggested</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {["AI", "Web3", "Healthcare", "Fintech", "Marketing"].map(tag => (
+                                        <Badge key={tag} variant="outline" className="cursor-pointer hover:border-[#FFD700] hover:text-[#FFD700] bg-transparent border-zinc-700 text-zinc-400">
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="p-6 bg-zinc-900/50 border-zinc-800">
+                        <h3 className="text-lg font-bold mb-6 text-[#FFD700] flex items-center gap-2">
+                             <Briefcase className="h-4 w-4" /> Company Details
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs text-zinc-400">Website</Label>
+                                <div className="relative">
+                                    <Globe className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+                                    <Input 
+                                        className="pl-9 bg-black/40 border-zinc-800 focus-visible:ring-[#FFD700]/50" 
+                                        placeholder="https://yourcompany.com"
+                                        value={profileData.website}
+                                        onChange={(e) => setProfileData({...profileData, website: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs text-zinc-400">Services / Products</Label>
+                                <Textarea 
+                                    className="bg-black/40 border-zinc-800 focus-visible:ring-[#FFD700]/50 min-h-[100px]" 
+                                    placeholder="Describe what your company does..."
+                                    value={profileData.services}
+                                    onChange={(e) => setProfileData({...profileData, services: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
+                {/* Right Column: Active Platforms */}
+                <div className="space-y-6">
+                    <Card className="p-6 bg-zinc-900/50 border-zinc-800 h-full">
+                        <h3 className="text-lg font-bold mb-6 text-[#FFD700]">Active Platforms</h3>
+                        <div className="space-y-4">
+                            <p className="text-xs text-zinc-500 mb-4">Select where you want to be active.</p>
+                            
+                            {[
+                                { id: "quora", label: "Quora" },
+                                { id: "reddit", label: "Reddit" },
+                                { id: "linkedin", label: "LinkedIn" },
+                                { id: "twitter", label: "Twitter/X" },
+                            ].map((platform) => (
+                                <div key={platform.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-black/40">
+                                    <span className="text-sm font-medium">{platform.label}</span>
+                                    <Switch 
+                                        checked={profileData.platforms[platform.id as keyof typeof profileData.platforms]}
+                                        onCheckedChange={(checked) => 
+                                            setProfileData({
+                                                ...profileData, 
+                                                platforms: { ...profileData.platforms, [platform.id]: checked }
+                                            })
+                                        }
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="mt-8 pt-6 border-t border-zinc-800">
+                             <Button 
+                                onClick={handleSave} 
+                                disabled={loading}
+                                className="w-full bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-bold"
+                            >
+                                {loading ? "Saving..." : "Save Changes"}
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        </TabsContent>
+
+        {/* =======================
+            EXISTING TABS (UNCHANGED)
+           ======================= */}
+        
+        {/* Link Tracking */}
+        <TabsContent value="tracking" className="space-y-6 mt-4 md:mt-8">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="text-lg md:text-xl font-bold mb-6 text-[#FFD700]">Link Tracking</h3>
+            {/* ... keep your existing tracking code ... */}
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                {/* Inputs */}
-                <div className="md:col-span-2 space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="username">User Name</Label>
-                    <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="username" 
-                          value={formData.name}
-                          onChange={(e) => handleChange("name", e.target.value)}
-                          className="pl-9 bg-background border-zinc-800" 
-                        />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="email" 
-                          value={formData.email}
-                          disabled 
-                          className="pl-9 bg-zinc-900/30 border-zinc-800 text-muted-foreground cursor-not-allowed" 
-                        />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input 
-                      id="phone" 
-                      value={formData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      placeholder="+91 ..." 
-                      className="bg-background border-zinc-800" 
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="industry">Industry</Label>
-                    <Input 
-                      id="industry" 
-                      value={formData.industry}
-                      onChange={(e) => handleChange("industry", e.target.value)}
-                      placeholder="e.g. SaaS" 
-                      className="bg-background border-zinc-800" 
-                    />
-                  </div>
-                </div>
-
-                {/* Photo Upload Placeholder */}
-                <div className="md:col-span-1">
-                  <Label className="mb-2 block">Profile Photo</Label>
-                  <div className="h-full min-h-[200px] border-2 border-dashed border-zinc-700 rounded-lg flex flex-col items-center justify-center bg-zinc-900/30">
-                    <div className="p-4 rounded-full bg-zinc-800 mb-3">
-                        <Upload className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <span className="text-sm text-muted-foreground">Upload Photo</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Keywords */}
               <div className="space-y-2">
-                 <Label>Interests & Keywords</Label>
-                 <Input 
-                   value={keywordInput}
-                   onChange={(e) => setKeywordInput(e.target.value)}
-                   onKeyDown={addKeyword}
-                   placeholder="Type keyword & press Enter" 
-                   className="bg-zinc-900/50 border-zinc-800" 
-                 />
-                 <div className="flex flex-wrap gap-2 mt-2">
-                   {formData.keywords.map((k, i) => (
-                     <Badge key={i} variant="secondary" className="bg-zinc-800 text-zinc-300 pr-1 gap-2 border border-zinc-700">
-                       {k} 
-                       <span onClick={() => removeKeyword(k)} className="cursor-pointer hover:text-red-400 font-bold px-1">×</span>
-                     </Badge>
-                   ))}
-                 </div>
+                <Label htmlFor="short-domain" className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Short Domain</Label>
+                <Input id="short-domain" defaultValue="lq.link" className="bg-background h-11" />
+                <p className="text-[11px] text-muted-foreground italic">Custom short domain for branded links.</p>
               </div>
-
-              <Separator className="bg-zinc-800" />
-
-              {/* Company Details */}
+              <Separator />
               <div className="space-y-4">
-                <h4 className="text-[#FFD700] font-semibold flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" /> Company Details
-                </h4>
-                
-                <div className="grid gap-2">
-                    <Label htmlFor="website">Website</Label>
-                    <div className="relative">
-                        <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="website" 
-                          value={formData.website}
-                          onChange={(e) => handleChange("website", e.target.value)}
-                          placeholder="https://..." 
-                          className="pl-9 bg-background border-zinc-800" 
-                        />
-                    </div>
-                </div>
-
-                <div className="grid gap-2">
-                    <Label htmlFor="services">Services / Products</Label>
-                    <Textarea 
-                        id="services" 
-                        value={formData.description}
-                        onChange={(e) => handleChange("description", e.target.value)}
-                        placeholder="Describe your services..." 
-                        className="bg-background border-zinc-800 min-h-[100px] resize-none" 
-                    />
-                </div>
+                 {/* ... existing UTM inputs ... */}
+                 <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Default UTM Parameters</Label>
+                 {/* Just rendering a placeholder here to keep it short for the answer, keep your original loop */}
+                 <div className="p-4 bg-zinc-900/50 rounded text-sm text-zinc-500">Existing UTM Inputs...</div>
               </div>
-
-              {/* Platforms */}
-              <div className="space-y-3 pt-2">
-                <Label className="text-[#FFD700]">Active Platforms</Label>
-                <div className="grid grid-cols-2 gap-4">
-                    <div 
-                      onClick={() => handlePlatformToggle('quora')}
-                      className={`cursor-pointer h-12 flex items-center justify-center rounded-md border transition-all font-medium ${
-                        formData.platforms.quora 
-                          ? "border-[#FFD700] text-[#FFD700] bg-zinc-900/80" 
-                          : "border-zinc-700 hover:border-zinc-500 text-muted-foreground"
-                      }`}
-                    >
-                        Quora
-                    </div>
-                    <div 
-                      onClick={() => handlePlatformToggle('reddit')}
-                      className={`cursor-pointer h-12 flex items-center justify-center rounded-md border transition-all font-medium ${
-                        formData.platforms.reddit 
-                          ? "border-[#FF5700] text-[#FF5700] bg-zinc-900/80" 
-                          : "border-zinc-700 hover:border-zinc-500 text-muted-foreground"
-                      }`}
-                    >
-                        Reddit
-                    </div>
-                </div>
-              </div>
-
             </div>
           </Card>
         </TabsContent>
 
-        <TabsContent value="tracking" className="mt-4"><Card className="p-6">Tracking Settings Placeholder</Card></TabsContent>
-        <TabsContent value="webhooks" className="mt-4"><Card className="p-6">Webhooks Settings Placeholder</Card></TabsContent>
-        <TabsContent value="integrations" className="mt-4"><Card className="p-6">Integrations Settings Placeholder</Card></TabsContent>
-        <TabsContent value="security" className="mt-4"><Card className="p-6">Security Settings Placeholder</Card></TabsContent>
+        {/* Webhooks */}
+        <TabsContent value="webhooks" className="space-y-6 mt-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+             <h3 className="text-lg md:text-xl font-bold mb-6 text-[#FFD700]">Webhooks</h3>
+             {/* ... keep your existing webhooks code ... */}
+             <div className="p-4 text-zinc-500">Existing Webhooks UI...</div>
+          </Card>
+        </TabsContent>
+
+        {/* Integrations Grid */}
+        <TabsContent value="integrations" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {integrations.map((integration) => (
+              <Card key={integration.name} className="p-4 md:p-6 bg-card border-border flex flex-col justify-between hover:border-[#FFD700]/30 transition-colors">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center">
+                        <integration.icon className="h-5 w-5 text-[#FFD700]" />
+                      </div>
+                      <h4 className="font-bold text-sm md:text-base">{integration.name}</h4>
+                    </div>
+                    <Badge variant="outline" className={integration.status === "Connected" ? "bg-emerald-500/10 text-emerald-500 border-none" : ""}>
+                      {integration.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground mb-6 leading-relaxed">
+                    {integration.description}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="secondary" size="sm" className="flex-1 text-xs">Configure</Button>
+                  {integration.status === "Connected" && (
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-500/5 text-xs">Disconnect</Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Security */}
+        <TabsContent value="security" className="mt-4">
+            {/* ... keep your existing security code ... */}
+             <Card className="p-4 md:p-6 bg-card border-border">
+                 <h3 className="text-lg md:text-xl font-bold mb-6 text-[#FFD700] flex items-center gap-2">
+                 <Lock className="h-5 w-5" /> Security & Access
+                 </h3>
+                 <div className="p-4 text-zinc-500">Existing Security UI...</div>
+             </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

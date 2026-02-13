@@ -47,7 +47,7 @@ type Thread = {
   replyOption2?: string | null;
 };
 
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/run`;
 
 /* ================= COMPONENT ================= */
 

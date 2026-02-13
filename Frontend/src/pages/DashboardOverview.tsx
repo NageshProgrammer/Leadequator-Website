@@ -67,7 +67,7 @@ const DashboardOverview = () => {
 
       try {
         setLoading(true);
-        const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
+        const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/a`;
 
         // We fetch independently to avoid one platform slowing down the other
         const [redditRes, quoraRes] = await Promise.all([
