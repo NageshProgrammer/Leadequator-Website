@@ -230,6 +230,50 @@ app.put("/api/settings/profile", async (req, res) => {
   }
 });
 
+
+/* ===============================
+   GET PROFILE DATA
+================================ */
+app.get("/api/settings/profile", async (req, res) => {
+  try {
+    const { userId } = req.query as { userId?: string };
+
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    // Run fetches in parallel for speed
+    const [userData] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    const [companyData] = await db
+      .select()
+      .from(companyDetails)
+      .where(eq(companyDetails.userId, userId))
+      .limit(1);
+
+    const [platformsData] = await db
+      .select()
+      .from(platformsToMonitor)
+      .where(eq(platformsToMonitor.userId, userId))
+      .limit(1);
+
+    // Return combined object
+    res.json({
+      user: userData || {},
+      company: companyData || {},
+      platforms: platformsData || {},
+    });
+
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
 /* ===============================
    USERS SYNC (CLERK)
 ================================ */
