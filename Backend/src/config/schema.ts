@@ -85,10 +85,11 @@ export const redditPosts = pgTable("reddit_posts", {
   userId: text("user_id").notNull(),
   platform: text("platform").default("reddit"),
   text: text("text").notNull(),
-  url: text("url").notNull(),
+  url: text("url").notNull().unique(),   // 🔥 add this
   author: text("author"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 
 export const redditAiReplies = pgTable("reddit_ai_replies", {
   id: uuid("id").defaultRandom().primaryKey(),
