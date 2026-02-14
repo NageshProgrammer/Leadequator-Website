@@ -16,8 +16,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set. Check ai-service/.env")
 
-conn = psycopg2.connect(DATABASE_URL)
-conn.autocommit = True
 
 def get_cursor():
-    return conn.cursor()
+    conn = psycopg2.connect(DATABASE_URL)
+    conn.autocommit = True
+    return conn.cursor(), conn
