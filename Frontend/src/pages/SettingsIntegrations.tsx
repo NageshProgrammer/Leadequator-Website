@@ -228,7 +228,7 @@ const SettingsIntegrations = () => {
   ];
 
   if (isLoading) {
-      return <div className="min-h-screen bg-black flex items-center justify-center text-[#FFD700]"><Loader2 className="animate-spin h-8 w-8" /></div>;
+      return <div className="min-h-screen  flex items-center justify-center text-[#FFD700]"><Loader2 className="animate-spin h-8 w-8" /></div>;
   }
 
   return (

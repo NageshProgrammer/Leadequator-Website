@@ -157,3 +157,17 @@ html {
   width: 2px;
 }
 
+@layer base {
+  /* ... existing code ... */
+
+  ::selection {
+    background-color: hsl(var(--primary)/0.9);
+    color: hsl(var(--primary-foreground));
+  }
+  
+  /* For Firefox */
+  ::-moz-selection {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Check, Star, IndianRupee, DollarSign, LogIn } from "lucide-react"; // Added LogIn icon
+import { Check, Star, IndianRupee, DollarSign, LogIn, ArrowRight } from "lucide-react"; // Added ArrowRight
 import { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
@@ -13,7 +13,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link, useNavigate } from "react-router-dom";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { toast } from "sonner";
-import { useUser } from "@clerk/clerk-react"; // 1. Import Clerk Hook
+import { useUser } from "@clerk/clerk-react";
 
 const plans = [
   {
@@ -90,9 +90,7 @@ export default function CongestedPricing() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const switchRef = useRef<HTMLButtonElement>(null);
   
-  // 2. Get User Auth Status
   const { isSignedIn } = useUser(); 
-
   const [{ options }, dispatch] = usePayPalScriptReducer();
 
   useEffect(() => {
@@ -133,7 +131,6 @@ export default function CongestedPricing() {
       </div>
 
       <div className="flex flex-col items-center gap-6 mb-12">
-        {/* Currency Toggle */}
         <div className="bg-zinc-900 p-1 rounded-lg inline-flex">
             <button
                 onClick={() => setCurrency("USD")}
@@ -155,7 +152,6 @@ export default function CongestedPricing() {
             </button>
         </div>
 
-        {/* Monthly/Annual Toggle */}
         <div className="flex justify-center items-center gap-4">
             <Label htmlFor="billing-toggle" className="font-semibold text-white">
             Monthly
@@ -272,12 +268,9 @@ export default function CongestedPricing() {
               </div>
 
               <div className="mt-auto pt-6 border-t border-zinc-900">
-                {/* 3. AUTHENTICATION LOGIC START 
-                   - If plan is Custom: Show "Contact Sales" (Everyone sees this)
-                   - If NOT Signed In: Show "Sign in to Subscribe" -> Redirects to /sign-in
-                   - If Signed In: Show PayPal Buttons
-                */}
+                {/* 3. CONDITIONAL BUTTON LOGIC */}
                 {isCustom ? (
+                  // ENTERPRISE: Always Show Contact Sales
                   <Link
                     to="/contact"
                     className={cn(
@@ -288,7 +281,7 @@ export default function CongestedPricing() {
                     Contact Sales
                   </Link>
                 ) : !isSignedIn ? (
-                   // --- NOT LOGGED IN STATE ---
+                    // NOT SIGNED IN: Show Dynamic "Free Trial" Button
                    <Link
                      to="/sign-in"
                      className={cn(
@@ -296,11 +289,15 @@ export default function CongestedPricing() {
                        "w-full py-6 text-lg bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2",
                      )}
                    >
+                     {/* Dynamic Text Logic */}
                      <LogIn className="w-5 h-5" />
-                      Start A Free Trial
+                     {plan.name === "PILOT" 
+                        ? "Start 14-Day Free Trial" 
+                        : "Start Free Trial"
+                     }
                    </Link>
                 ) : (
-                  // --- LOGGED IN STATE (PayPal) ---
+                  // SIGNED IN: Show PayPal
                   <div className="z-0">
                     <PayPalButtons
                       style={{
@@ -341,7 +338,7 @@ export default function CongestedPricing() {
 
                           const details = await actions.order.capture();
                           
-                          // Optional Backend Verification
+                          // Backend Verification (with Skip logic for testing)
                           try {
                               const response = await fetch("http://localhost:5000/api/verify-payment", {
                                   method: "POST",
