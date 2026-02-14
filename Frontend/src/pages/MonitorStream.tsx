@@ -104,8 +104,8 @@ const MonitorStream = () => {
           keywords: Array.isArray(p.keywords) ? p.keywords : [],
           replyStatus: p.replyStatus || "Not Sent",
           url: p.url,
-          replyOption1: p.replyOption1 || null,
-          replyOption2: p.replyOption2 || null,
+          replyOption1: p.replyOption1 || p.replies?.[0] || null,
+          replyOption2: p.replyOption2 || p.replies?.[1] || null,
         };
       });
 
@@ -129,40 +129,39 @@ const MonitorStream = () => {
   /* ================= RUN SCRAPER ================= */
 
   const runScraper = async () => {
-  if (!user?.id) return;
+    if (!user?.id) return;
 
-  try {
-    setRunning(true);
+    try {
+      setRunning(true);
 
-    const response = await fetch(`${API_BASE}/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id }),
-    });
+      const response = await fetch(`${API_BASE}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Scraper failed");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Scraper failed");
+      }
+
+      toast({
+        title: "Scraping Started 🚀",
+        description: "Reddit and Quora scraping in progress.",
+      });
+
+      // wait a bit then reload
+      setTimeout(loadPosts, 6000);
+    } catch (err: any) {
+      toast({
+        title: "Scraper Failed",
+        description: err.message || "Check backend / AI service.",
+        variant: "destructive",
+      });
+    } finally {
+      setRunning(false);
     }
-
-    toast({
-      title: "Scraping Started 🚀",
-      description: "Reddit and Quora scraping in progress.",
-    });
-
-    // wait a bit then reload
-    setTimeout(loadPosts, 6000);
-
-  } catch (err: any) {
-    toast({
-      title: "Scraper Failed",
-      description: err.message || "Check backend / AI service.",
-      variant: "destructive",
-    });
-  } finally {
-    setRunning(false);
-  }
-};
+  };
 
   const getSentimentColor = (sentiment: Thread["sentiment"]) => {
     if (sentiment === "Positive") return "text-green-500";

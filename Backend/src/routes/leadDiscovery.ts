@@ -3,6 +3,8 @@ import { db } from "../db.js";
 import { buyerKeywords, redditPosts, quoraPosts } from "../config/schema.js";
 import { eq, desc } from "drizzle-orm";
 import { quoraAiReplies } from "../config/schema.js"; // Update this path to your actual schema file
+import { redditAiReplies } from "../config/schema.js";
+
 
 const router = Router();
 
@@ -79,9 +81,8 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Reddit scraping failed" });
   }
 });
-
 /* ===============================
-   FETCH REDDIT POSTS (USER SAFE)
+   FETCH REDDIT POSTS (WITH REPLIES)
 ================================ */
 router.get("/reddit/posts", async (req: Request, res: Response) => {
   try {
@@ -91,17 +92,52 @@ router.get("/reddit/posts", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing userId" });
     }
 
-    const posts = await db
-      .select()
+    const rows = await db
+      .select({
+        id: redditPosts.id,
+        userId: redditPosts.userId,
+        platform: redditPosts.platform,
+        text: redditPosts.text,
+        url: redditPosts.url,
+        author: redditPosts.author,
+        createdAt: redditPosts.createdAt,
+        generatedReply: redditAiReplies.generatedReply,
+      })
       .from(redditPosts)
+      .leftJoin(
+        redditAiReplies,
+        eq(redditPosts.id, redditAiReplies.redditPostId)
+      )
       .where(eq(redditPosts.userId, userId))
-      .orderBy(desc(redditPosts.createdAt))
-      .limit(50);
+      .orderBy(desc(redditPosts.createdAt));
+
+    // 🔥 Group replies per post
+    const grouped: Record<string, any> = {};
+
+    for (const row of rows) {
+      if (!grouped[row.id]) {
+        grouped[row.id] = {
+          id: row.id,
+          userId: row.userId,
+          platform: row.platform,
+          text: row.text,
+          url: row.url,
+          author: row.author,
+          createdAt: row.createdAt,
+          replies: [],
+        };
+      }
+
+      if (row.generatedReply) {
+        grouped[row.id].replies.push(row.generatedReply);
+      }
+    }
 
     return res.json({
       success: true,
-      posts,
+      posts: Object.values(grouped),
     });
+
   } catch (err) {
     console.error("FETCH REDDIT ERROR:", err);
     return res.status(500).json({ error: "Failed to fetch reddit posts" });
