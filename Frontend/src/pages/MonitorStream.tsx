@@ -99,7 +99,7 @@ const MonitorStream = () => {
           sentiment:
             intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
           timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString() : "—",
-          post: p.question || p.content || "",
+          post: p.text || p.question || p.content || "",
           engagement: { likes: 0 },
           keywords: Array.isArray(p.keywords) ? p.keywords : [],
           replyStatus: p.replyStatus || "Not Sent",
