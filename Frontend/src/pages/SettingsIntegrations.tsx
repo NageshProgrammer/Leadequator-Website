@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,42 +22,42 @@ import {
   Globe,
   Briefcase,
   Loader2,
-  X // Added X icon for removing keywords
+  X,
+  Trash2,
+  RefreshCcw
 } from "lucide-react";
 
 // ==========================================
 // 🔧 API CONFIGURATION
 // ==========================================
-// CHANGE THIS: Replace 'https://api.leadequator.live' with your actual deployed backend URL
 const API_BASE = import.meta.env.MODE === "development" 
   ? "http://localhost:5000" 
   : "https://api.leadequator.live"; 
 
 const SettingsIntegrations = () => {
   const { user: clerkUser } = useUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Image State
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Local state for the keyword input field
   const [keywordInput, setKeywordInput] = useState("");
 
-  // Form State matching your DB Schema
+  // Form State
   const [profileData, setProfileData] = useState({
-    // User Table
     name: "",
     email: "",
-    
-    // Company Details Table
     companyName: "",
     phone: "",
     industry: "",
     website: "",
-    services: "", // maps to product_description
-    
-    // Keywords Table
+    services: "", 
     keywords: [] as string[],
-
-    // Platforms Table
     platforms: {
       quora: false,
       reddit: false,
@@ -74,6 +74,9 @@ const SettingsIntegrations = () => {
   useEffect(() => {
     if (!clerkUser?.id) return;
 
+    // Set initial profile image from Clerk
+    setImagePreview(clerkUser.imageUrl);
+
     const fetchProfile = async () => {
       setIsLoading(true);
       try {
@@ -86,16 +89,12 @@ const SettingsIntegrations = () => {
           setProfileData({
             name: data.user?.name || clerkUser.fullName || "",
             email: data.user?.email || clerkUser.primaryEmailAddress?.emailAddress || "",
-            
             companyName: data.company?.companyName || "",
             phone: data.company?.phoneNumber || "",
             industry: data.company?.industry || "",
             website: data.company?.websiteUrl || "",
             services: data.company?.productDescription || "",
-            
-            // Map keywords from backend
             keywords: data.keywords || [],
-
             platforms: {
               quora: data.platforms?.quora ?? false,
               reddit: data.platforms?.reddit ?? false,
@@ -118,7 +117,38 @@ const SettingsIntegrations = () => {
   }, [clerkUser]);
 
   // ==========================================
-  // 2. KEYWORD LOGIC
+  // 2. IMAGE HANDLERS
+  // ==========================================
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size too large (max 5MB)");
+        return;
+      }
+      setImageFile(file);
+      // Create local preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    // Note: To actually delete from Clerk, usually uploading a default avatar is required
+    // or utilizing a delete endpoint if available. For UI, we clear it here.
+  };
+
+  // ==========================================
+  // 3. KEYWORD LOGIC
   // ==========================================
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -129,7 +159,7 @@ const SettingsIntegrations = () => {
           ...prev,
           keywords: [...prev.keywords, trimmed]
         }));
-        setKeywordInput(""); // Clear input
+        setKeywordInput(""); 
       }
     }
   };
@@ -142,18 +172,22 @@ const SettingsIntegrations = () => {
   };
 
   // ==========================================
-  // 3. SAVE DATA
+  // 4. SAVE DATA
   // ==========================================
   const handleSave = async () => {
     if (!clerkUser?.id) return;
     setIsSaving(true);
 
     try {
+      // 1. Update Profile Image in Clerk if changed
+      if (imageFile) {
+        await clerkUser.setProfileImage({ file: imageFile });
+      }
+
+      // 2. Prepare Backend Payload
       const payload = {
         userId: clerkUser.id,
-        userData: { 
-            name: profileData.name 
-        },
+        userData: { name: profileData.name },
         companyData: {
           companyName: profileData.companyName || profileData.name + "'s Company",
           phoneNumber: profileData.phone,
@@ -162,9 +196,10 @@ const SettingsIntegrations = () => {
           productDescription: profileData.services
         },
         platformsData: profileData.platforms,
-        keywords: profileData.keywords // Send keywords to backend
+        keywords: profileData.keywords 
       };
 
+      // 3. Send to Backend
       const res = await fetch(`${API_BASE}/api/settings/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -172,13 +207,13 @@ const SettingsIntegrations = () => {
       });
 
       if (res.ok) {
-        toast.success("Profile updated successfully!");
+        toast.success("Profile and settings updated successfully!");
       } else {
-        throw new Error("Failed to update");
+        throw new Error("Failed to update database");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save changes.");
+      toast.error("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -214,10 +249,10 @@ const SettingsIntegrations = () => {
         <div className="overflow-x-auto pb-2 scrollbar-hide">
           <TabsList className="flex w-max md:w-full md:grid md:grid-cols-5 bg-zinc-900/50 p-1 border border-zinc-800">
             <TabsTrigger value="profile" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Profile</TabsTrigger>
-            {/* <TabsTrigger value="tracking" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Tracking</TabsTrigger>
+            <TabsTrigger value="tracking" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Tracking</TabsTrigger>
             <TabsTrigger value="webhooks" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Webhooks</TabsTrigger>
             <TabsTrigger value="integrations" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Integrations</TabsTrigger>
-            <TabsTrigger value="security" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Security</TabsTrigger> */}
+            <TabsTrigger value="security" className="px-6 md:px-0 data-[state=active]:bg-[#FFD700] data-[state=active]:text-black font-medium">Security</TabsTrigger>
           </TabsList>
         </div>
 
@@ -273,19 +308,68 @@ const SettingsIntegrations = () => {
                                 </div>
                             </div>
 
-                            {/* Photo Upload Area */}
-                            <div className="h-full">
+                            {/* Photo Upload Area - FIXED */}
+                            <div className="h-full flex flex-col">
                                 <Label className="text-xs text-zinc-400 mb-2 block">Profile Photo</Label>
-                                <div className="border-2 border-dashed border-zinc-800 rounded-lg h-[calc(100%-28px)] flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-colors cursor-pointer group">
-                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                        <Upload className="h-6 w-6 text-zinc-400 group-hover:text-[#FFD700]" />
-                                    </div>
-                                    <span className="text-sm text-zinc-500 font-medium">Upload Photo</span>
+                                
+                                <input 
+                                  type="file" 
+                                  ref={fileInputRef} 
+                                  onChange={handleFileChange} 
+                                  className="hidden" 
+                                  accept="image/*"
+                                />
+
+                                <div className="border-2 border-dashed border-zinc-800 rounded-lg flex-grow flex flex-col items-center justify-center bg-black/20 overflow-hidden relative group">
+                                    {imagePreview ? (
+                                      <>
+                                        {/* Current Image */}
+                                        <img 
+                                          src={imagePreview} 
+                                          alt="Profile" 
+                                          className="w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" 
+                                        />
+                                        
+                                        {/* Hover Overlay Buttons */}
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <Button 
+                                            variant="secondary" 
+                                            size="sm" 
+                                            className="bg-[#FFD700] text-black hover:bg-[#FFD700]/80 h-8 text-xs font-bold"
+                                            onClick={handleImageClick}
+                                          >
+                                            <RefreshCcw className="w-3 h-3 mr-2" /> Replace
+                                          </Button>
+                                          
+                                          {/* Note: Clerk doesn't support deleting image via API easily, so we just remove visual or replace */}
+                                          <Button 
+                                            variant="destructive" 
+                                            size="sm" 
+                                            className="h-8 text-xs bg-red-500/20 text-red-500 hover:bg-red-500/40 border border-red-500/50"
+                                            onClick={handleRemoveImage}
+                                          >
+                                            <Trash2 className="w-3 h-3 mr-2" /> Remove
+                                          </Button>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      /* Placeholder Upload State */
+                                      <div 
+                                        className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-black/40 transition-colors"
+                                        onClick={handleImageClick}
+                                      >
+                                        <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <Upload className="h-6 w-6 text-zinc-400 group-hover:text-[#FFD700]" />
+                                        </div>
+                                        <span className="text-sm text-zinc-500 font-medium">Upload Photo</span>
+                                        <span className="text-[10px] text-zinc-600 mt-1">Max 5MB</span>
+                                      </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* KEYWORDS SECTION (Replaced Suggested Industries) */}
+                        {/* KEYWORDS SECTION */}
                         <div className="mt-8 space-y-4">
                             <div className="space-y-2">
                                 <Label className="text-xs text-zinc-400 uppercase tracking-wider font-bold">Monitor Keywords</Label>
