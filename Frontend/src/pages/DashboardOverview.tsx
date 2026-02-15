@@ -1,8 +1,10 @@
-import { useEffect, useState, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { Link, Outlet } from "react-router-dom";
+// 1. Import useUser hook
+import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -10,298 +12,305 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { KPICard } from "@/components/dashboard/KPICard";
 import {
-  Activity,
-  TrendingUp,
-  Users,
-  MessageSquare,
-  ThumbsUp,
-  AlertCircle,
-  Download,
-  Loader2,
-} from "lucide-react";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { useNavigate } from "react-router-dom";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
-import CreditAlert from "@/components/creditalert";
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  LayoutDashboard,
+  Radio,
+  Clock,
+  Users,
+  FileText,
+  Settings,
+  Search,
+  Menu,
+  Home,
+  ArrowUpCircle,
+  Zap,
+  X,
+  UserCog2,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { NavLink } from "@/components/NavLink";
 
-/* ================= TYPES ================= */
-type Lead = {
-  _id: string;
-  name: string;
-  platform: string;
-  intent: number;
-  status: string;
-  value: number;
-  createdAt: string;
-};
+// Define your API Base URL (Update this port to match your backend)
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"; 
 
-const DashboardOverview = () => {
-  const navigate = useNavigate();
+export const DashboardLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // State for credits
+  const [creditsBalance, setCreditsBalance] = useState<number>(0);
+  const [loadingCredits, setLoadingCredits] = useState(true);
+  
+  // 2. Get the current user data from Clerk
   const { user, isLoaded } = useUser();
-  const dashboardRef = useRef<HTMLDivElement>(null);
 
-  const [range, setRange] = useState<"24h" | "7d" | "30d" | "custom">("7d");
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  /* ================= FETCH REAL-TIME DATA ================= */
+  // 3. Fetch Credits from your Database
   useEffect(() => {
-    const fetchLiveLeads = async () => {
-      if (!isLoaded || !user?.id) return;
-
-      try {
-        setLoading(true);
-        const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
-
-        // We fetch independently to avoid one platform slowing down the other
-        const [redditRes, quoraRes] = await Promise.all([
-          fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
-          fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
-        ]);
-
-        const redditData = await redditRes.json();
-        const quoraData = await quoraRes.json();
-
-        const combined = [
-          ...(redditData.posts || []),
-          ...(quoraData.posts || []),
-        ];
-
-        // Map data using the exact same logic as MonitorStream for consistency
-        const mapped: Lead[] = combined.map((p: any, idx: number) => {
-          const intent = 50 + (idx % 40); 
-          return {
-            _id: String(p.id),
-            name: p.author ?? "Unknown",
-            platform: p.platform || (p.question ? "Quora" : "Reddit"),
-            intent: intent,
-            status: p.replyStatus || "Not Sent",
-            value: 0,
-            createdAt: p.createdAt || new Date().toISOString(),
-          };
-        });
-
-        setLeads(mapped);
-      } catch (err) {
-        console.error("Dashboard Fetch Error:", err);
-      } finally {
-        setLoading(false);
+    const fetchCredits = async () => {
+      if (isLoaded && user) {
+        try {
+          // IMPORTANT: Update /api/leaddiscovery to match your actual route prefix in server.ts
+          const response = await fetch(`${API_BASE_URL}/api/leaddiscovery/user/credits?userId=${user.id}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            // Assuming the DB returns the Current Balance (e.g., 200 remaining)
+            setCreditsBalance(data.credits || 0);
+          } else {
+            console.error("Failed to fetch credits");
+          }
+        } catch (error) {
+          console.error("Error fetching credits:", error);
+        } finally {
+          setLoadingCredits(false);
+        }
       }
     };
 
-    fetchLiveLeads();
-  }, [isLoaded, user?.id]);
+    fetchCredits();
+  }, [isLoaded, user]);
 
-  /* ================= DERIVED DATA (KPIs) ================= */
-  const totalLeads = leads.length;
-  const highIntent = leads.filter((l) => l.intent >= 60).length;
-  const repliesSent = leads.filter((l) => l.status === "Sent").length;
-  const impressions = totalLeads * 3; // Simulated metric
-  const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
+  // 4. Calculate Logic
+  const PLAN_LIMIT = 1000; // Define your plan limit here
+  
+  // If DB stores "Remaining Credits":
+  const remainingPercentage = (creditsBalance / PLAN_LIMIT) * 100;
+  // Used is the inverse
+  const creditPercentageUsed = 100 - remainingPercentage;
 
-  const sentimentData = [
-    { name: "Positive", value: highIntent, color: "#FACC15" }, 
-    { name: "Neutral", value: Math.max(0, totalLeads - highIntent), color: "#4B5563" },
-    { name: "Negative", value: 0, color: "#EF4444" },
-  ];
-
-  const platformStats = Object.values(
-    leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
-      if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
-      acc[l.platform].threads += 1;
-      acc[l.platform].leads += l.intent >= 60 ? 1 : 0;
-      return acc;
-    }, {})
-  );
-
-  const kpiData = [
-    { icon: MessageSquare, label: "TOTAL POST", value: totalLeads.toString() },
-    { icon: AlertCircle, label: "HIGH-INTENT (60)", value: highIntent.toString() },
-    { icon: ThumbsUp, label: "REPLY SENT", value: repliesSent.toString() },
-    { icon: Users, label: "IMPRESSIONS", value: impressions.toString() },
-    { icon: TrendingUp, label: "ENGAGE→LEAD %", value: `${engageRate}%` },
-    { icon: Activity, label: "AVG REPLY TIME", value: "—" },
-  ];
-
-  /* ================= EXPORT FUNCTIONS ================= */
-  const exportPDF = async () => {
-    if (!dashboardRef.current) return;
-    try {
-      const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("dashboard-overview.pdf");
-    } catch (e) {
-      console.error("Failed to export PDF", e);
-    }
+  const getStatusColor = () => {
+    if (remainingPercentage <= 20) return "text-red-500";
+    if (remainingPercentage <= 50) return "text-yellow-500";
+    return "text-green-500";
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-10 w-10 animate-spin text-yellow-400 mx-auto" />
-          <p className="text-muted-foreground animate-pulse">Synchronizing live stream data...</p>
-        </div>
-      </div>
-    );
-  }
+  const getBarColor = () => {
+    if (remainingPercentage <= 20) return "bg-red-500";
+    if (remainingPercentage <= 50) return "bg-yellow-500";
+    return "bg-green-500";
+  };
+
+  const navItems = [
+    { icon: Home, label: "Home", path: "/" },
+    { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
+    { icon: Radio, label: "Monitor Stream", path: "/monitor-stream" },
+    // { icon: Clock, label: "Comment Timeline", path: "/comment-timeline" },
+    { icon: Users, label: "Leads & Tracking", path: "/leads-pipeline" },
+    { icon: FileText, label: "Reports", path: "/reports" },
+    { icon: UserCog2, label: "User Profile", path: "/user-profile" },
+  ];
 
   return (
-    <div ref={dashboardRef} className="p-4 md:p-8 space-y-6 bg-background min-h-screen">
-      {/* HEADER */}
-      <div>
-        <CreditAlert/>
-      </div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-1">Dashboard Overview</h1>
-          <p className="text-sm text-muted-foreground">Real-time analytics and metrics</p>
-        </div>
+    <div className="min-h-screen bg-background flex overflow-x-hidden">
+      {/* MOBILE OVERLAY */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        <div className="flex flex-wrap gap-2">
-          <Select value={range} onValueChange={(v: any) => setRange(v)}>
-            <SelectTrigger className="w-[120px] bg-card border-muted">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">Last 24h</SelectItem>
-              <SelectItem value="7d">Last 7d</SelectItem>
-              <SelectItem value="30d">Last 30d</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button 
-            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold"
-            onClick={exportPDF}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {kpiData.map((kpi, index) => (
-          <KPICard key={index} {...kpi} />
-        ))}
-      </div>
-
-      {/* CHARTS ROW 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-        <Card className="p-4 md:p-6 bg-card border-muted">
-          <h3 className="text-lg font-bold mb-4 text-white">Sentiment Analysis</h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={sentimentData} 
-                  dataKey="value" 
-                  innerRadius={60} 
-                  outerRadius={80} 
-                  paddingAngle={5}
-                >
-                  {sentimentData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                </Pie>
-                <Tooltip 
-                   contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-4 md:p-6 bg-card border-muted">
-          <h3 className="text-lg font-bold mb-4 text-white">Platform Performance</h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={platformStats}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
-                <XAxis dataKey="platform" fontSize={12} tick={{fill: '#9ca3af'}} />
-                <YAxis fontSize={12} tick={{fill: '#9ca3af'}} />
-                <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                />
-                <Legend />
-                <Bar dataKey="threads" name="Total Posts" fill="#FACC15" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="High Intent" fill="#4B5563" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      {/* RECENT HIGH-INTENT LEADS */}
-      <Card className="p-4 md:p-6 bg-card border-muted">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-white">Recent High-Intent Leads</h3>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/monitor-stream")} className="text-yellow-400">
-            View All
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {leads
-            .filter((l) => l.intent >= 60)
-            .sort((a, b) => b.intent - a.intent)
-            .slice(0, 5)
-            .map((lead) => (
-              <div 
-                key={lead._id} 
-                className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border border-muted bg-background/40 hover:border-yellow-400/50 transition-all"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="bg-yellow-400 text-black font-bold px-2 py-1 rounded text-sm min-w-[35px] text-center">
-                    {lead.intent}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate text-white">{lead.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      via {lead.platform} • {new Date(lead.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
-                  className="w-full sm:w-auto"
-                  onClick={() => navigate("/monitor-stream")}
-                >
-                  Engage
-                </Button>
-              </div>
-            ))}
-          {leads.filter(l => l.intent >= 80).length === 0 && (
-            <div className="text-center py-10 text-muted-foreground border border-dashed rounded-lg">
-              No high-intent leads detected yet. Run the scraper in Monitor Stream to start.
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed left-0 top-0 h-screen z-50 bg-card border-r border-border transition-transform duration-300 ease-in-out flex flex-col
+          ${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-20"}
+        `}
+      >
+        <div className="p-4 border-b border-border flex items-center justify-between pb-6">
+          {sidebarOpen && (
+            // 3. Display the User's Name here
+            <div className="flex flex-col">
+               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                 Welcome back,
+               </span>
+               <h1 className="text-2xl font-bold text-amber-400 truncate max-w-[180px]" title={user?.fullName || ""}>
+                 {isLoaded ? (user?.firstName || "User") : "..."}
+               </h1>
             </div>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:flex"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
         </div>
-      </Card>
+
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <TooltipProvider delayDuration={0}>
+            {navItems.map((item) => (
+              <Tooltip key={item.path}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={item.path}
+                    end={item.path === "/dashboard"}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors ${
+                      !sidebarOpen ? "lg:justify-center" : ""
+                    }`}
+                    activeClassName="bg-muted text-primary font-medium"
+                    onClick={() => {
+                      if (window.innerWidth < 1024) setSidebarOpen(false);
+                    }}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    {sidebarOpen && <span>{item.label}</span>}
+                  </NavLink>
+                </TooltipTrigger>
+                
+                {!sidebarOpen && (
+                  <TooltipContent side="right" className="ml-2 font-medium">
+                    {item.label}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
+          </TooltipProvider>
+        </nav>
+
+        <div
+          className={`p-4 border-t border-border mt-auto flex flex-col gap-6 ${
+            !sidebarOpen ? "lg:items-center" : ""
+          }`}
+        >
+          <Link to="/pricings" className="w-full flex justify-center">
+            <Button
+              variant="default"
+              className={`bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-dashed border border-primary/50 transition-all ${
+                sidebarOpen
+                  ? "w-full justify-start gap-3"
+                  : "h-10 w-10 p-0 justify-center rounded-full"
+              }`}
+            >
+              <ArrowUpCircle className="h-5 w-5 flex-shrink-0" />
+              {sidebarOpen && <span className="font-semibold">Upgrade Plan</span>}
+            </Button>
+          </Link>
+
+          <div className={`w-full flex flex-col items-center ${sidebarOpen ? "px-2" : ""}`}>
+            {sidebarOpen ? (
+              <div className="w-full space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground font-medium flex items-center gap-1">
+                    <Zap className={`h-3 w-3 fill-current ${getStatusColor()}`} /> Credits
+                  </span>
+                  <span className={`font-bold ${getStatusColor()}`}>
+                    {loadingCredits ? "..." : Math.round(remainingPercentage)}%
+                  </span>
+                </div>
+                <Progress
+                  value={loadingCredits ? 0 : creditPercentageUsed}
+                  className={`h-1.5 bg-muted [&>div]:${getBarColor()}`}
+                />
+              </div>
+            ) : (
+              <div className="relative h-10 w-10 flex items-center justify-center">
+                <svg className="h-full w-full transform -rotate-90">
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    className="text-muted/20"
+                  />
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    strokeDasharray={100}
+                    strokeDashoffset={100 - (loadingCredits ? 0 : remainingPercentage)}
+                    strokeLinecap="round"
+                    className={`transition-all duration-500 ${getStatusColor()}`}
+                  />
+                </svg>
+                <Zap className={`absolute h-3 w-3 fill-current ${getStatusColor()}`} />
+              </div>
+            )}
+          </div>
+
+          <div
+            className={`flex items-center w-full ${
+              sidebarOpen ? "gap-3 px-2" : "justify-center"
+            }`}
+          >
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }}
+            />
+            {sidebarOpen && (
+              <div className="flex flex-col overflow-hidden">
+                {/* 4. Update the account footer as well */}
+                <p className="text-sm font-medium text-foreground truncate">
+                    {user?.fullName || "My Account"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                    {user?.primaryEmailAddress?.emailAddress || "Manage Settings"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${
+          sidebarOpen ? "lg:ml-64" : "lg:ml-20"
+        }`}
+      >
+        <header className="bg-card border-b border-border px-4 lg:px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              {/* 5. Updated Header Title */}
+              <h2 className="text-lg font-semibold text-foreground  sm:block">
+                LEADEQUATOR
+              </h2>
+              <Badge variant="secondary" className="bg-primary/20 text-primary">
+                Pilot
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-4 flex-1 max-w-2xl justify-end">
+              <div className="relative flex-1 hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input placeholder="Search comments..." className="pl-10 bg-background" />
+              </div>
+              <Select defaultValue="utc">
+                <SelectTrigger className="w-24 md:w-32 bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="utc">UTC</SelectItem>
+                  <SelectItem value="pst">PST.</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
-
-export default DashboardOverview;

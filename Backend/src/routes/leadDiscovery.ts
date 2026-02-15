@@ -1,12 +1,13 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db.js";
+// 1. Import usersTable here
 import { 
   buyerKeywords, 
   redditPosts, 
   quoraPosts, 
-  usersTable, // <--- 1. IMPORT THIS
-  quoraAiReplies,
-  redditAiReplies
+  usersTable, 
+  quoraAiReplies, 
+  redditAiReplies 
 } from "../config/schema.js";
 import { eq, desc } from "drizzle-orm";
 
@@ -74,49 +75,48 @@ router.get("/keywords", async (req: Request, res: Response) => {
    RUN REDDIT SCRAPING (TRIGGER)
 ================================ */
 router.post("/reddit/run", async (req: Request, res: Response) => {
-    // ... (Your existing code)
-    try {
-        const { userId, forceLogin } = req.body as {
-          userId?: string;
-          forceLogin?: boolean;
-        };
-    
-        if (!userId || typeof userId !== "string") {
-          return res.status(400).json({ error: "Missing userId" });
-        }
-    
-        const rows = await db
-          .select()
-          .from(buyerKeywords)
-          .where(eq(buyerKeywords.userId, userId));
-    
-        const keywords = rows.map((r) => r.keyword);
-    
-        if (!keywords.length) {
-          return res.status(400).json({ error: "No buyer keywords found" });
-        }
-    
-        // 🔥 Fire & forget AI service (no change)
-        fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            keywords,
-            force_login: !!forceLogin,
-          }),
-        }).catch((err) => {
-          console.error("AI SERVICE REDDIT ERROR:", err);
-        });
-    
-        return res.json({
-          success: true,
-          message: "Reddit scraping triggered successfully",
-        });
-      } catch (err) {
-        console.error("REDDIT RUN ERROR:", err);
-        return res.status(500).json({ error: "Reddit scraping failed" });
-      }
+  try {
+    const { userId, forceLogin } = req.body as {
+      userId?: string;
+      forceLogin?: boolean;
+    };
+
+    if (!userId || typeof userId !== "string") {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    const rows = await db
+      .select()
+      .from(buyerKeywords)
+      .where(eq(buyerKeywords.userId, userId));
+
+    const keywords = rows.map((r) => r.keyword);
+
+    if (!keywords.length) {
+      return res.status(400).json({ error: "No buyer keywords found" });
+    }
+
+    // 🔥 Fire & forget AI service (no change)
+    fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        keywords,
+        force_login: !!forceLogin,
+      }),
+    }).catch((err) => {
+      console.error("AI SERVICE REDDIT ERROR:", err);
+    });
+
+    return res.json({
+      success: true,
+      message: "Reddit scraping triggered successfully",
+    });
+  } catch (err) {
+    console.error("REDDIT RUN ERROR:", err);
+    return res.status(500).json({ error: "Reddit scraping failed" });
+  }
 });
 
 /* ===============================
@@ -237,8 +237,6 @@ router.post("/quora/run", async (req: Request, res: Response) => {
   }
 });
 
-
-
 /* ===============================
    FETCH QUORA POSTS (USER SAFE)
 ================================ */
@@ -258,7 +256,7 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
         userId: quoraPosts.userId,
         author: quoraPosts.author,
         question: quoraPosts.question,
-        url: quoraPosts.url, // Ensure this exists in your quoraPosts schema
+        url: quoraPosts.url,
         createdAt: quoraPosts.createdAt,
         // Select AI reply fields
         replyOption1: quoraAiReplies.replyOption1,
@@ -284,7 +282,7 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
 });
 
 /* ===============================
-   RUN BOTH SCRAPERS (TRANSCRIPTPER)
+   RUN BOTH SCRAPERS
 ================================ */
 router.post("/run", async (req: Request, res: Response) => {
   try {
