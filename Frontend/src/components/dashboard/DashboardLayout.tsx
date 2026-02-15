@@ -265,7 +265,7 @@ export const DashboardLayout = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="utc">UTC</SelectItem>
-                  <SelectItem value="pst">PST</SelectItem>
+                  <SelectItem value="pst">PST.</SelectItem>
                 </SelectContent>
               </Select>
             </div>
