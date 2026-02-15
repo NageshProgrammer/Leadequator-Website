@@ -11,7 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+// 👇 IMPORT THE HOOK
+import { useCredits } from "@/context/CreditContext";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === "development" ? "http://localhost:5000" : "https://api.leadequator.live");
 
 /* --- UNIFIED LOGS FOR DISCOVERY --- */
 const DISCOVERY_LOGS = [
@@ -47,9 +50,8 @@ export default function LeadDiscovery() {
   const [quoraPosts, setQuoraPosts] = useState<QuoraPost[]>([]);
   const [loadingKeywords, setLoadingKeywords] = useState(true);
   
-  // --- CREDITS STATE ---
-  const [credits, setCredits] = useState<number>(0);
-  const [loadingCredits, setLoadingCredits] = useState(true);
+  // 👇 USE CONTEXT INSTEAD OF LOCAL STATE
+  const { credits, loading: loadingCredits, refreshCredits } = useCredits();
 
   // --- SCANNER STATE ---
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
@@ -87,24 +89,6 @@ export default function LeadDiscovery() {
   }, [scanStep]);
 
   /* --- FETCH DATA --- */
-  const loadCredits = useCallback(async () => {
-    if (!userId) return;
-    setLoadingCredits(true);
-    try {
-        // Assuming you have an endpoint to get user details/credits
-        // Note: Check your server.ts route for the exact path, usually /api/leaddiscovery/user/credits
-        const res = await fetch(`${API_BASE}/api/leaddiscovery/user/credits?userId=${userId}`);
-        const data = await res.json();
-        if (data.success) {
-            setCredits(data.credits);
-        }
-    } catch (e) {
-        console.error("Error loading credits:", e);
-    } finally {
-        setLoadingCredits(false);
-    }
-  }, [userId]);
-
   const loadKeywords = useCallback(async () => {
     setLoadingKeywords(true);
     try {
@@ -149,6 +133,8 @@ export default function LeadDiscovery() {
   /* --- MAIN ACTION --- */
   const handleDiscovery = async () => {
     if (!userId) { setError("User ID missing. Please re-login."); return; }
+    
+    // Check credits from Context
     if (credits < 2) { setError("Insufficient credits. You need at least 2 credits to run the scraper."); return; }
     
     setIsScanModalOpen(true);
@@ -160,7 +146,7 @@ export default function LeadDiscovery() {
         const headers = { "Content-Type": "application/json" };
         
         // Trigger both scrapers in parallel
-        // The BACKEND should handle the counting of new leads and deducting credits
+        // The BACKEND handles deducting credits based on results
         const redditReq = fetch(`${API_BASE}/api/lead-discovery/reddit/run`, {
             method: "POST", headers,
             body: JSON.stringify({ userId, forceLogin: true }),
@@ -177,17 +163,17 @@ export default function LeadDiscovery() {
         console.error("Discovery error:", err);
         setError("Scraping failed. Please try again.");
     } finally {
-        // Wait for the simulated scan visualization to finish or backend to process
         setTimeout(() => {
             setScanStep("success");
             setIsRunning(false);
             
-            // Refresh Data
+            // Refresh Data Tables
             loadPosts();
             loadQuoraPosts();
             
-            // Refresh Credits to show deduction
-            loadCredits();
+            // 👇 REFRESH CREDITS IN SIDEBAR IMMEDIATELY
+            refreshCredits();
+            
         }, 10000); 
     }
   };
@@ -196,8 +182,8 @@ export default function LeadDiscovery() {
     loadKeywords();
     loadPosts();
     loadQuoraPosts();
-    loadCredits();
-  }, [loadKeywords, loadPosts, loadQuoraPosts, loadCredits]);
+    // We don't need loadCredits() here because Context handles it on mount
+  }, [loadKeywords, loadPosts, loadQuoraPosts]);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8 font-sans selection:bg-[#FFD700] selection:text-black">
@@ -214,7 +200,7 @@ export default function LeadDiscovery() {
             </p>
             </div>
 
-            {/* Credits Badge */}
+            {/* Credits Badge (Using Context Data) */}
             <Card className="bg-zinc-900 border-zinc-800 p-3 px-5 flex items-center gap-3 shadow-[0_0_10px_rgba(255,215,0,0.1)]">
                 <div className="p-2 bg-[#FFD700]/10 rounded-full">
                     <Zap className="w-5 h-5 text-[#FFD700] fill-current" />

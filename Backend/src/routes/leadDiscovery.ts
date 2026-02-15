@@ -90,8 +90,8 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
     const keywords = rows.map((r) => r.keyword);
     if (!keywords.length) return res.status(400).json({ error: "No buyer keywords found" });
 
-    // 3. Mark Start Time
-    const startTime = new Date();
+    // 3. Mark Start Time (Buffer: 10s ago)
+    const startTime = new Date(Date.now() - 10000);
 
     // 4. Run AI Service (Wait for completion)
     const aiResponse = await fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
@@ -103,7 +103,6 @@ router.post("/reddit/run", async (req: Request, res: Response) => {
     if (!aiResponse.ok) console.error("Reddit scraper service reported an issue.");
 
     // 5. Count New Posts & Deduct Credits
-    // We count posts created AFTER our startTime
     const [countResult] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(redditPosts)
@@ -156,8 +155,8 @@ router.post("/quora/run", async (req: Request, res: Response) => {
     const keywords = rows.map((r) => r.keyword);
     if (!keywords.length) return res.status(400).json({ error: "No buyer keywords found" });
 
-    // 3. Mark Start Time
-    const startTime = new Date();
+    // 3. Mark Start Time (Buffer: 10s ago)
+    const startTime = new Date(Date.now() - 10000);
 
     // 4. Run AI Service
     const aiResponse = await fetch(`${process.env.AI_SERVICE_URL}/quora/run`, {
@@ -221,11 +220,11 @@ router.post("/run", async (req: Request, res: Response) => {
     const keywords = rows.map((r) => r.keyword);
     if (!keywords.length) return res.status(400).json({ error: "No buyer keywords found" });
 
-    // 3. Mark Start Time
-    const startTime = new Date();
+    // 3. Mark Start Time (Buffer: 10s ago)
+    const startTime = new Date(Date.now() - 10000);
 
     // 4. Run Both Services in Parallel (Wait for both)
-    const [redditRes, quoraRes] = await Promise.allSettled([
+    await Promise.allSettled([
       fetch(`${process.env.AI_SERVICE_URL}/reddit/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
