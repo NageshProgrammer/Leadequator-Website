@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 
 import { db } from "./db.js";
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
+import paymentRoutes from "./routes/payment";
+
 
 import {
   onboardingProgress,
@@ -39,6 +41,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api", paymentRoutes);
 
 /* ===============================
    HEALTH
