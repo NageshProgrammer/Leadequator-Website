@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Check, Star, IndianRupee, DollarSign, LogIn, ArrowRight } from "lucide-react"; // Added ArrowRight
+import { Check, Star, IndianRupee, DollarSign, LogIn } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
@@ -223,22 +223,24 @@ export default function CongestedPricing() {
                 <p className="text-zinc-500 font-bold tracking-wider">
                   {plan.name}
                 </p>
-                <div className="mt-4 flex items-baseline gap-1">
+                <div className="mt-4 flex items-baseline gap-1 justify-center">
                   {isCustom ? (
                     <span className="text-4xl font-bold text-white">
                       Custom
                     </span>
                   ) : (
                     <>
-                      <span className="text-5xl font-bold text-white">
-                        <NumberFlow
-                          value={Number(currentPrice)}
-                          format={{
-                            style: "currency",
-                            currency: currency,
-                            minimumFractionDigits: 0,
-                          }}
-                        />
+                      <span className="text-5xl font-bold text-white flex items-center justify-center gap-1">
+                         {/* FIX: Manually render symbol + NumberFlow for cleaner look */}
+                         <span>{currency === "USD" ? "$" : "₹"}</span>
+                         <NumberFlow
+                           value={Number(currentPrice)}
+                           format={{
+                             // Disable automatic currency formatting to avoid "US$"
+                             style: "decimal", 
+                             minimumFractionDigits: 0,
+                           }}
+                         />
                       </span>
                       <span className="text-zinc-500 text-sm">
                         /{isMonthly ? "mo" : "mo"}
@@ -254,7 +256,7 @@ export default function CongestedPricing() {
                       : "billed annually"}
                 </p>
 
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4 mb-8 lg:pl-7">
                   {plan.features.map((feature, idx) => (
                     <li
                       key={idx}
@@ -268,9 +270,8 @@ export default function CongestedPricing() {
               </div>
 
               <div className="mt-auto pt-6 border-t border-zinc-900">
-                {/* 3. CONDITIONAL BUTTON LOGIC */}
+                {/* BUTTON LOGIC */}
                 {isCustom ? (
-                  // ENTERPRISE: Always Show Contact Sales
                   <Link
                     to="/contact"
                     className={cn(
@@ -281,7 +282,6 @@ export default function CongestedPricing() {
                     Contact Sales
                   </Link>
                 ) : !isSignedIn ? (
-                    // NOT SIGNED IN: Show Dynamic "Free Trial" Button
                    <Link
                      to="/sign-in"
                      className={cn(
@@ -289,7 +289,6 @@ export default function CongestedPricing() {
                        "w-full py-6 text-lg bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2",
                      )}
                    >
-                     {/* Dynamic Text Logic */}
                      <LogIn className="w-5 h-5" />
                      {plan.name === "PILOT" 
                         ? "Start 14-Day Free Trial" 
@@ -297,7 +296,6 @@ export default function CongestedPricing() {
                      }
                    </Link>
                 ) : (
-                  // SIGNED IN: Show PayPal
                   <div className="z-0">
                     <PayPalButtons
                       style={{
@@ -308,7 +306,6 @@ export default function CongestedPricing() {
                       }}
                       forceReRender={[currentPrice, isMonthly, currency]}
                       createOrder={(data, actions) => {
-                        // Exchange rate logic (Method 1)
                         const EXCHANGE_RATE = 84;
                         let chargeAmount = String(currentPrice);
                         let chargeCurrency = currency;
@@ -338,7 +335,6 @@ export default function CongestedPricing() {
 
                           const details = await actions.order.capture();
                           
-                          // Backend Verification (with Skip logic for testing)
                           try {
                               const response = await fetch("http://localhost:5000/api/verify-payment", {
                                   method: "POST",
