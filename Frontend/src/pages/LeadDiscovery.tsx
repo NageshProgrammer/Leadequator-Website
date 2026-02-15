@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Clock, ExternalLink, Hash, Loader2, Play, CheckCircle2, Minimize2, AlertCircle, RefreshCw } from "lucide-react";
+import { Clock, ExternalLink, Hash, Loader2, Play, CheckCircle2, Minimize2, AlertCircle, RefreshCw, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +47,10 @@ export default function LeadDiscovery() {
   const [quoraPosts, setQuoraPosts] = useState<QuoraPost[]>([]);
   const [loadingKeywords, setLoadingKeywords] = useState(true);
   
+  // --- CREDITS STATE ---
+  const [credits, setCredits] = useState<number>(0);
+  const [loadingCredits, setLoadingCredits] = useState(true);
+
   // --- SCANNER STATE ---
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [scanStep, setScanStep] = useState<"idle" | "scanning" | "success">("idle");
@@ -59,7 +63,6 @@ export default function LeadDiscovery() {
 
   // Retrieve Credentials
   const userId = localStorage.getItem("userId");
-  // IMPORTANT: Ensure you are saving 'userEmail' in localStorage during login/signup!
   const userEmail = localStorage.getItem("userEmail"); 
 
   /* --- ANIMATION LOOP --- */
@@ -84,23 +87,37 @@ export default function LeadDiscovery() {
   }, [scanStep]);
 
   /* --- FETCH DATA --- */
+  const loadCredits = useCallback(async () => {
+    if (!userId) return;
+    setLoadingCredits(true);
+    try {
+        // Assuming you have an endpoint to get user details/credits
+        // Note: Check your server.ts route for the exact path, usually /api/leaddiscovery/user/credits
+        const res = await fetch(`${API_BASE}/api/leaddiscovery/user/credits?userId=${userId}`);
+        const data = await res.json();
+        if (data.success) {
+            setCredits(data.credits);
+        }
+    } catch (e) {
+        console.error("Error loading credits:", e);
+    } finally {
+        setLoadingCredits(false);
+    }
+  }, [userId]);
+
   const loadKeywords = useCallback(async () => {
     setLoadingKeywords(true);
     try {
-      // Logic: If we have an email, use it. Otherwise fallback to userId.
       let queryParam = "";
       if (userEmail) queryParam = `email=${encodeURIComponent(userEmail)}`;
       else if (userId) queryParam = `userId=${userId}`;
       else {
-        // No credentials found
         setLoadingKeywords(false);
         return;
       }
 
       const res = await fetch(`${API_BASE}/api/lead-discovery/keywords?${queryParam}`);
-      
       if (!res.ok) throw new Error("Failed to fetch keywords");
-      
       const data = await res.json();
       setBuyerKeywords(data.keywords || []); 
     } catch (e) {
@@ -132,6 +149,7 @@ export default function LeadDiscovery() {
   /* --- MAIN ACTION --- */
   const handleDiscovery = async () => {
     if (!userId) { setError("User ID missing. Please re-login."); return; }
+    if (credits < 2) { setError("Insufficient credits. You need at least 2 credits to run the scraper."); return; }
     
     setIsScanModalOpen(true);
     setScanStep("scanning");
@@ -142,6 +160,7 @@ export default function LeadDiscovery() {
         const headers = { "Content-Type": "application/json" };
         
         // Trigger both scrapers in parallel
+        // The BACKEND should handle the counting of new leads and deducting credits
         const redditReq = fetch(`${API_BASE}/api/lead-discovery/reddit/run`, {
             method: "POST", headers,
             body: JSON.stringify({ userId, forceLogin: true }),
@@ -156,12 +175,19 @@ export default function LeadDiscovery() {
         
     } catch (err: any) {
         console.error("Discovery error:", err);
+        setError("Scraping failed. Please try again.");
     } finally {
+        // Wait for the simulated scan visualization to finish or backend to process
         setTimeout(() => {
             setScanStep("success");
             setIsRunning(false);
+            
+            // Refresh Data
             loadPosts();
             loadQuoraPosts();
+            
+            // Refresh Credits to show deduction
+            loadCredits();
         }, 10000); 
     }
   };
@@ -170,20 +196,38 @@ export default function LeadDiscovery() {
     loadKeywords();
     loadPosts();
     loadQuoraPosts();
-  }, [loadKeywords, loadPosts, loadQuoraPosts]);
+    loadCredits();
+  }, [loadKeywords, loadPosts, loadQuoraPosts, loadCredits]);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8 font-sans selection:bg-[#FFD700] selection:text-black">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
-            Lead <span className="text-[#FFD700] drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]">Discovery</span>
-          </h1>
-          <p className="text-zinc-400 text-sm md:text-base max-w-2xl">
-            Deploy autonomous agents to scrape high-intent leads using your configured keywords.
-          </p>
+        {/* Header with Credits Display */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="space-y-2">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+                Lead <span className="text-[#FFD700] drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]">Discovery</span>
+            </h1>
+            <p className="text-zinc-400 text-sm md:text-base max-w-2xl">
+                Deploy autonomous agents to scrape high-intent leads using your configured keywords.
+            </p>
+            </div>
+
+            {/* Credits Badge */}
+            <Card className="bg-zinc-900 border-zinc-800 p-3 px-5 flex items-center gap-3 shadow-[0_0_10px_rgba(255,215,0,0.1)]">
+                <div className="p-2 bg-[#FFD700]/10 rounded-full">
+                    <Zap className="w-5 h-5 text-[#FFD700] fill-current" />
+                </div>
+                <div>
+                    <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Credits</p>
+                    {loadingCredits ? (
+                        <div className="h-6 w-12 bg-zinc-800 animate-pulse rounded mt-1" />
+                    ) : (
+                        <p className="text-xl font-bold text-white">{credits}</p>
+                    )}
+                </div>
+            </Card>
         </div>
 
         {/* KEYWORDS SECTION */}
@@ -227,11 +271,11 @@ export default function LeadDiscovery() {
         </Card>
 
         {/* CENTERED ACTION BUTTON */}
-        <div className="flex justify-center py-6">
+        <div className="flex flex-col items-center gap-3 py-6">
           <Button 
             onClick={handleDiscovery} 
-            disabled={isRunning}
-            className="w-full sm:w-80 h-16 bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-bold text-lg rounded-xl shadow-[0_0_25px_rgba(255,215,0,0.2)] transition-all active:scale-[0.98] relative overflow-hidden group"
+            disabled={isRunning || credits < 2}
+            className="w-full sm:w-80 h-16 bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-bold text-lg rounded-xl shadow-[0_0_25px_rgba(255,215,0,0.2)] transition-all active:scale-[0.98] relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {/* Shine Effect */}
             <div className="absolute inset-0 bg-white/20 translate-y-full skew-y-12 group-hover:translate-y-[-150%] transition-transform duration-700" />
@@ -248,6 +292,7 @@ export default function LeadDiscovery() {
                 </>
             )}
           </Button>
+          <p className="text-xs text-zinc-500">Cost: 2 Credits per lead found</p>
         </div>
 
         {/* SCANNER MODAL */}
@@ -302,7 +347,8 @@ export default function LeadDiscovery() {
                         </div>
                         <h3 className="text-2xl font-bold text-white">Leads Extracted!</h3>
                         <p className="text-zinc-400 max-w-xs mx-auto text-sm leading-relaxed">
-                            The discovery process has successfully identified potential high-intent leads from multiple platforms.
+                            The discovery process has successfully identified potential high-intent leads. 
+                            <br/><span className="text-[#FFD700]">Credits have been updated.</span>
                         </p>
                         <Button onClick={() => setIsScanModalOpen(false)} className="w-full bg-white text-black hover:bg-zinc-200 mt-4 h-12 text-base font-semibold">
                             View Results
@@ -350,7 +396,7 @@ export default function LeadDiscovery() {
                   <p className="text-zinc-200 text-sm leading-relaxed line-clamp-3">{p.text}</p>
                 </div>
                 <div className="pt-4 mt-auto">
-                   <Button variant="outline" className="w-full border-zinc-700 bg-transparent hover:bg-[#FFD700] hover:text-black transition-all text-xs h-9" onClick={() => window.open(p.url, "_blank")}>
+                    <Button variant="outline" className="w-full border-zinc-700 bg-transparent hover:bg-[#FFD700] hover:text-black transition-all text-xs h-9" onClick={() => window.open(p.url, "_blank")}>
                     View Discussion <ExternalLink className="ml-2 w-3 h-3" />
                   </Button>
                 </div>
