@@ -38,7 +38,7 @@ const CreditAlert = () => {
                   credits
                 )} credits
               </span>{' '}
-              remaining. Your campaigns {credits === 0 ? "have paused." : "may pause soon."}
+              remaining. Your {credits === 0 ? "credits are exhausted." : "credits may exhaust soon."}
             </p>
           </div>
         </div>
