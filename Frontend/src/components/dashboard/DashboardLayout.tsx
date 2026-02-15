@@ -83,7 +83,7 @@ export const DashboardLayout = () => {
 
   // 4. Calculate Logic
   // Define your total plan limit (e.g., 1000 credits per month)
-  const TOTAL_PLAN_CREDITS = 1000; 
+  const TOTAL_PLAN_CREDITS = 100; 
 
   // Calculate percentages
   // If 'credits' is the BALANCE (what they have left):
