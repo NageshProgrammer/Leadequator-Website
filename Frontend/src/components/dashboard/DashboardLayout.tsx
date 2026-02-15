@@ -38,7 +38,9 @@ import { NavLink } from "@/components/NavLink";
 
 // Define your API Base URL
 // If you are running locally, this is usually http://localhost:3000
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"; 
+const API_BASE = import.meta.env.MODE === "development" 
+  ? "http://localhost:5000" 
+  : "https://api.leadequator.live"; 
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

@@ -288,7 +288,7 @@ app.post("/api/users/sync", async (req, res) => {
       id: clerkId,
       email,
       name,
-      credits: 20,
+      credits: 100,
     });
   }
 
