@@ -292,7 +292,7 @@ export default function CongestedPricing() {
                      <LogIn className="w-5 h-5" />
                      {plan.name === "PILOT" 
                         ? "Start 14-Day Free Trial" 
-                        : "Start Free Trial"
+                        : "Subscribe To Scale"
                      }
                    </Link>
                 ) : (
