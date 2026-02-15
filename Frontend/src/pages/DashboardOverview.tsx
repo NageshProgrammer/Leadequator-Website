@@ -36,14 +36,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 
-// Define your API Base URL (Update this port to match your backend)
+// Define your API Base URL
+// If you are running locally, this is usually http://localhost:3000
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"; 
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // State for credits
-  const [creditsBalance, setCreditsBalance] = useState<number>(0);
+  // State for credits logic
+  const [credits, setCredits] = useState<number>(0);
   const [loadingCredits, setLoadingCredits] = useState(true);
   
   // 2. Get the current user data from Clerk
@@ -54,13 +55,14 @@ export const DashboardLayout = () => {
     const fetchCredits = async () => {
       if (isLoaded && user) {
         try {
-          // IMPORTANT: Update /api/leaddiscovery to match your actual route prefix in server.ts
-          const response = await fetch(`${API_BASE_URL}/api/leaddiscovery/user/credits?userId=${user.id}`);
+          // IMPORTANT: Check your server.ts to see where you mounted the leaddiscovery router.
+          // If you mounted it at app.use('/api', leadDiscoveryRouter), then the path is /api/user/credits
+          const response = await fetch(`${API_BASE_URL}/api/user/credits?userId=${user.id}`);
           
           if (response.ok) {
             const data = await response.json();
-            // Assuming the DB returns the Current Balance (e.g., 200 remaining)
-            setCreditsBalance(data.credits || 0);
+            // Assuming the DB returns the Current Balance (e.g., 200)
+            setCredits(data.credits || 0);
           } else {
             console.error("Failed to fetch credits");
           }
@@ -76,13 +78,16 @@ export const DashboardLayout = () => {
   }, [isLoaded, user]);
 
   // 4. Calculate Logic
-  const PLAN_LIMIT = 1000; // Define your plan limit here
-  
-  // If DB stores "Remaining Credits":
-  const remainingPercentage = (creditsBalance / PLAN_LIMIT) * 100;
-  // Used is the inverse
-  const creditPercentageUsed = 100 - remainingPercentage;
+  // Define your total plan limit (e.g., 1000 credits per month)
+  const TOTAL_PLAN_CREDITS = 1000; 
 
+  // Calculate percentages
+  // If 'credits' is the BALANCE (what they have left):
+  const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
+  // If you want to show how much is used:
+  const usedPercentage = 100 - remainingPercentage;
+
+  // Helper for colors based on remaining balance
   const getStatusColor = () => {
     if (remainingPercentage <= 20) return "text-red-500";
     if (remainingPercentage <= 50) return "text-yellow-500";
@@ -123,7 +128,7 @@ export const DashboardLayout = () => {
       >
         <div className="p-4 border-b border-border flex items-center justify-between pb-6">
           {sidebarOpen && (
-            // 3. Display the User's Name here
+            // Display the User's Name here
             <div className="flex flex-col">
                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                  Welcome back,
@@ -193,6 +198,7 @@ export const DashboardLayout = () => {
             </Button>
           </Link>
 
+          {/* CREDITS SECTION */}
           <div className={`w-full flex flex-col items-center ${sidebarOpen ? "px-2" : ""}`}>
             {sidebarOpen ? (
               <div className="w-full space-y-2">
@@ -204,10 +210,14 @@ export const DashboardLayout = () => {
                     {loadingCredits ? "..." : Math.round(remainingPercentage)}%
                   </span>
                 </div>
+                {/* Progress bar shows how much is USED (inverse of remaining) */}
                 <Progress
-                  value={loadingCredits ? 0 : creditPercentageUsed}
+                  value={loadingCredits ? 0 : usedPercentage}
                   className={`h-1.5 bg-muted [&>div]:${getBarColor()}`}
                 />
+                <div className="text-[10px] text-muted-foreground text-right">
+                   {credits} / {TOTAL_PLAN_CREDITS} remaining
+                </div>
               </div>
             ) : (
               <div className="relative h-10 w-10 flex items-center justify-center">
@@ -229,6 +239,7 @@ export const DashboardLayout = () => {
                     strokeWidth="3"
                     fill="transparent"
                     strokeDasharray={100}
+                    // Calculate offset for circular progress
                     strokeDashoffset={100 - (loadingCredits ? 0 : remainingPercentage)}
                     strokeLinecap="round"
                     className={`transition-all duration-500 ${getStatusColor()}`}
@@ -250,7 +261,7 @@ export const DashboardLayout = () => {
             />
             {sidebarOpen && (
               <div className="flex flex-col overflow-hidden">
-                {/* 4. Update the account footer as well */}
+                {/* Update the account footer */}
                 <p className="text-sm font-medium text-foreground truncate">
                     {user?.fullName || "My Account"}
                 </p>
@@ -280,8 +291,8 @@ export const DashboardLayout = () => {
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              {/* 5. Updated Header Title */}
-              <h2 className="text-lg font-semibold text-foreground  sm:block">
+              {/* Header Title */}
+              <h2 className="text-lg font-semibold text-foreground sm:block">
                 LEADEQUATOR
               </h2>
               <Badge variant="secondary" className="bg-primary/20 text-primary">
