@@ -1,11 +1,12 @@
 import React from 'react';
 // If you don't have lucide-react, you can use any warning icon SVG
 import { AlertTriangle, Zap } from 'lucide-react'; 
+import { Link } from 'react-router-dom';
 
 const CreditAlert = () => {
   return (
     // Container: Matches your dark theme with a subtle gold background tint
-    <div className="mb-8 w-full rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 shadow-sm backdrop-blur-sm">
+    <div className="mb-8 w-full rounded-xl border border-red-500/20 bg-red-500/10 p-4 shadow-sm backdrop-blur-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         
         {/* Left Side: Icon & Text */}
@@ -25,10 +26,12 @@ const CreditAlert = () => {
         </div>
 
         {/* Right Side: Action Button */}
-        <button className="group flex shrink-0 items-center justify-center gap-2 rounded-lg bg-yellow-500 px-5 py-2.5 text-sm font-bold text-black transition-all hover:bg-yellow-400 active:scale-95">
+        <Link to={"/pricing"}>
+        <button className="group flex shrink-0 items-center justify-center gap-2 rounded-lg bg-red-500 px-5 py-2.5 text-sm font-bold text-black transition-all hover:bg-red-500/85 active:scale-95">
           <Zap size={16} className="fill-black" />
           <span>Upgrade Plan</span>
         </button>
+        </Link>
         
       </div>
     </div>
