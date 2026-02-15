@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,8 +21,6 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -41,6 +38,9 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import CreditAlert from "@/components/creditalert";
 
+// 👇 IMPORT THE HOOK
+import { useCredits } from "@/context/CreditContext";
+
 /* ================= TYPES ================= */
 type Lead = {
   _id: string;
@@ -57,6 +57,9 @@ const DashboardOverview = () => {
   const { user, isLoaded } = useUser();
   const dashboardRef = useRef<HTMLDivElement>(null);
 
+  // 👇 CONSUME CONTEXT TO GET LIVE CREDITS
+  const { credits } = useCredits();
+
   const [range, setRange] = useState<"24h" | "7d" | "30d" | "custom">("7d");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +73,7 @@ const DashboardOverview = () => {
         setLoading(true);
         const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
 
-        // We fetch independently to avoid one platform slowing down the other
+        // Fetch independently
         const [redditRes, quoraRes] = await Promise.all([
           fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
           fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
@@ -84,7 +87,7 @@ const DashboardOverview = () => {
           ...(quoraData.posts || []),
         ];
 
-        // Map data using the exact same logic as MonitorStream for consistency
+        // Map data using the exact same logic as MonitorStream
         const mapped: Lead[] = combined.map((p: any, idx: number) => {
           const intent = 50 + (idx % 40); 
           return {
@@ -169,10 +172,14 @@ const DashboardOverview = () => {
 
   return (
     <div ref={dashboardRef} className="p-4 md:p-8 space-y-6 bg-background min-h-screen">
-      {/* HEADER */}
+      
+      {/* HEADER WITH CREDIT ALERT */}
       <div>
-        <CreditAlert/>
+        {/* 👇 Pass credits prop if your component accepts it, or ensure component uses Context internally */}
+        {/* If CreditAlert doesn't accept props yet, see NOTE below */}
+        <CreditAlert currentCredits={credits} />
       </div>
+
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">Dashboard Overview</h1>
