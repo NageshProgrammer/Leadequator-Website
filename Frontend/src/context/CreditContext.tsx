@@ -22,8 +22,9 @@ export const CreditProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshCredits = useCallback(async () => {
     if (!isLoaded || !user) return;
     try {
-      // Intentionally don't set loading=true here to avoid UI flickering during background refreshes
-      const res = await fetch(`${API_BASE}/api/lead-discovery/user/credits?userId=${user.id}`);
+      // ✅ FIX: Add &_t=${Date.now()} to prevent browser caching
+      const res = await fetch(`${API_BASE}/api/lead-discovery/user/credits?userId=${user.id}&_t=${Date.now()}`);
+      
       if (res.ok) {
         const data = await res.json();
         setCredits(data.credits);

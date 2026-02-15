@@ -1,34 +1,29 @@
 import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  LayoutDashboard, Radio, Users, FileText, Search, Menu, Home, ArrowUpCircle, Zap, X, UserCog2,
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LayoutDashboard, Radio, Users, FileText, Search, Menu, Home, ArrowUpCircle, Zap, X, UserCog2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
+import { Link } from "react-router-dom";
 
-// 👇 IMPORT THE NEW CONTEXT
+// 👇 IMPORT CONTEXT
 import { CreditProvider, useCredits } from "@/context/CreditContext";
 
-// 1. Create the Inner Layout Component (This uses the hook)
+// 1. Inner Component (Consumes Context)
 const DashboardLayoutContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, isLoaded } = useUser();
   
-  // 👇 USE THE HOOK INSTEAD OF LOCAL STATE
+  // 👇 USE THE HOOK
   const { credits, loading: loadingCredits } = useCredits();
 
   // Logic
-  const TOTAL_PLAN_CREDITS = 100; 
+  const TOTAL_PLAN_CREDITS = 1000; 
   const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
   const usedPercentage = 100 - remainingPercentage;
 
@@ -98,7 +93,6 @@ const DashboardLayoutContent = () => {
             </Button>
           </Link>
 
-          {/* CREDITS SECTION */}
           <div className={`w-full flex flex-col items-center ${sidebarOpen ? "px-2" : ""}`}>
             {sidebarOpen ? (
               <div className="w-full space-y-2">
