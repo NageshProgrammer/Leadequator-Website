@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, Outlet } from "react-router-dom";
+// 1. Import useUser hook
 import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +21,10 @@ import {
 import {
   LayoutDashboard,
   Radio,
+  Clock,
   Users,
   FileText,
+  Settings,
   Search,
   Menu,
   Home,
@@ -33,29 +36,40 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 
-// Define your backend URL (Adjust if you use an environment variable)
-const BACKEND_URL = "http://localhost:3000"; // Replace with your actual backend URL
+// Define your API Base URL
+// If you are running locally, this is usually http://localhost:3000
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"; 
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // State for credits
-  const [dbCredits, setDbCredits] = useState<number>(0);
+  // State for credits logic
+  const [credits, setCredits] = useState<number>(0);
+  const [loadingCredits, setLoadingCredits] = useState(true);
   
+  // 2. Get the current user data from Clerk
   const { user, isLoaded } = useUser();
 
-  // 1. Fetch Credits from Backend
+  // 3. Fetch Credits from your Database
   useEffect(() => {
     const fetchCredits = async () => {
-      if (isLoaded && user?.id) {
+      if (isLoaded && user) {
         try {
-          const response = await fetch(`${BACKEND_URL}/user/credits?userId=${user.id}`);
+          // IMPORTANT: Check your server.ts to see where you mounted the leaddiscovery router.
+          // If you mounted it at app.use('/api', leadDiscoveryRouter), then the path is /api/user/credits
+          const response = await fetch(`${API_BASE_URL}/api/user/credits?userId=${user.id}`);
+          
           if (response.ok) {
             const data = await response.json();
-            setDbCredits(data.credits);
+            // Assuming the DB returns the Current Balance (e.g., 200)
+            setCredits(data.credits || 0);
+          } else {
+            console.error("Failed to fetch credits");
           }
         } catch (error) {
           console.error("Error fetching credits:", error);
+        } finally {
+          setLoadingCredits(false);
         }
       }
     };
@@ -63,14 +77,17 @@ export const DashboardLayout = () => {
     fetchCredits();
   }, [isLoaded, user]);
 
-  // 2. Calculate Progress based on DB data
-  const PLAN_LIMIT = 1000; // Define your plan max credits here
-  const remainingCredits = dbCredits; 
-  const remainingPercentage = (remainingCredits / PLAN_LIMIT) * 100;
-  // If you want to show how much is USED (inverse of remaining)
-  const creditsUsed = PLAN_LIMIT - remainingCredits;
-  const creditPercentageUsed = 100 - remainingPercentage;
+  // 4. Calculate Logic
+  // Define your total plan limit (e.g., 1000 credits per month)
+  const TOTAL_PLAN_CREDITS = 1000; 
 
+  // Calculate percentages
+  // If 'credits' is the BALANCE (what they have left):
+  const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
+  // If you want to show how much is used:
+  const usedPercentage = 100 - remainingPercentage;
+
+  // Helper for colors based on remaining balance
   const getStatusColor = () => {
     if (remainingPercentage <= 20) return "text-red-500";
     if (remainingPercentage <= 50) return "text-yellow-500";
@@ -87,6 +104,7 @@ export const DashboardLayout = () => {
     { icon: Home, label: "Home", path: "/" },
     { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
     { icon: Radio, label: "Monitor Stream", path: "/monitor-stream" },
+    // { icon: Clock, label: "Comment Timeline", path: "/comment-timeline" },
     { icon: Users, label: "Leads & Tracking", path: "/leads-pipeline" },
     { icon: FileText, label: "Reports", path: "/reports" },
     { icon: UserCog2, label: "User Profile", path: "/user-profile" },
@@ -110,6 +128,7 @@ export const DashboardLayout = () => {
       >
         <div className="p-4 border-b border-border flex items-center justify-between pb-6">
           {sidebarOpen && (
+            // Display the User's Name here
             <div className="flex flex-col">
                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                  Welcome back,
@@ -179,6 +198,7 @@ export const DashboardLayout = () => {
             </Button>
           </Link>
 
+          {/* CREDITS SECTION */}
           <div className={`w-full flex flex-col items-center ${sidebarOpen ? "px-2" : ""}`}>
             {sidebarOpen ? (
               <div className="w-full space-y-2">
@@ -187,15 +207,17 @@ export const DashboardLayout = () => {
                     <Zap className={`h-3 w-3 fill-current ${getStatusColor()}`} /> Credits
                   </span>
                   <span className={`font-bold ${getStatusColor()}`}>
-                    {/* Display Remaining vs Total */}
-                    {dbCredits} / {PLAN_LIMIT}
+                    {loadingCredits ? "..." : Math.round(remainingPercentage)}%
                   </span>
                 </div>
-                {/* Progress bar usually shows % USED */}
+                {/* Progress bar shows how much is USED (inverse of remaining) */}
                 <Progress
-                  value={creditPercentageUsed}
+                  value={loadingCredits ? 0 : usedPercentage}
                   className={`h-1.5 bg-muted [&>div]:${getBarColor()}`}
                 />
+                <div className="text-[10px] text-muted-foreground text-right">
+                   {credits} / {TOTAL_PLAN_CREDITS} remaining
+                </div>
               </div>
             ) : (
               <div className="relative h-10 w-10 flex items-center justify-center">
@@ -217,8 +239,8 @@ export const DashboardLayout = () => {
                     strokeWidth="3"
                     fill="transparent"
                     strokeDasharray={100}
-                    // Visualizing REMAINING percentage in the circle
-                    strokeDashoffset={100 - remainingPercentage}
+                    // Calculate offset for circular progress
+                    strokeDashoffset={100 - (loadingCredits ? 0 : remainingPercentage)}
                     strokeLinecap="round"
                     className={`transition-all duration-500 ${getStatusColor()}`}
                   />
@@ -239,6 +261,7 @@ export const DashboardLayout = () => {
             />
             {sidebarOpen && (
               <div className="flex flex-col overflow-hidden">
+                {/* Update the account footer */}
                 <p className="text-sm font-medium text-foreground truncate">
                     {user?.fullName || "My Account"}
                 </p>
@@ -268,6 +291,7 @@ export const DashboardLayout = () => {
               >
                 <Menu className="h-5 w-5" />
               </Button>
+              {/* Header Title */}
               <h2 className="text-lg font-semibold text-foreground sm:block">
                 LEADEQUATOR
               </h2>
