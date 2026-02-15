@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useUser } from "@clerk/clerk-react";
 
-// API Config
+// 🔧 API CONFIGURATION
 const API_BASE = import.meta.env.MODE === "development" 
   ? "http://localhost:5000" 
   : "https://api.leadequator.live";
@@ -22,15 +22,22 @@ export const CreditProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshCredits = useCallback(async () => {
     if (!isLoaded || !user) return;
     try {
-      // ✅ FIX: Add &_t=${Date.now()} to prevent browser caching
+      // 🛑 DEBUG LOG: Remove this after verifying it works in console
+      console.log("🔄 Refreshing credits for:", user.id);
+
+      // ✅ FIX: URL must match 'app.use("/api/lead-discovery", ...)' in server.ts
+      // ✅ FIX: Added timestamp to prevent browser caching
       const res = await fetch(`${API_BASE}/api/lead-discovery/user/credits?userId=${user.id}&_t=${Date.now()}`);
       
       if (res.ok) {
         const data = await res.json();
+        console.log("✅ Credits updated:", data.credits);
         setCredits(data.credits);
+      } else {
+        console.error("❌ Failed to fetch credits:", res.status);
       }
     } catch (error) {
-      console.error("Failed to refresh credits:", error);
+      console.error("❌ Error fetching credits:", error);
     } finally {
       setLoading(false);
     }

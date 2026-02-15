@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LayoutDashboard, Radio, Users, FileText, Search, Menu, Home, ArrowUpCircle, Zap, X, UserCog2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
+import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 
 // 👇 IMPORT CONTEXT
@@ -22,10 +22,11 @@ const DashboardLayoutContent = () => {
   // 👇 USE THE HOOK
   const { credits, loading: loadingCredits } = useCredits();
 
-  // Logic
-  const TOTAL_PLAN_CREDITS = 100; 
+  // Logic (Example Plan Limit)
+  const TOTAL_PLAN_CREDITS = 1000; 
   const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
-  const usedPercentage = 100 - remainingPercentage;
+  // Visual calculation: Inverse if you want "used", or direct for "remaining"
+  const usedPercentage = 100 - remainingPercentage; 
 
   const getStatusColor = () => {
     if (remainingPercentage <= 20) return "text-red-500";
@@ -104,6 +105,7 @@ const DashboardLayoutContent = () => {
                     {loadingCredits ? "..." : Math.round(remainingPercentage)}%
                   </span>
                 </div>
+                {/* Visualizing Used % vs Remaining */}
                 <Progress value={loadingCredits ? 0 : usedPercentage} className={`h-1.5 bg-muted [&>div]:${getBarColor()}`} />
                 <div className="text-[10px] text-muted-foreground text-right">{credits} / {TOTAL_PLAN_CREDITS} remaining</div>
               </div>

@@ -5,10 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 
 // 👇 IMPORT THE HOOK
@@ -16,7 +13,7 @@ import { useCredits } from "@/context/CreditContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === "development" ? "http://localhost:5000" : "https://api.leadequator.live");
 
-/* --- UNIFIED LOGS FOR DISCOVERY --- */
+/* --- LOGS --- */
 const DISCOVERY_LOGS = [
   "Initializing autonomous agents...",
   "Authenticating secure sessions...",
@@ -29,31 +26,16 @@ const DISCOVERY_LOGS = [
   "Compiling multi-source dataset...",
 ];
 
-type RedditPost = {
-  id: string;
-  text: string;
-  url: string;
-  author: string;
-  createdAt: string;
-};
-
-type QuoraPost = {
-  id: string;
-  question: string;
-  url: string;
-  author: string | null;
-};
-
 export default function LeadDiscovery() {
   const [buyerKeywords, setBuyerKeywords] = useState<string[]>([]);
-  const [posts, setPosts] = useState<RedditPost[]>([]);
-  const [quoraPosts, setQuoraPosts] = useState<QuoraPost[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [quoraPosts, setQuoraPosts] = useState<any[]>([]);
   const [loadingKeywords, setLoadingKeywords] = useState(true);
   
-  // 👇 USE CONTEXT INSTEAD OF LOCAL STATE
-  const { credits, loading: loadingCredits, refreshCredits } = useCredits();
+  // 👇 CONSUME CONTEXT
+  const { credits, refreshCredits } = useCredits();
 
-  // --- SCANNER STATE ---
+  // UI States
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [scanStep, setScanStep] = useState<"idle" | "scanning" | "success">("idle");
   const [progress, setProgress] = useState(0);
@@ -63,18 +45,16 @@ export default function LeadDiscovery() {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
 
-  // Retrieve Credentials
   const userId = localStorage.getItem("userId");
   const userEmail = localStorage.getItem("userEmail"); 
 
-  /* --- ANIMATION LOOP --- */
+  // --- Animation Loop ---
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (scanStep === "scanning") {
       setProgress(0);
       setLogsHistory([]);
       let counter = 0;
-      
       interval = setInterval(() => {
         setProgress((prev) => (prev >= 95 ? 95 : prev + 0.5));
         if (Math.random() > 0.6) {
@@ -88,28 +68,22 @@ export default function LeadDiscovery() {
     return () => clearInterval(interval);
   }, [scanStep]);
 
-  /* --- FETCH DATA --- */
+  // --- Data Loading ---
   const loadKeywords = useCallback(async () => {
     setLoadingKeywords(true);
     try {
       let queryParam = "";
       if (userEmail) queryParam = `email=${encodeURIComponent(userEmail)}`;
       else if (userId) queryParam = `userId=${userId}`;
-      else {
-        setLoadingKeywords(false);
-        return;
-      }
+      else { setLoadingKeywords(false); return; }
 
       const res = await fetch(`${API_BASE}/api/lead-discovery/keywords?${queryParam}`);
-      if (!res.ok) throw new Error("Failed to fetch keywords");
-      const data = await res.json();
-      setBuyerKeywords(data.keywords || []); 
-    } catch (e) {
-       console.error("Error loading keywords:", e);
-       setBuyerKeywords([]); 
-    } finally {
-      setLoadingKeywords(false);
-    }
+      if (res.ok) {
+        const data = await res.json();
+        setBuyerKeywords(data.keywords || []); 
+      }
+    } catch (e) { console.error(e); } 
+    finally { setLoadingKeywords(false); }
   }, [userId, userEmail]);
 
   const loadPosts = useCallback(async () => {
@@ -130,12 +104,10 @@ export default function LeadDiscovery() {
     } catch (e) { console.error(e) }
   }, [userId]);
 
-  /* --- MAIN ACTION --- */
+  // --- MAIN SCRAPER ACTION ---
   const handleDiscovery = async () => {
     if (!userId) { setError("User ID missing. Please re-login."); return; }
-    
-    // Check credits from Context
-    if (credits < 2) { setError("Insufficient credits. You need at least 2 credits to run the scraper."); return; }
+    if (credits < 2) { setError("Insufficient credits. You need at least 2 credits."); return; }
     
     setIsScanModalOpen(true);
     setScanStep("scanning");
@@ -145,16 +117,12 @@ export default function LeadDiscovery() {
     try {
         const headers = { "Content-Type": "application/json" };
         
-        // Trigger both scrapers in parallel
-        // The BACKEND handles deducting credits based on results
+        // Parallel Fetch
         const redditReq = fetch(`${API_BASE}/api/lead-discovery/reddit/run`, {
-            method: "POST", headers,
-            body: JSON.stringify({ userId, forceLogin: true }),
+            method: "POST", headers, body: JSON.stringify({ userId, forceLogin: true }),
         });
-
         const quoraReq = fetch(`${API_BASE}/api/lead-discovery/quora/run`, {
-            method: "POST", headers,
-            body: JSON.stringify({ userId }),
+            method: "POST", headers, body: JSON.stringify({ userId }),
         });
 
         await Promise.all([redditReq, quoraReq]);
@@ -167,11 +135,10 @@ export default function LeadDiscovery() {
             setScanStep("success");
             setIsRunning(false);
             
-            // Refresh Data Tables
             loadPosts();
             loadQuoraPosts();
             
-            // 👇 REFRESH CREDITS IN SIDEBAR IMMEDIATELY
+            // 👇 THIS UPDATES THE SIDEBAR WITHOUT RELOAD
             refreshCredits();
             
         }, 10000); 
@@ -182,14 +149,13 @@ export default function LeadDiscovery() {
     loadKeywords();
     loadPosts();
     loadQuoraPosts();
-    // We don't need loadCredits() here because Context handles it on mount
   }, [loadKeywords, loadPosts, loadQuoraPosts]);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8 font-sans selection:bg-[#FFD700] selection:text-black">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header with Credits Display */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="space-y-2">
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
@@ -200,23 +166,19 @@ export default function LeadDiscovery() {
             </p>
             </div>
 
-            {/* Credits Badge (Using Context Data) */}
-            <Card className="bg-zinc-900 border-zinc-800 p-3 px-5 flex items-center gap-3 shadow-[0_0_10px_rgba(255,215,0,0.1)]">
+            {/* Credit Badge (Visual only - Logic is in Sidebar) */}
+            <Card className="bg-zinc-900 border-zinc-800 p-3 px-5 flex items-center gap-3">
                 <div className="p-2 bg-[#FFD700]/10 rounded-full">
                     <Zap className="w-5 h-5 text-[#FFD700] fill-current" />
                 </div>
                 <div>
-                    <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Credits</p>
-                    {loadingCredits ? (
-                        <div className="h-6 w-12 bg-zinc-800 animate-pulse rounded mt-1" />
-                    ) : (
-                        <p className="text-xl font-bold text-white">{credits}</p>
-                    )}
+                    <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Balance</p>
+                    <p className="text-xl font-bold text-white">{credits}</p>
                 </div>
             </Card>
         </div>
 
-        {/* KEYWORDS SECTION */}
+        {/* KEYWORDS */}
         <Card className="bg-zinc-900/50 border-zinc-800 p-6 backdrop-blur-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-4 relative z-10">
             <div className="flex items-center gap-2">
@@ -234,10 +196,9 @@ export default function LeadDiscovery() {
                <div className="flex gap-2 animate-pulse">
                   <div className="h-8 w-24 bg-zinc-800 rounded-full" />
                   <div className="h-8 w-32 bg-zinc-800 rounded-full" />
-                  <div className="h-8 w-20 bg-zinc-800 rounded-full" />
                </div>
                <p className="text-xs text-zinc-500 mt-2 flex items-center gap-2">
-                  <RefreshCw className="w-3 h-3 animate-spin" /> Fetching keywords for {userEmail || "user"}...
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Fetching keywords...
                </p>
             </div>
           ) : buyerKeywords.length === 0 ? (
@@ -247,7 +208,7 @@ export default function LeadDiscovery() {
           ) : (
             <div className="flex flex-wrap gap-2 relative z-10 animate-in fade-in duration-500">
               {buyerKeywords.map((k, i) => (
-                <Badge key={i} className="bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20 px-3 py-1.5 text-sm font-medium hover:bg-[#FFD700]/20 transition-colors cursor-default">
+                <Badge key={i} className="bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20 px-3 py-1.5 text-sm font-medium">
                   {k}
                 </Badge>
               ))}
@@ -256,26 +217,18 @@ export default function LeadDiscovery() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
         </Card>
 
-        {/* CENTERED ACTION BUTTON */}
+        {/* BUTTON */}
         <div className="flex flex-col items-center gap-3 py-6">
           <Button 
             onClick={handleDiscovery} 
             disabled={isRunning || credits < 2}
             className="w-full sm:w-80 h-16 bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-bold text-lg rounded-xl shadow-[0_0_25px_rgba(255,215,0,0.2)] transition-all active:scale-[0.98] relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {/* Shine Effect */}
             <div className="absolute inset-0 bg-white/20 translate-y-full skew-y-12 group-hover:translate-y-[-150%] transition-transform duration-700" />
-            
             {isRunning ? (
-                <>
-                    <Loader2 className="mr-2 animate-spin" /> 
-                    Initializing Agents...
-                </>
+                <><Loader2 className="mr-2 animate-spin" /> Initializing Agents...</>
             ) : (
-                <>
-                    <Play className="mr-2 w-5 h-5 fill-current" /> 
-                    Start Lead Discovery
-                </>
+                <><Play className="mr-2 w-5 h-5 fill-current" /> Start Lead Discovery</>
             )}
           </Button>
           <p className="text-xs text-zinc-500">Cost: 2 Credits per lead found</p>
@@ -284,7 +237,6 @@ export default function LeadDiscovery() {
         {/* SCANNER MODAL */}
         <Dialog open={isScanModalOpen} onOpenChange={setIsScanModalOpen}>
           <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-[500px] p-0 overflow-hidden gap-0 rounded-2xl shadow-2xl shadow-black">
-            
             <div className="p-6 border-b border-zinc-900 bg-zinc-900/50">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold flex items-center justify-between">
@@ -305,7 +257,6 @@ export default function LeadDiscovery() {
                     <>
                         <div className="relative h-32 w-full flex items-center justify-center overflow-hidden rounded-xl bg-black border border-zinc-800/50">
                              <div className="absolute border border-[#FFD700]/10 rounded-full h-64 w-64 animate-[spin_10s_linear_infinite]" />
-                             <div className="absolute border border-[#FFD700]/20 rounded-full h-48 w-48 animate-[ping_3s_linear_infinite]" />
                              <Hash className="relative z-10 w-10 h-10 text-[#FFD700]" />
                         </div>
                         <div className="space-y-2">
@@ -317,9 +268,7 @@ export default function LeadDiscovery() {
                         </div>
                         <div className="bg-zinc-900/80 rounded-lg p-4 font-mono text-xs border border-zinc-800 h-32 flex flex-col justify-end overflow-hidden">
                             <div className="space-y-1 text-zinc-500">
-                                {logsHistory.slice().reverse().map((log, i) => (
-                                    <div key={i} className="opacity-50">{`> ${log}`}</div>
-                                ))}
+                                {logsHistory.slice().reverse().map((log, i) => (<div key={i} className="opacity-50">{`> ${log}`}</div>))}
                             </div>
                             <div className="text-[#FFD700] mt-1 flex items-center gap-1">
                                 <span className="animate-pulse">{`> ${currentLog}`}</span>
@@ -333,8 +282,7 @@ export default function LeadDiscovery() {
                         </div>
                         <h3 className="text-2xl font-bold text-white">Leads Extracted!</h3>
                         <p className="text-zinc-400 max-w-xs mx-auto text-sm leading-relaxed">
-                            The discovery process has successfully identified potential high-intent leads. 
-                            <br/><span className="text-[#FFD700]">Credits have been updated.</span>
+                            <span className="text-[#FFD700]">Credits have been updated.</span>
                         </p>
                         <Button onClick={() => setIsScanModalOpen(false)} className="w-full bg-white text-black hover:bg-zinc-200 mt-4 h-12 text-base font-semibold">
                             View Results
@@ -342,14 +290,6 @@ export default function LeadDiscovery() {
                     </div>
                 )}
             </div>
-
-            {scanStep === "scanning" && (
-                <div className="bg-zinc-900/50 p-4 text-center border-t border-zinc-900">
-                    <p className="text-xs text-zinc-500 flex items-center justify-center gap-2">
-                        <Clock className="w-3 h-3" /> Estimated remaining time: ~14 mins
-                    </p>
-                </div>
-            )}
           </DialogContent>
         </Dialog>
 
@@ -363,14 +303,10 @@ export default function LeadDiscovery() {
 
         {/* Results Grid - Reddit */}
         <div className="space-y-4">
-          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            Lead <span className="text-[#FFD700]">Results</span>
-          </h2>
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">Lead <span className="text-[#FFD700]">Results</span></h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {posts.length === 0 && !loadingKeywords && (
-               <div className="col-span-1 md:col-span-2 text-center py-8 border border-dashed border-zinc-800 rounded-xl text-zinc-500 text-sm">
-                  No leads found yet. Start a discovery scan.
-               </div>
+               <div className="col-span-1 md:col-span-2 text-center py-8 border border-dashed border-zinc-800 rounded-xl text-zinc-500 text-sm">No leads found yet.</div>
             )}
             {posts.map((p) => (
               <Card key={p.id} className="bg-zinc-900 border-zinc-800 p-5 flex flex-col justify-between hover:border-[#FFD700]/30 transition-colors">
