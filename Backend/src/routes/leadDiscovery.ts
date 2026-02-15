@@ -31,7 +31,7 @@ router.get("/user/credits", async (req: Request, res: Response) => {
       .where(eq(usersTable.id, userId))
       .limit(1);
 
-    // If user doesn't exist in DB yet, return 0 or default
+    // If user doesn't exist in DB yet, return 0
     const currentCredits = userRecord.length > 0 ? userRecord[0].credits : 0;
 
     return res.json({

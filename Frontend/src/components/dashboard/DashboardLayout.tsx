@@ -61,7 +61,7 @@ export const DashboardLayout = () => {
           // IMPORTANT: Ensure this path matches how you mounted the router in server.ts
           // If you used: app.use('/api/leaddiscovery', leadDiscoveryRouter);
           // Then the path is: /api/leaddiscovery/user/credits
-          const response = await fetch(`${API_BASE}/api/leaddiscovery/user/credits?userId=${user.id}`);
+          const response = await fetch(`${API_BASE}/api/lead-discovery/user/credits?userId=${user.id}`);
           
           if (response.ok) {
             const data = await response.json();
