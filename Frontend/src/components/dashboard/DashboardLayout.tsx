@@ -36,8 +36,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 
-// Define your API Base URL
-// If you are running locally, this is usually http://localhost:3000
+// ----------------------------------------------------------------------
+// 🔧 API CONFIGURATION (Matches settingsIntegration.tsx)
+// ----------------------------------------------------------------------
 const API_BASE = import.meta.env.MODE === "development" 
   ? "http://localhost:5000" 
   : "https://api.leadequator.live"; 
@@ -57,16 +58,17 @@ export const DashboardLayout = () => {
     const fetchCredits = async () => {
       if (isLoaded && user) {
         try {
-          // IMPORTANT: Check your server.ts to see where you mounted the leaddiscovery router.
-          // If you mounted it at app.use('/api', leadDiscoveryRouter), then the path is /api/user/credits
-          const response = await fetch(`${API_BASE_URL}/api/user/credits?userId=${user.id}`);
+          // IMPORTANT: Ensure this path matches how you mounted the router in server.ts
+          // If you used: app.use('/api/leaddiscovery', leadDiscoveryRouter);
+          // Then the path is: /api/leaddiscovery/user/credits
+          const response = await fetch(`${API_BASE}/api/leaddiscovery/user/credits?userId=${user.id}`);
           
           if (response.ok) {
             const data = await response.json();
             // Assuming the DB returns the Current Balance (e.g., 200)
             setCredits(data.credits || 0);
           } else {
-            console.error("Failed to fetch credits");
+            console.error("Failed to fetch credits. Status:", response.status);
           }
         } catch (error) {
           console.error("Error fetching credits:", error);

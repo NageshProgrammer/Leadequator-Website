@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db.js";
-// 1. Import usersTable here
+// 1. Ensure usersTable is imported
 import { 
   buyerKeywords, 
   redditPosts, 
