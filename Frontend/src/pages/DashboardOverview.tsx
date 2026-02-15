@@ -170,7 +170,9 @@ const DashboardOverview = () => {
   return (
     <div ref={dashboardRef} className="p-4 md:p-8 space-y-6 bg-background min-h-screen">
       {/* HEADER */}
+      <div>
         <CreditAlert/>
+      </div>
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">Dashboard Overview</h1>
