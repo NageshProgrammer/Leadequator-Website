@@ -35,10 +35,9 @@ import {
   Filter,
   Copy,
   CheckCircle2,
-  MessageSquareQuote,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast"; // Assuming you have this hook
+import { useToast } from "@/hooks/use-toast";
 
 /* -------------------- Types -------------------- */
 type Lead = {
@@ -50,7 +49,7 @@ type Lead = {
   status: string;
   url: string;
   createdAt: string;
-  postTitle: string;
+  postTitle: string; // This stores the content/question/text
 };
 
 const STATUSES = [
@@ -106,9 +105,9 @@ const LeadsPipeline = () => {
         status: p.replyStatus === "Sent" ? "Contacted" : "New",
         url: p.url || "#",
         createdAt: p.createdAt || new Date().toISOString(),
-        // Capture the content (try common API fields)
+        // FIX: Added `p.text` here to catch Reddit content correctly
         postTitle:
-          p.title || p.question || p.body || p.content || "Content unavailable",
+          p.text || p.question || p.body || p.content || "Content unavailable",
       }));
 
       setLeads(mapped);
@@ -137,10 +136,10 @@ const LeadsPipeline = () => {
 
   const exportCSV = () => {
     if (!leads.length) return;
-    const headers = ["Lead ID", "Username", "Platform", "Status", "Link"];
+    const headers = ["Lead ID", "Username", "Platform", "Status", "Link", "Content"];
     const rows = leads.map((l) =>
-      [l.leadId, l.name, l.platform, l.status, l.url]
-        .map((v) => `"${v}"`)
+      [l.leadId, l.name, l.platform, l.status, l.url, l.postTitle]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`) // Safe CSV escaping
         .join(","),
     );
     const csv = [headers.join(","), ...rows].join("\n");
@@ -415,7 +414,6 @@ const LeadsPipeline = () => {
           </>
         )}
 
-        
         {/* --- LEAD DETAILS MODAL --- */}
         <Dialog
           open={!!selectedLead}
@@ -456,9 +454,9 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                
+                {/* 2. Post Context */}
                 <div className="space-y-2">
-                   <span className="text-xs font-semibold text-muted-foreground uppercase block">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase block">
                     Post Context
                   </span>
                   <div className="relative p-4 rounded-md bg-muted/30 border border-border/50">
