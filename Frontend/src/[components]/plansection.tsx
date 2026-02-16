@@ -339,7 +339,7 @@ export default function CongestedPricing() {
 
     // 🔐 Call your Render backend (NOT localhost)
     const response = await fetch(
-      "https://your-render-backend.onrender.com/api/verify-payment",
+      "https://api.leadequator.live/api/verify-payment",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
