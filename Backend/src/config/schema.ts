@@ -10,9 +10,6 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core";
 
-import { uuid } from "drizzle-orm/pg-core/columns/uuid";
-
-
 
 /* =========================
    USERS
