@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "./db.js";
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
-import paymentRoutes from "./routes/payment";
+import paymentRoutes from "./routes/payment.js";
 
 
 import {
