@@ -14,7 +14,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
-const { isSignedIn, user } = useUser();
 
 
 const plans = [
@@ -92,7 +91,7 @@ export default function CongestedPricing() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const switchRef = useRef<HTMLButtonElement>(null);
   
-  const { isSignedIn } = useUser(); 
+  const { isSignedIn, user } = useUser();
   const [{ options }, dispatch] = usePayPalScriptReducer();
 
   useEffect(() => {
