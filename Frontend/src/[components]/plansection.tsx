@@ -14,6 +14,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
+const { isSignedIn, user } = useUser();
+
 
 const plans = [
   {
@@ -329,36 +331,43 @@ export default function CongestedPricing() {
                         });
                       }}
                       onApprove={async (data, actions) => {
-                        const toastId = toast.loading("Verifying payment...");
-                        try {
-                          if (!actions.order) throw new Error("Actions missing");
+  const toastId = toast.loading("Verifying payment...");
+  try {
+    if (!actions.order) throw new Error("Actions missing");
 
-                          const details = await actions.order.capture();
-                          
-                          try {
-                              const response = await fetch("http://localhost:5000/api/verify-payment", {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    orderID: data.orderID,
-                                    planType: plan.name,
-                                    userEmail: details.payer.email_address,
-                                    currency: currency 
-                                  }),
-                              });
-                              if (!response.ok) throw new Error("Backend offline");
-                          } catch (backendError) {
-                              console.warn("Backend Verification Failed (Skipping for testing)");
-                          }
+    const details = await actions.order.capture();
 
-                          toast.success("Payment successful! Redirecting...", { id: toastId });
-                          setTimeout(() => navigate("/onboarding"), 1500);
+    // 🔐 Call your Render backend (NOT localhost)
+    const response = await fetch(
+      "https://your-render-backend.onrender.com/api/verify-payment",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id, // 👈 Clerk user id
+          planName: plan.name,
+          billingCycle: isMonthly ? "MONTHLY" : "YEARLY",
+          currency: currency,
+          orderID: data.orderID,
+        }),
+      }
+    );
 
-                        } catch (err: any) {
-                          console.error("Payment Error:", err);
-                          toast.error("Payment failed. Please try again.", { id: toastId });
-                        }
-                      }}
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error("Backend verification failed");
+    }
+
+    toast.success("Payment verified! Redirecting...", { id: toastId });
+    setTimeout(() => navigate("/onboarding"), 1500);
+
+  } catch (err: any) {
+    console.error("Payment Error:", err);
+    toast.error("Payment failed. Please try again.", { id: toastId });
+  }
+}}
+
                       onError={(err) => {
                         console.error("PayPal Popup Error:", err);
                         toast.error("Payment window closed.");
