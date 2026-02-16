@@ -1,22 +1,19 @@
 import {
   pgTable,
+  uuid,
   varchar,
   text,
   boolean,
   integer,
   timestamp,
-} from "drizzle-orm/pg-core";
-import { uuid } from "drizzle-orm/pg-core/columns/uuid";
-
-
-import {
-  pgTable,
-  uuid,
-  varchar,
-  timestamp,
   numeric,
   jsonb,
 } from "drizzle-orm/pg-core";
+
+import { uuid } from "drizzle-orm/pg-core/columns/uuid";
+
+
+
 /* =========================
    USERS
 ========================= */
