@@ -1,7 +1,7 @@
 import { Router } from "express";
 import fetch from "node-fetch";
-import { db } from "../db";
-import { userSubscriptions } from "../db/schema";
+import { db } from "../db.js";
+import { userSubscriptions } from "../db/schema.js";
 
 const router = Router();
 
