@@ -177,7 +177,7 @@ const DashboardOverview = () => {
       <div>
         {/* 👇 Pass credits prop if your component accepts it, or ensure component uses Context internally */}
         {/* If CreditAlert doesn't accept props yet, see NOTE below */}
-        <CreditAlert currentCredits={credits} />
+        <CreditAlert />
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
