@@ -23,7 +23,7 @@ const DashboardLayoutContent = () => {
   const { credits, loading: loadingCredits } = useCredits();
 
   // Logic (Example Plan Limit)
-  const TOTAL_PLAN_CREDITS = 100; 
+  const TOTAL_PLAN_CREDITS = 200; 
   const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
   // Visual calculation: Inverse if you want "used", or direct for "remaining"
   const usedPercentage = 100 - remainingPercentage; 

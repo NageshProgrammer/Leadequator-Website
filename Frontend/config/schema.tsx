@@ -13,7 +13,7 @@ export const usersTable = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(), // Clerk userId
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  credits: integer("credits").default(100),
+  credits: integer("credits").default(200),
 });
 
 /* =======================
