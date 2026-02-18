@@ -15,6 +15,12 @@ import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
 
+// 🔧 API CONFIGURATION
+// This automatically switches between localhost and live server based on where you run it.
+const API_BASE = import.meta.env.MODE === "development" 
+  ? "http://localhost:5000" 
+  : "https://api.leadequator.live";
+
 const plans = [
   {
     name: "PILOT",
@@ -89,17 +95,17 @@ export default function CongestedPricing() {
   const navigate = useNavigate();
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const switchRef = useRef<HTMLButtonElement>(null);
-
+  
   const { isSignedIn, user } = useUser();
   const [{ options }, dispatch] = usePayPalScriptReducer();
 
   useEffect(() => {
     dispatch({
-      type: "resetOptions",
-      value: {
-        ...options,
-        currency: currency,
-      },
+        type: "resetOptions",
+        value: {
+            ...options,
+            currency: currency,
+        },
     });
   }, [currency]);
 
@@ -132,50 +138,46 @@ export default function CongestedPricing() {
 
       <div className="flex flex-col items-center gap-6 mb-12">
         <div className="bg-zinc-900 p-1 rounded-lg inline-flex">
-          <button
-            onClick={() => setCurrency("USD")}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-              currency === "USD"
-                ? "bg-primary text-black shadow-lg"
-                : "text-zinc-400 hover:text-white",
-            )}
-          >
-            <DollarSign className="w-4 h-4" /> USD ($)
-          </button>
-          <button
-            onClick={() => setCurrency("INR")}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-              currency === "INR"
-                ? "bg-primary text-black shadow-lg"
-                : "text-zinc-400 hover:text-white",
-            )}
-          >
-            <IndianRupee className="w-4 h-4" /> INR (₹)
-          </button>
+            <button
+                onClick={() => setCurrency("USD")}
+                className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                    currency === "USD" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white"
+                )}
+            >
+                <DollarSign className="w-4 h-4" /> USD ($)
+            </button>
+            <button
+                onClick={() => setCurrency("INR")}
+                className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                    currency === "INR" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white"
+                )}
+            >
+                <IndianRupee className="w-4 h-4" /> INR (₹)
+            </button>
         </div>
 
         <div className="flex justify-center items-center gap-4">
-          <Label htmlFor="billing-toggle" className="font-semibold text-white">
+            <Label htmlFor="billing-toggle" className="font-semibold text-white">
             Monthly
-          </Label>
-          <Switch
+            </Label>
+            <Switch
             id="billing-toggle"
             ref={switchRef as any}
             checked={!isMonthly}
             onCheckedChange={handleToggle}
-          />
-          <Label htmlFor="billing-toggle" className="font-semibold text-white">
+            />
+            <Label htmlFor="billing-toggle" className="font-semibold text-white">
             Annual <span className="text-primary">(Save 50%)</span>
-          </Label>
+            </Label>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0">
         {plans.map((plan, index) => {
-          const currentPrice = isMonthly
-            ? plan.pricing[currency].monthly
+          const currentPrice = isMonthly 
+            ? plan.pricing[currency].monthly 
             : plan.pricing[currency].yearly;
           const isCustom = currentPrice === "Custom";
 
@@ -235,16 +237,14 @@ export default function CongestedPricing() {
                   ) : (
                     <>
                       <span className="text-5xl font-bold text-white flex items-center justify-center gap-1">
-                        {/* FIX: Manually render symbol + NumberFlow for cleaner look */}
-                        <span>{currency === "USD" ? "$" : "₹"}</span>
-                        <NumberFlow
-                          value={Number(currentPrice)}
-                          format={{
-                            // Disable automatic currency formatting to avoid "US$"
-                            style: "decimal",
-                            minimumFractionDigits: 0,
-                          }}
-                        />
+                          <span>{currency === "USD" ? "$" : "₹"}</span>
+                          <NumberFlow
+                            value={Number(currentPrice)}
+                            format={{
+                              style: "decimal", 
+                              minimumFractionDigits: 0,
+                            }}
+                          />
                       </span>
                       <span className="text-zinc-500 text-sm">
                         /{isMonthly ? "mo" : "mo"}
@@ -274,7 +274,6 @@ export default function CongestedPricing() {
               </div>
 
               <div className="mt-auto pt-6 border-t border-zinc-900">
-                {/* BUTTON LOGIC */}
                 {isCustom ? (
                   <Link
                     to="/contact"
@@ -286,18 +285,19 @@ export default function CongestedPricing() {
                     Contact Sales
                   </Link>
                 ) : !isSignedIn ? (
-                  <Link
-                    to="/sign-in"
-                    className={cn(
-                      buttonVariants({ variant: "default" }),
-                      "w-full py-6 text-lg bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2",
-                    )}
-                  >
-                    <LogIn className="w-5 h-5" />
-                    {plan.name === "PILOT"
-                      ? "Start 14-Day Free Trial"
-                      : "Subscribe To Get Started"}
-                  </Link>
+                    <Link
+                      to="/sign-in"
+                      className={cn(
+                        buttonVariants({ variant: "default" }),
+                        "w-full py-6 text-lg bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2",
+                      )}
+                    >
+                      <LogIn className="w-5 h-5" />
+                      {plan.name === "PILOT" 
+                        ? "Start 14-Day Free Trial" 
+                        : "Subscribe To Get Started"
+                      }
+                    </Link>
                 ) : (
                   <div className="z-0">
                     <PayPalButtons
@@ -314,10 +314,8 @@ export default function CongestedPricing() {
                         let chargeCurrency = currency;
 
                         if (currency === "INR") {
-                          chargeAmount = (
-                            Number(currentPrice) / EXCHANGE_RATE
-                          ).toFixed(2);
-                          chargeCurrency = "USD";
+                            chargeAmount = (Number(currentPrice) / EXCHANGE_RATE).toFixed(2);
+                            chargeCurrency = "USD";
                         }
 
                         return actions.order.create({
@@ -336,14 +334,13 @@ export default function CongestedPricing() {
                       onApprove={async (data, actions) => {
                         const toastId = toast.loading("Verifying payment...");
                         try {
-                          if (!actions.order)
-                            throw new Error("Actions missing");
+                          if (!actions.order) throw new Error("Actions missing");
 
                           const details = await actions.order.capture();
 
-                          // 🔐 Call your Render backend (NOT localhost)
+                          // ✅ FIX: Use the dynamic API_BASE variable
                           const response = await fetch(
-                            "https://api.leadequator.live/api/verify-payment", // Make sure this URL is correct for your environment
+                            `${API_BASE}/api/verify-payment`,
                             {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
@@ -354,7 +351,7 @@ export default function CongestedPricing() {
                                 currency: currency,
                                 orderID: data.orderID,
                               }),
-                            },
+                            }
                           );
 
                           const result = await response.json();
@@ -363,15 +360,12 @@ export default function CongestedPricing() {
                             throw new Error("Backend verification failed");
                           }
 
-                          toast.success("Payment verified! Redirecting...", {
-                            id: toastId,
-                          });
+                          toast.success("Payment verified! Redirecting...", { id: toastId });
                           setTimeout(() => navigate("/onboarding"), 1500);
+
                         } catch (err: any) {
                           console.error("Payment Error:", err);
-                          toast.error("Payment failed. Please try again.", {
-                            id: toastId,
-                          });
+                          toast.error("Payment failed. Please try again.", { id: toastId });
                         }
                       }}
                       onError={(err) => {
