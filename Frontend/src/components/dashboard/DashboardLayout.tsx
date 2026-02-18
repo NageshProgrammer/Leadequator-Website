@@ -26,7 +26,7 @@ const DashboardLayoutContent = () => {
   const TOTAL_PLAN_CREDITS = 200; 
   const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
   // Visual calculation: Inverse if you want "used", or direct for "remaining"
-  const usedPercentage = 100 - remainingPercentage; 
+  const usedPercentage = 200 - remainingPercentage; 
 
   const getStatusColor = () => {
     if (remainingPercentage <= 20) return "text-red-500";
