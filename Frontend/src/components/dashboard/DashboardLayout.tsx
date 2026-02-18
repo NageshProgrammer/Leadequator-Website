@@ -113,7 +113,7 @@ const DashboardLayoutContent = () => {
               <div className="relative h-10 w-10 flex items-center justify-center">
                 <svg className="h-full w-full transform -rotate-90">
                   <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-muted/20" />
-                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray={100} strokeDashoffset={100 - (loadingCredits ? 0 : remainingPercentage)} strokeLinecap="round" className={`transition-all duration-500 ${getStatusColor()}`} />
+                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray={100} strokeDashoffset={200 - (loadingCredits ? 0 : remainingPercentage)} strokeLinecap="round" className={`transition-all duration-500 ${getStatusColor()}`} />
                 </svg>
                 <Zap className={`absolute h-3 w-3 fill-current ${getStatusColor()}`} />
               </div>
