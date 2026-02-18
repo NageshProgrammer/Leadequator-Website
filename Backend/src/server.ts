@@ -4,15 +4,16 @@ import cors from "cors";
 import { eq } from "drizzle-orm";
 
 import { db } from "./db.js";
+// ✅ Routes
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
-import paymentRoutes from "./routes/payment.js";
+import paymentRoutes from "./routes/payment.js"; 
 
-
+// ✅ Schema Imports
 import {
   onboardingProgress,
   companyDetails,
   targetMarket,
-  buyerKeywords, // Ensure this is imported
+  buyerKeywords,
   platformsToMonitor,
   usersTable,
 } from "./config/schema.js";
@@ -41,22 +42,27 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/api", paymentRoutes);
 
 /* ===============================
-   HEALTH
+   HEALTH CHECK
 ================================ */
 app.get("/", (_req, res) => {
   res.json({ status: "Backend running" });
 });
 
 /* ===============================
-   LEAD DISCOVERY
+   MOUNT ROUTES
 ================================ */
+
+// 1. Payment Verification ( /api/verify-payment )
+app.use("/api", paymentRoutes);
+
+// 2. Lead Discovery ( /api/lead-discovery/... )
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
+
 /* ===============================
-   ONBOARDING
+   ONBOARDING ENDPOINTS
 ================================ */
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
@@ -101,7 +107,7 @@ app.post("/api/onboarding", async (req, res) => {
       platformsData,
     } = req.body;
 
-    // company
+    // 1. Company Details
     await db
       .insert(companyDetails)
       .values({
@@ -119,7 +125,7 @@ app.post("/api/onboarding", async (req, res) => {
         set: { companyName: companyData.companyName },
       });
 
-    // target
+    // 2. Target Market
     await db
       .insert(targetMarket)
       .values({ userId, ...targetData })
@@ -128,7 +134,7 @@ app.post("/api/onboarding", async (req, res) => {
         set: targetData,
       });
 
-    // keywords
+    // 3. Buyer Keywords
     await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
     if (keywordsData?.keywords?.length) {
       await db.insert(buyerKeywords).values(
@@ -139,7 +145,7 @@ app.post("/api/onboarding", async (req, res) => {
       );
     }
 
-    // platforms
+    // 4. Platforms
     await db
       .insert(platformsToMonitor)
       .values({ userId, ...platformsData })
@@ -148,7 +154,7 @@ app.post("/api/onboarding", async (req, res) => {
         set: platformsData,
       });
 
-    // progress
+    // 5. Update Progress to Complete
     await db
       .insert(onboardingProgress)
       .values({ userId, completed: true, currentStep: 5 })
@@ -274,7 +280,7 @@ app.put("/api/settings/profile", async (req, res) => {
 });
 
 /* ===============================
-   USERS SYNC (CLERK)
+   USERS SYNC (CLERK WEBHOOK)
 ================================ */
 app.post("/api/users/sync", async (req, res) => {
   const { clerkId, email, name } = req.body;
@@ -291,7 +297,7 @@ app.post("/api/users/sync", async (req, res) => {
       id: clerkId,
       email,
       name,
-      credits: 300,
+      credits: 300, // Default free credits
     });
   }
 
@@ -299,7 +305,7 @@ app.post("/api/users/sync", async (req, res) => {
 });
 
 /* ===============================
-   START
+   START SERVER
 ================================ */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

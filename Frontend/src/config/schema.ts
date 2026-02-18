@@ -4,6 +4,7 @@ import {
   integer,
   text,
   boolean,
+  timestamp, // Added timestamp import
 } from "drizzle-orm/pg-core";
 
 /* =======================
@@ -14,11 +15,14 @@ export const usersTable = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   credits: integer("credits").default(300),
+  
+  // ✅ NEW FIELDS FOR SUBSCRIPTION
+  plan: varchar("plan", { length: 50 }).default("FREE"), // e.g., "PILOT", "SCALE"
+  planCycle: varchar("plan_cycle", { length: 20 }),      // e.g., "MONTHLY", "YEARLY"
+  updatedAt: timestamp("updated_at").defaultNow(),       // To track when they subscribed
 });
 
-/* =======================
-   ONBOARDING PROGRESS
-======================= */
+// ... rest of your schema (onboardingProgress, etc.) remains exactly the same
 export const onboardingProgress = pgTable("onboarding_progress", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
@@ -26,9 +30,6 @@ export const onboardingProgress = pgTable("onboarding_progress", {
   completed: boolean("completed").default(false),
 });
 
-/* =======================
-   COMPANY DETAILS
-======================= */
 export const companyDetails = pgTable("company_details", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
@@ -41,9 +42,6 @@ export const companyDetails = pgTable("company_details", {
   productDescription: text("product_description"),
 });
 
-/* =======================
-   TARGET MARKET
-======================= */
 export const targetMarket = pgTable("target_market", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
@@ -53,18 +51,12 @@ export const targetMarket = pgTable("target_market", {
   businessType: varchar("business_type", { length: 50 }),
 });
 
-/* =======================
-   BUYER KEYWORDS
-======================= */
 export const buyerKeywords = pgTable("buyer_keywords", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   keyword: varchar("keyword", { length: 255 }).notNull(),
 });
 
-/* =======================
-   PLATFORMS TO MONITOR
-======================= */
 export const platformsToMonitor = pgTable("platforms_to_monitor", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),

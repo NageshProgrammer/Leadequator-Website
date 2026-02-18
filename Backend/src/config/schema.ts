@@ -10,20 +10,54 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core";
 
-
 /* =========================
-   USERS
+   USERS (Current State)
 ========================= */
 export const usersTable = pgTable("users", {
-  id: varchar("id", { length: 255 }).primaryKey(),
-  email: varchar("email", { length: 255 }).notNull(),
-  name: varchar("name", { length: 255 }),
-  credits: integer("credits").default(300).notNull(),
+  id: varchar("id", { length: 255 }).primaryKey(), // Clerk userId
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  
+  // CORE APP DATA
+  credits: integer("credits").default(300),
+  
+  // ACTIVE SUBSCRIPTION CACHE (Keep these for fast access!)
+  plan: varchar("plan", { length: 50 }).default("FREE"), // e.g. "PILOT"
+  planCycle: varchar("plan_cycle", { length: 20 }),      // e.g. "MONTHLY"
+  updatedAt: timestamp("updated_at").defaultNow(),       // Last update time
+});
+
+/* =========================
+   USER SUBSCRIPTIONS (History Log)
+========================= */
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  // ✅ FIX: Must be varchar to match usersTable.id (Clerk ID)
+  userId: varchar("user_id", { length: 255 }).notNull(),
+
+  // PLAN INFO
+  planName: varchar("plan_name", { length: 50 }).notNull(), 
+  billingCycle: varchar("billing_cycle", { length: 20 }).notNull(), 
+  currency: varchar("currency", { length: 10 }).notNull(),
+  amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
+
+  // STATUS
+  status: varchar("status", { length: 20 }).notNull(), // ACTIVE, EXPIRED
+  
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date").notNull(),
+
+  // PAYPAL DETAILS
+  paypalOrderId: varchar("paypal_order_id", { length: 255 }).notNull(),
+  paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
+  paypalRawResponse: jsonb("paypal_raw_response"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /* =========================
-   ONBOARDING PROGRESS
+   OTHER TABLES (Unchanged)
 ========================= */
 export const onboardingProgress = pgTable("onboarding_progress", {
   userId: varchar("user_id", { length: 255 }).primaryKey(),
@@ -32,9 +66,6 @@ export const onboardingProgress = pgTable("onboarding_progress", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/* =========================
-   COMPANY DETAILS
-========================= */
 export const companyDetails = pgTable("company_details", {
   userId: varchar("user_id", { length: 255 }).primaryKey(),
   companyName: varchar("company_name", { length: 255 }).notNull(),
@@ -47,9 +78,6 @@ export const companyDetails = pgTable("company_details", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/* =========================
-   TARGET MARKET
-========================= */
 export const targetMarket = pgTable("target_market", {
   userId: varchar("user_id", { length: 255 }).primaryKey(),
   targetAudience: varchar("target_audience", { length: 255 }),
@@ -59,18 +87,12 @@ export const targetMarket = pgTable("target_market", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/* =========================
-   BUYER KEYWORDS
-========================= */
 export const buyerKeywords = pgTable("buyer_keywords", {
   userId: varchar("user_id", { length: 255 }).notNull(),
   keyword: varchar("keyword", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/* =========================
-   PLATFORMS TO MONITOR
-========================= */
 export const platformsToMonitor = pgTable("platforms_to_monitor", {
   userId: varchar("user_id", { length: 255 }).primaryKey(),
   linkedin: boolean("linkedin").default(false).notNull(),
@@ -82,17 +104,15 @@ export const platformsToMonitor = pgTable("platforms_to_monitor", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
 export const redditPosts = pgTable("reddit_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
   platform: text("platform").default("reddit"),
   text: text("text").notNull(),
-  url: text("url").notNull().unique(),   // 🔥 add this
+  url: text("url").notNull().unique(),
   author: text("author"),
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 
 export const redditAiReplies = pgTable("reddit_ai_replies", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -102,10 +122,7 @@ export const redditAiReplies = pgTable("reddit_ai_replies", {
   generatedReply: text("generated_reply"),
   createdAt: timestamp("created_at").defaultNow(),
 });
-/* =========================
-   PYTHON AI COMPATIBILITY
-   (DO NOT REMOVE)
-========================= */
+
 export const socialPosts = pgTable("social_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id"),
@@ -128,88 +145,23 @@ export const aiReplies = pgTable("ai_replies", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-/* =========================
-   QUORA POSTS
-   (NEW – SAFE ADDITION)
-========================= */
-/* =========================
-   QUORA POSTS
-========================= */
 export const quoraPosts = pgTable("quora_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
-
   userId: text("user_id").notNull(),
-
-  platform: text("platform")
-    .default("quora")
-    .notNull(),
-
+  platform: text("platform").default("quora").notNull(),
   question: text("question").notNull(),
-
   url: text("url").notNull().unique(),
-
   author: text("author"),
-
-  createdAt: timestamp("created_at")
-    .defaultNow()
-    .notNull(),
-});
-
-
-/* =========================
-   QUORA AI REPLIES
-========================= */
-export const quoraAiReplies = pgTable("quora_ai_replies", {
-  id: uuid("id").defaultRandom().primaryKey(),
-
-  quoraPostId: uuid("quora_post_id")
-    .references(() => quoraPosts.id, { onDelete: "cascade" })
-    .notNull(),
-
-  replyOption1: text("reply_option_1").notNull(),
-
-  replyOption2: text("reply_option_2").notNull(),
-
-  approved: boolean("approved")
-    .default(false)
-    .notNull(),
-
-  createdAt: timestamp("created_at")
-    .defaultNow()
-    .notNull(),
-});
-
-
-
-export const userSubscriptions = pgTable("user_subscriptions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-
-  userId: uuid("user_id").notNull(),
-
-  // PLAN INFO
-  planName: varchar("plan_name", { length: 50 }).notNull(), 
-  // PILOT | SCALE
-
-  billingCycle: varchar("billing_cycle", { length: 20 }).notNull(), 
-  // MONTHLY | YEARLY
-
-  currency: varchar("currency", { length: 10 }).notNull(),
-
-  amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
-
-  // SUBSCRIPTION STATUS
-  status: varchar("status", { length: 20 }).notNull(), 
-  // ACTIVE | EXPIRED | CANCELLED
-
-  startDate: timestamp("start_date").defaultNow().notNull(),
-  endDate: timestamp("end_date").notNull(),
-
-  // PAYPAL INFO
-  paypalOrderId: varchar("paypal_order_id", { length: 255 }).notNull(),
-  paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
-
-  paypalRawResponse: jsonb("paypal_raw_response"),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const quoraAiReplies = pgTable("quora_ai_replies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  quoraPostId: uuid("quora_post_id")
+    .references(() => quoraPosts.id, { onDelete: "cascade" })
+    .notNull(),
+  replyOption1: text("reply_option_1").notNull(),
+  replyOption2: text("reply_option_2").notNull(),
+  approved: boolean("approved").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

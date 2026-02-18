@@ -1,10 +1,11 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { db } from "../db.js";
-import { userSubscriptions } from "../config/schema.js";
+import { userSubscriptions, usersTable } from "../config/schema.js";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
-router.post("/verify-payment", async (req, res) => {
+router.post("/verify-payment", async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -14,8 +15,8 @@ router.post("/verify-payment", async (req, res) => {
       orderID,
     } = req.body;
 
-    if (!orderID) {
-      return res.status(400).json({ success: false, message: "Missing orderID" });
+    if (!orderID || !userId) {
+      return res.status(400).json({ success: false, message: "Missing required data" });
     }
 
     // 🔐 1. Get PayPal Access Token
@@ -38,7 +39,7 @@ router.post("/verify-payment", async (req, res) => {
     const tokenData = await tokenRes.json();
     const accessToken = tokenData.access_token;
 
-    // 🔐 2. Verify Order
+    // 🔐 2. Verify Order with PayPal
     const orderRes = await fetch(
       `https://api-m.paypal.com/v2/checkout/orders/${orderID}`,
       {
@@ -57,9 +58,7 @@ router.post("/verify-payment", async (req, res) => {
       });
     }
 
-    const capture =
-      orderData.purchase_units[0].payments.captures[0];
-
+    const capture = orderData.purchase_units[0].payments.captures[0];
     const amountPaid = capture.amount.value;
 
     // 🗓 Expiry Logic
@@ -70,7 +69,7 @@ router.post("/verify-payment", async (req, res) => {
       endDate.setFullYear(endDate.getFullYear() + 1);
     }
 
-    // 💾 Insert into DB
+    // 💾 3. Insert into User Subscriptions (Audit History)
     await db.insert(userSubscriptions).values({
       userId,
       planName,
@@ -84,6 +83,25 @@ router.post("/verify-payment", async (req, res) => {
       paypalCaptureId: capture.id,
       paypalRawResponse: orderData,
     });
+
+    // ✅ 4. UPDATE USER'S CURRENT STATUS & CREDITS
+    let creditBoost = 0;
+    if (planName === "PILOT") creditBoost = 1000;
+    if (planName === "SCALE") creditBoost = 5000;
+    if (planName === "ENTERPRISE") creditBoost = 20000;
+
+    await db
+      .update(usersTable)
+      .set({
+        plan: planName,
+        planCycle: billingCycle,
+        // Override credits with new plan limit
+        credits: creditBoost > 0 ? creditBoost : undefined, 
+        updatedAt: new Date(),
+      })
+      .where(eq(usersTable.id, userId));
+
+    console.log(`✅ User ${userId} upgraded to ${planName}. History logged.`);
 
     return res.json({ success: true });
 
