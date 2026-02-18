@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Check, Star, IndianRupee, DollarSign, LogIn } from "lucide-react";
+import { Check, Star, IndianRupee, DollarSign, LogIn, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
 
 // 🔧 API CONFIGURATION
-// This automatically switches between localhost and live server based on where you run it.
 const API_BASE = import.meta.env.MODE === "development" 
   ? "http://localhost:5000" 
   : "https://api.leadequator.live";
@@ -96,7 +95,7 @@ export default function CongestedPricing() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const switchRef = useRef<HTMLButtonElement>(null);
   
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
   const [{ options }, dispatch] = usePayPalScriptReducer();
 
   useEffect(() => {
@@ -299,80 +298,93 @@ export default function CongestedPricing() {
                       }
                     </Link>
                 ) : (
-                  <div className="z-0">
-                    <PayPalButtons
-                      style={{
-                        layout: "vertical",
-                        label: "buynow",
-                        height: 45,
-                        tagline: false,
-                      }}
-                      forceReRender={[currentPrice, isMonthly, currency]}
-                      createOrder={(data, actions) => {
-                        const EXCHANGE_RATE = 84;
-                        let chargeAmount = String(currentPrice);
-                        let chargeCurrency = currency;
+                  <div className="z-0 min-h-[50px]">
+                    {!isLoaded || !user?.id ? (
+                      <div className="flex items-center justify-center w-full py-4 text-zinc-500">
+                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        Loading Payment...
+                      </div>
+                    ) : (
+                      <PayPalButtons
+                        style={{
+                          layout: "vertical",
+                          label: "buynow",
+                          height: 45,
+                          tagline: false,
+                        }}
+                        forceReRender={[currentPrice, isMonthly, currency]}
+                        createOrder={(data, actions) => {
+                          const EXCHANGE_RATE = 84;
+                          let chargeAmount = String(currentPrice);
+                          let chargeCurrency = currency;
 
-                        if (currency === "INR") {
-                            chargeAmount = (Number(currentPrice) / EXCHANGE_RATE).toFixed(2);
-                            chargeCurrency = "USD";
-                        }
-
-                        return actions.order.create({
-                          intent: "CAPTURE",
-                          purchase_units: [
-                            {
-                              description: `${plan.name} Plan (${isMonthly ? "Monthly" : "Annual"})`,
-                              amount: {
-                                currency_code: chargeCurrency,
-                                value: chargeAmount,
-                              },
-                            },
-                          ],
-                        });
-                      }}
-                      onApprove={async (data, actions) => {
-                        const toastId = toast.loading("Verifying payment...");
-                        try {
-                          if (!actions.order) throw new Error("Actions missing");
-
-                          const details = await actions.order.capture();
-
-                          // ✅ FIX: Use the dynamic API_BASE variable
-                          const response = await fetch(
-                            `${API_BASE}/api/verify-payment`,
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                userId: user?.id,
-                                planName: plan.name,
-                                billingCycle: isMonthly ? "MONTHLY" : "YEARLY",
-                                currency: currency,
-                                orderID: data.orderID,
-                              }),
-                            }
-                          );
-
-                          const result = await response.json();
-
-                          if (!result.success) {
-                            throw new Error("Backend verification failed");
+                          if (currency === "INR") {
+                              chargeAmount = (Number(currentPrice) / EXCHANGE_RATE).toFixed(2);
+                              chargeCurrency = "USD";
                           }
 
-                          toast.success("Payment verified! Redirecting...", { id: toastId });
-                          setTimeout(() => navigate("/onboarding"), 1500);
+                          return actions.order.create({
+                            intent: "CAPTURE",
+                            purchase_units: [
+                              {
+                                description: `${plan.name} Plan (${isMonthly ? "Monthly" : "Annual"})`,
+                                amount: {
+                                  currency_code: chargeCurrency,
+                                  value: chargeAmount,
+                                },
+                              },
+                            ],
+                          });
+                        }}
+                        onApprove={async (data, actions) => {
+                          const toastId = toast.loading("Verifying payment...");
+                          try {
+                            if (!actions.order) throw new Error("Actions missing");
 
-                        } catch (err: any) {
-                          console.error("Payment Error:", err);
-                          toast.error("Payment failed. Please try again.", { id: toastId });
-                        }
-                      }}
-                      onError={(err) => {
-                        console.error("PayPal Popup Error:", err);
-                        toast.error("Payment window closed.");
-                      }}
-                    />
+                            const details = await actions.order.capture();
+
+                            // ✅ Use the dynamic API_BASE from top of file
+                            const response = await fetch(
+                              `${API_BASE}/api/verify-payment`,
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  userId: user.id, // Confirmed ID from Clerk
+                                  planName: plan.name,
+                                  billingCycle: isMonthly ? "MONTHLY" : "YEARLY",
+                                  currency: currency,
+                                  orderID: data.orderID,
+                                }),
+                              }
+                            );
+
+                            // Handle HTTP Errors
+                            if (!response.ok) {
+                               const errorData = await response.json();
+                               throw new Error(errorData.message || `Server Error: ${response.status}`);
+                            }
+
+                            const result = await response.json();
+
+                            if (!result.success) {
+                              throw new Error("Backend verification failed");
+                            }
+
+                            toast.success("Payment verified! Redirecting...", { id: toastId });
+                            setTimeout(() => navigate("/onboarding"), 1500);
+
+                          } catch (err: any) {
+                            console.error("Payment Error:", err);
+                            toast.error(`Payment failed: ${err.message}`, { id: toastId });
+                          }
+                        }}
+                        onError={(err) => {
+                          console.error("PayPal Popup Error:", err);
+                          toast.error("Payment window closed or failed.");
+                        }}
+                      />
+                    )}
                   </div>
                 )}
                 <p className="text-center text-xs text-zinc-500 mt-4">
