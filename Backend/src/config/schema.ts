@@ -18,7 +18,7 @@ export const usersTable = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(),
   email: varchar("email", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }),
-  credits: integer("credits").default(200).notNull(),
+  credits: integer("credits").default(300).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
