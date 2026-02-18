@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Zap, Loader2 } from 'lucide-react'; 
 
-// 👇 Import the hook to fetch DB credits
+// 👇 Import the hook to fetch DB credits directly
 import { useCredits } from "@/context/CreditContext";
 
 const CreditAlert = () => {
@@ -10,7 +10,7 @@ const CreditAlert = () => {
   const { credits, loading } = useCredits();
 
   // OPTIONAL: Hide the alert if credits are healthy (e.g., > 50)
-  // Remove this block if you want the alert to ALWAYS show.
+  // If you want the alert to always show, remove this if-block.
   if (!loading && credits > 50) {
     return null; 
   }
@@ -38,7 +38,7 @@ const CreditAlert = () => {
                   credits
                 )} credits
               </span>{' '}
-              remaining. Your {credits === 0 ? "credits are exhausted." : "credits may exhaust soon."}
+              remaining. Your campaigns {credits === 0 ? "have paused." : "may pause soon."}
             </p>
           </div>
         </div>

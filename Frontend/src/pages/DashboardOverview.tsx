@@ -36,10 +36,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import CreditAlert from "@/components/creditalert";
 
-// 👇 IMPORT THE HOOK
-import { useCredits } from "@/context/CreditContext";
+// 👇 Import the Smart Alert Component
+import CreditAlert from "@/components/creditalert";
 
 /* ================= TYPES ================= */
 type Lead = {
@@ -56,9 +55,6 @@ const DashboardOverview = () => {
   const navigate = useNavigate();
   const { user, isLoaded } = useUser();
   const dashboardRef = useRef<HTMLDivElement>(null);
-
-  // 👇 CONSUME CONTEXT TO GET LIVE CREDITS
-  const { credits } = useCredits();
 
   const [range, setRange] = useState<"24h" | "7d" | "30d" | "custom">("7d");
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -173,10 +169,8 @@ const DashboardOverview = () => {
   return (
     <div ref={dashboardRef} className="p-4 md:p-8 space-y-6 bg-background min-h-screen">
       
-      {/* HEADER WITH CREDIT ALERT */}
+      {/* HEADER WITH SMART CREDIT ALERT */}
       <div>
-        {/* 👇 Pass credits prop if your component accepts it, or ensure component uses Context internally */}
-        {/* If CreditAlert doesn't accept props yet, see NOTE below */}
         <CreditAlert />
       </div>
 
