@@ -5,6 +5,12 @@ import { eq } from "drizzle-orm";
 
 const router = Router();
 
+// 🔧 API CONFIGURATION: Auto-switch between Sandbox and Live
+// Ensure your .env has NODE_ENV set to "production" when live
+const PAYPAL_API = process.env.NODE_ENV === "production" 
+  ? "https://api-m.paypal.com" 
+  : "https://api-m.sandbox.paypal.com";
+
 router.post("/verify-payment", async (req: Request, res: Response) => {
   try {
     const {
@@ -16,42 +22,45 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
     } = req.body;
 
     if (!orderID || !userId) {
-      return res.status(400).json({ success: false, message: "Missing required data" });
+      return res.status(400).json({ success: false, message: "Missing required data (orderID or userId)" });
     }
+
+    console.log(`[Payment] Verifying Order: ${orderID} for User: ${userId}`);
 
     // 🔐 1. Get PayPal Access Token
     const auth = Buffer.from(
       `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
     ).toString("base64");
 
-    const tokenRes = await fetch(
-      "https://api-m.paypal.com/v1/oauth2/token",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: "grant_type=client_credentials",
-      }
-    );
+    const tokenRes = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
 
     const tokenData = await tokenRes.json();
+    
+    if (!tokenRes.ok) {
+        console.error("PayPal Token Error:", tokenData);
+        throw new Error("Failed to authenticate with PayPal");
+    }
+
     const accessToken = tokenData.access_token;
 
-    // 🔐 2. Verify Order with PayPal
-    const orderRes = await fetch(
-      `https://api-m.paypal.com/v2/checkout/orders/${orderID}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    // 🔐 2. Verify Order
+    const orderRes = await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderID}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     const orderData = await orderRes.json();
 
     if (orderData.status !== "COMPLETED") {
+      console.error("Payment Not Completed:", orderData.status);
       return res.status(400).json({
         success: false,
         message: "Payment not completed",
@@ -69,9 +78,9 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
       endDate.setFullYear(endDate.getFullYear() + 1);
     }
 
-    // 💾 3. Insert into User Subscriptions (Audit History)
+    // 💾 3. Insert into User Subscriptions (History)
     await db.insert(userSubscriptions).values({
-      userId,
+      userId, // Now matches varchar(255) in schema
       planName,
       billingCycle,
       currency,
@@ -84,30 +93,30 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
       paypalRawResponse: orderData,
     });
 
-    // ✅ 4. UPDATE USER'S CURRENT STATUS & CREDITS
+    // ✅ 4. UPDATE THE USER'S CURRENT PLAN & CREDITS
     let creditBoost = 0;
     if (planName === "PILOT") creditBoost = 1000;
-    if (planName === "SCALE") creditBoost = 5000;
-    if (planName === "ENTERPRISE") creditBoost = 20000;
+    else if (planName === "SCALE") creditBoost = 5000;
+    else if (planName === "ENTERPRISE") creditBoost = 20000;
 
     await db
       .update(usersTable)
       .set({
         plan: planName,
         planCycle: billingCycle,
-        // Override credits with new plan limit
         credits: creditBoost > 0 ? creditBoost : undefined, 
         updatedAt: new Date(),
       })
       .where(eq(usersTable.id, userId));
 
-    console.log(`✅ User ${userId} upgraded to ${planName}. History logged.`);
+    console.log(`✅ User ${userId} upgraded to ${planName}.`);
 
     return res.json({ success: true });
 
-  } catch (error) {
-    console.error("Verification Error:", error);
-    return res.status(500).json({ success: false });
+  } catch (error: any) {
+    console.error("Verification Error:", error.message || error);
+    // Return 500 so frontend knows it failed
+    return res.status(500).json({ success: false, message: "Server error during verification" });
   }
 });
 

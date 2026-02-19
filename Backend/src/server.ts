@@ -1,14 +1,10 @@
-import "dotenv/config";
-import express from "express";
 import cors from "cors";
 import { eq } from "drizzle-orm";
 
 import { db } from "./db.js";
-// ✅ Routes
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
-import paymentRoutes from "./routes/payment.js"; 
+import paymentRoutes from "./routes/payment.js";
 
-// ✅ Schema Imports
 import {
   onboardingProgress,
   companyDetails,
@@ -21,7 +17,7 @@ import {
 const app = express();
 
 /* ===============================
-   CORS (CLERK + PROD SAFE)
+   CORS
 ================================ */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -43,26 +39,23 @@ app.use(
 
 app.use(express.json());
 
+// ✅ Mount Payment Route
+app.use("/api", paymentRoutes);
+
 /* ===============================
-   HEALTH CHECK
+   HEALTH
 ================================ */
 app.get("/", (_req, res) => {
   res.json({ status: "Backend running" });
 });
 
 /* ===============================
-   MOUNT ROUTES
+   LEAD DISCOVERY
 ================================ */
-
-// 1. Payment Verification ( /api/verify-payment )
-app.use("/api", paymentRoutes);
-
-// 2. Lead Discovery ( /api/lead-discovery/... )
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
-
 /* ===============================
-   ONBOARDING ENDPOINTS
+   ONBOARDING
 ================================ */
 app.get("/api/onboarding/progress", async (req, res) => {
   try {
@@ -84,7 +77,6 @@ app.get("/api/onboarding/progress", async (req, res) => {
 
 app.post("/api/onboarding/progress", async (req, res) => {
   const { userId, currentStep } = req.body;
-
   await db
     .insert(onboardingProgress)
     .values({ userId, currentStep })
@@ -92,7 +84,6 @@ app.post("/api/onboarding/progress", async (req, res) => {
       target: onboardingProgress.userId,
       set: { currentStep },
     });
-
   res.json({ success: true });
 });
 
@@ -297,16 +288,12 @@ app.post("/api/users/sync", async (req, res) => {
       id: clerkId,
       email,
       name,
-      credits: 300, // Default free credits
+      credits: 300,
     });
   }
-
   res.json({ success: true });
 });
 
-/* ===============================
-   START SERVER
-================================ */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ API running on port ${PORT}`);
