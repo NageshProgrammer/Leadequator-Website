@@ -103,7 +103,6 @@ app.post("/api/onboarding/progress", async (req, res) => {
 
 app.post("/api/onboarding", async (req, res) => {
   try {
-    // ✅ Added fallback empty objects to prevent 'Cannot read properties of undefined' crashes
     const {
       userId,
       companyData = {},
@@ -209,17 +208,14 @@ app.get("/api/settings/profile", async (req, res) => {
     // Run fetches in parallel for speed
     const [userData] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
     const [companyData] = await db.select().from(companyDetails).where(eq(companyDetails.userId, userId)).limit(1);
-    
-    // ✅ NEW: Fetch Target Market Data
     const [targetMarketData] = await db.select().from(targetMarket).where(eq(targetMarket.userId, userId)).limit(1);
-    
     const [platformsData] = await db.select().from(platformsToMonitor).where(eq(platformsToMonitor.userId, userId)).limit(1);
     const keywordsRaw = await db.select().from(buyerKeywords).where(eq(buyerKeywords.userId, userId));
 
     res.json({
       user: userData || {},
       company: companyData || {},
-      targetMarket: targetMarketData || {}, // ✅ Added to response
+      targetMarket: targetMarketData || {},
       platforms: platformsData || {},
       keywords: keywordsRaw.map(k => k.keyword) || []
     });
@@ -233,19 +229,19 @@ app.get("/api/settings/profile", async (req, res) => {
 // 2. UPDATE Profile Data
 app.put("/api/settings/profile", async (req, res) => {
   try {
-    // ✅ Added targetData to destructured body
     const { userId, userData, companyData, targetData, platformsData, keywords } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId" });
 
     // 1. Update User Table (Name)
-    if (userData) {
+    // Using update instead of insert here since usersTable requires an email, which comes from the sync route
+    if (userData && userData.name) {
       await db.update(usersTable)
         .set({ name: userData.name })
         .where(eq(usersTable.id, userId));
     }
 
     // 2. Update Company Details (Upsert)
-    if (companyData) {
+    if (companyData && Object.keys(companyData).length > 0) {
       await db.insert(companyDetails)
         .values({ userId, ...companyData })
         .onConflictDoUpdate({
@@ -254,7 +250,7 @@ app.put("/api/settings/profile", async (req, res) => {
         });
     }
 
-    // ✅ 3. Update Target Market Data (Upsert)
+    // 3. Update Target Market Data (Upsert)
     if (targetData && Object.keys(targetData).length > 0) {
       await db.insert(targetMarket)
         .values({ userId, ...targetData })
@@ -265,7 +261,7 @@ app.put("/api/settings/profile", async (req, res) => {
     }
 
     // 4. Update Platforms (Upsert)
-    if (platformsData) {
+    if (platformsData && Object.keys(platformsData).length > 0) {
       await db.insert(platformsToMonitor)
         .values({ userId, ...platformsData })
         .onConflictDoUpdate({
@@ -275,7 +271,7 @@ app.put("/api/settings/profile", async (req, res) => {
     }
 
     // 5. Update Keywords (Delete All -> Re-insert)
-    if (keywords) {
+    if (Array.isArray(keywords)) {
       await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
       if (keywords.length > 0) {
         await db.insert(buyerKeywords).values(
