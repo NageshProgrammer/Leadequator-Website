@@ -11,53 +11,46 @@ import {
 } from "drizzle-orm/pg-core";
 
 /* =========================
-   USERS (Clerk compatible)
+   USERS (Fast Access Cache)
 ========================= */
 export const usersTable = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(), // Clerk userId
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  
+  // CORE APP DATA
   credits: integer("credits").default(300),
   
-  // ✅ SUBSCRIPTION FIELDS
-  plan: varchar("plan", { length: 50 }).default("FREE"), // "PILOT", "SCALE"
-  planCycle: varchar("plan_cycle", { length: 20 }),      // "MONTHLY", "YEARLY"
+  // ACTIVE SUBSCRIPTION CACHE
+  plan: varchar("plan", { length: 50 }).default("FREE"),
+  planCycle: varchar("plan_cycle", { length: 20 }),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 /* =========================
-   USER SUBSCRIPTIONS (History)
+   USER SUBSCRIPTIONS (History Log)
 ========================= */
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
-
-  // ⚠️ FIXED: Changed from uuid to varchar to match Clerk ID format
-  userId: varchar("user_id", { length: 255 }).notNull(),
-
-  // PLAN INFO
+  userId: varchar("user_id", { length: 255 }).notNull(), // Clerk ID
   planName: varchar("plan_name", { length: 50 }).notNull(), 
   billingCycle: varchar("billing_cycle", { length: 20 }).notNull(), 
   currency: varchar("currency", { length: 10 }).notNull(),
   amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
-
-  // STATUS
   status: varchar("status", { length: 20 }).notNull(), 
-  
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date").notNull(),
-
-  // PAYPAL INFO
   paypalOrderId: varchar("paypal_order_id", { length: 255 }).notNull(),
   paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
   paypalRawResponse: jsonb("paypal_raw_response"),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /* =========================
-   REMAINING TABLES (Keep as is)
+   ONBOARDING PROGRESS
 ========================= */
 export const onboardingProgress = pgTable("onboarding_progress", {
+  // ✅ Identity added to prevent push errors
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
   currentStep: integer("current_step").default(1).notNull(),
@@ -65,7 +58,11 @@ export const onboardingProgress = pgTable("onboarding_progress", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/* =========================
+   COMPANY DETAILS
+========================= */
 export const companyDetails = pgTable("company_details", {
+  // ✅ Identity added
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
   companyName: varchar("company_name", { length: 255 }).notNull(),
@@ -78,33 +75,50 @@ export const companyDetails = pgTable("company_details", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/* =========================
+   TARGET MARKET
+========================= */
 export const targetMarket = pgTable("target_market", {
+  // ✅ Identity added
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
-  targetAudience: text("target_audience"),
-  targetCountry: varchar("target_country", { length: 100 }),
+  targetAudience: varchar("target_audience", { length: 255 }),
+  targetCountry: varchar("target_country", { length: 255 }),
   targetStateCity: varchar("target_state_city", { length: 255 }),
-  businessType: varchar("business_type", { length: 50 }),
+  businessType: varchar("business_type", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/* =========================
+   BUYER KEYWORDS
+========================= */
 export const buyerKeywords = pgTable("buyer_keywords", {
+  // ✅ Identity added
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   keyword: varchar("keyword", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/* =========================
+   PLATFORMS TO MONITOR
+========================= */
 export const platformsToMonitor = pgTable("platforms_to_monitor", {
+  // ✅ Identity added
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
-  linkedin: boolean("linkedin").default(false),
-  twitter: boolean("twitter").default(false),
-  reddit: boolean("reddit").default(false),
-  facebook: boolean("facebook").default(false),
-  quora: boolean("quora").default(false),
-  youtube: boolean("youtube").default(false),
+  linkedin: boolean("linkedin").default(false).notNull(),
+  twitter: boolean("twitter").default(false).notNull(),
+  reddit: boolean("reddit").default(false).notNull(),
+  quora: boolean("quora").default(false).notNull(),
+  facebook: boolean("facebook").default(false).notNull(),
+  youtube: boolean("youtube").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Assuming redditPosts and quoraPosts are defined elsewhere or below as in your previous code
+/* =========================
+   REDDIT POSTS
+========================= */
 export const redditPosts = pgTable("reddit_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
@@ -117,12 +131,41 @@ export const redditPosts = pgTable("reddit_posts", {
 
 export const redditAiReplies = pgTable("reddit_ai_replies", {
   id: uuid("id").defaultRandom().primaryKey(),
-  redditPostId: uuid("reddit_post_id").references(() => redditPosts.id, { onDelete: "cascade" }),
+  redditPostId: uuid("reddit_post_id")
+    .references(() => redditPosts.id, { onDelete: "cascade" }),
   intent: text("intent"),
   generatedReply: text("generated_reply"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+/* =========================
+   PYTHON AI COMPATIBILITY (Legacy)
+========================= */
+export const socialPosts = pgTable("social_posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id"),
+  platform: text("platform").notNull(),
+  text: text("text").notNull(),
+  url: text("url").notNull().unique(),
+  author: text("author"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const aiReplies = pgTable("ai_replies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  postId: uuid("post_id")
+    .references(() => socialPosts.id, { onDelete: "cascade" }),
+  platform: text("platform"),
+  postUrl: text("post_url"),
+  replyOption1: text("reply_option_1"),
+  replyOption2: text("reply_option_2"),
+  approved: boolean("approved").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+/* =========================
+   QUORA POSTS
+========================= */
 export const quoraPosts = pgTable("quora_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
@@ -135,7 +178,9 @@ export const quoraPosts = pgTable("quora_posts", {
 
 export const quoraAiReplies = pgTable("quora_ai_replies", {
   id: uuid("id").defaultRandom().primaryKey(),
-  quoraPostId: uuid("quora_post_id").references(() => quoraPosts.id, { onDelete: "cascade" }).notNull(),
+  quoraPostId: uuid("quora_post_id")
+    .references(() => quoraPosts.id, { onDelete: "cascade" })
+    .notNull(),
   replyOption1: text("reply_option_1").notNull(),
   replyOption2: text("reply_option_2").notNull(),
   approved: boolean("approved").default(false).notNull(),

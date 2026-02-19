@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 // 🔧 API CONFIGURATION: Auto-switch between Sandbox and Live
-// Ensure your .env has NODE_ENV set to "production" when live
+// Ensure your Render environment variables have NODE_ENV set to "production"
 const PAYPAL_API = process.env.NODE_ENV === "production" 
   ? "https://api-m.paypal.com" 
   : "https://api-m.sandbox.paypal.com";
@@ -22,10 +22,16 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
     } = req.body;
 
     if (!orderID || !userId) {
+      console.error("❌ Verify Payment: Missing orderID or userId");
       return res.status(400).json({ success: false, message: "Missing required data (orderID or userId)" });
     }
 
-    console.log(`[Payment] Verifying Order: ${orderID} for User: ${userId}`);
+    if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_SECRET) {
+        console.error("❌ Verify Payment: Missing PayPal credentials in backend environment.");
+        return res.status(500).json({ success: false, message: "Server configuration missing PayPal keys" });
+    }
+
+    console.log(`[Payment] Verifying Order: ${orderID} for User: ${userId} on ${PAYPAL_API}`);
 
     // 🔐 1. Get PayPal Access Token
     const auth = Buffer.from(
@@ -44,13 +50,13 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
     const tokenData = await tokenRes.json();
     
     if (!tokenRes.ok) {
-        console.error("PayPal Token Error:", tokenData);
+        console.error("❌ PayPal Token Error:", tokenData);
         throw new Error("Failed to authenticate with PayPal");
     }
 
     const accessToken = tokenData.access_token;
 
-    // 🔐 2. Verify Order
+    // 🔐 2. Verify Order with PayPal
     const orderRes = await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderID}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -60,14 +66,18 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
     const orderData = await orderRes.json();
 
     if (orderData.status !== "COMPLETED") {
-      console.error("Payment Not Completed:", orderData.status);
+      console.error("❌ Payment Not Completed. Status:", orderData.status);
       return res.status(400).json({
         success: false,
         message: "Payment not completed",
       });
     }
 
-    const capture = orderData.purchase_units[0].payments.captures[0];
+    // Fallback safely if array structure from PayPal is unexpected
+    const capture = orderData.purchase_units?.[0]?.payments?.captures?.[0];
+    if (!capture) {
+        throw new Error("Could not locate capture details in PayPal response.");
+    }
     const amountPaid = capture.amount.value;
 
     // 🗓 Expiry Logic
@@ -80,7 +90,7 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
 
     // 💾 3. Insert into User Subscriptions (History)
     await db.insert(userSubscriptions).values({
-      userId, // Now matches varchar(255) in schema
+      userId, 
       planName,
       billingCycle,
       currency,
@@ -114,8 +124,7 @@ router.post("/verify-payment", async (req: Request, res: Response) => {
     return res.json({ success: true });
 
   } catch (error: any) {
-    console.error("Verification Error:", error.message || error);
-    // Return 500 so frontend knows it failed
+    console.error("🔥 Verification Server Error:", error.message || error);
     return res.status(500).json({ success: false, message: "Server error during verification" });
   }
 });
