@@ -319,9 +319,12 @@ export default function CongestedPricing() {
                           let chargeCurrency = currency;
 
                           if (currency === "INR") {
-                              chargeAmount = (Number(currentPrice) / EXCHANGE_RATE).toFixed(2);
+                              chargeAmount = (Number(currentPrice) / EXCHANGE_RATE).toString();
                               chargeCurrency = "USD";
                           }
+
+                          // ✅ FIX: Ensure standard decimal formatting for PayPal
+                          const formattedValue = Number(chargeAmount).toFixed(2);
 
                           return actions.order.create({
                             intent: "CAPTURE",
@@ -330,7 +333,7 @@ export default function CongestedPricing() {
                                 description: `${plan.name} Plan (${isMonthly ? "Monthly" : "Annual"})`,
                                 amount: {
                                   currency_code: chargeCurrency,
-                                  value: chargeAmount,
+                                  value: formattedValue,
                                 },
                               },
                             ],
@@ -343,14 +346,13 @@ export default function CongestedPricing() {
 
                             const details = await actions.order.capture();
 
-                            // ✅ Use the dynamic API_BASE from top of file
                             const response = await fetch(
                               `${API_BASE}/api/verify-payment`,
                               {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
-                                  userId: user.id, // Confirmed ID from Clerk
+                                  userId: user.id,
                                   planName: plan.name,
                                   billingCycle: isMonthly ? "MONTHLY" : "YEARLY",
                                   currency: currency,
@@ -359,7 +361,6 @@ export default function CongestedPricing() {
                               }
                             );
 
-                            // Handle HTTP Errors
                             if (!response.ok) {
                                const errorData = await response.json();
                                throw new Error(errorData.message || `Server Error: ${response.status}`);

@@ -181,33 +181,27 @@ export const quoraAiReplies = pgTable("quora_ai_replies", {
 
 
 
+// Update this specific block at the bottom of your schema.ts
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
 
-  userId: uuid("user_id").notNull(),
+  // 🔥 CHANGED FROM uuid TO varchar to match usersTable.id (Clerk IDs)
+  userId: varchar("user_id", { length: 255 }).notNull(),
 
   // PLAN INFO
   planName: varchar("plan_name", { length: 50 }).notNull(), 
-  // PILOT | SCALE
-
   billingCycle: varchar("billing_cycle", { length: 20 }).notNull(), 
-  // MONTHLY | YEARLY
-
   currency: varchar("currency", { length: 10 }).notNull(),
-
   amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
 
   // SUBSCRIPTION STATUS
   status: varchar("status", { length: 20 }).notNull(), 
-  // ACTIVE | EXPIRED | CANCELLED
-
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date").notNull(),
 
   // PAYPAL INFO
   paypalOrderId: varchar("paypal_order_id", { length: 255 }).notNull(),
   paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
-
   paypalRawResponse: jsonb("paypal_raw_response"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),

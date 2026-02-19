@@ -3,18 +3,28 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { ClerkProvider } from "@clerk/clerk-react";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 
-// Read Clerk key from Vite env
+// Read keys from Vite env
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
 
 // Log for debugging (optional)
 console.log("Clerk Key Initialized:", !!PUBLISHABLE_KEY);
+console.log("PayPal Key Initialized:", !!PAYPAL_CLIENT_ID);
 
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
   throw new Error("Root element not found");
 }
+
+// ✅ Setup PayPal Options
+const initialPayPalOptions = {
+  clientId: PAYPAL_CLIENT_ID || "test", // Fallback prevents crash if env is missing
+  currency: "USD",
+  intent: "capture",
+};
 
 createRoot(rootElement).render(
   <StrictMode>
@@ -25,7 +35,10 @@ createRoot(rootElement).render(
         afterSignUpUrl="/onboarding"
         afterSignInUrl="/onboarding"
       >
-        <App />
+        {/* ✅ Wrap App with PayPal Provider */}
+        <PayPalScriptProvider options={initialPayPalOptions}>
+          <App />
+        </PayPalScriptProvider>
       </ClerkProvider>
     ) : (
       <div
