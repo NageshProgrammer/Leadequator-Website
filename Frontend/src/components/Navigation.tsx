@@ -56,10 +56,13 @@ const Navigation = () => {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 1. Added max-w-7xl here so the navbar perfectly aligns with the page content below it */}
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
+          
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold flex items-center gap-2 group cursor-pointer relative z-50">
+          {/* 2. Added shrink-0 so the logo never gets squished on weird screen sizes */}
+          <Link to="/" className="text-2xl font-bold flex items-center gap-2 group cursor-pointer relative z-50 shrink-0">
             <img
               src="/leadequator_logo.png"
               alt="Leadequator Logo"
@@ -72,13 +75,14 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-2 xl:gap-4">
+          {/* 3. Changed lg:flex to xl:flex so it collapses to mobile menu before getting crowded */}
+          <div className="hidden xl:flex items-center gap-2">
             <div className="flex items-center p-1.5 rounded-full bg-white/[0.02] border border-white/[0.05] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] backdrop-blur-md">
               {navLinks.map((link) => (
                 <NavLink 
                   key={link.to} 
                   to={link.to} 
-                  className="text-sm font-medium px-5 py-2"
+                  className="text-sm font-medium px-4 py-2"
                 >
                   {link.label}
                 </NavLink>
@@ -118,7 +122,7 @@ const Navigation = () => {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden relative z-50 p-2.5 rounded-full text-gray-300 bg-white/[0.03] border border-white/[0.05] hover:text-white hover:bg-white/[0.1] active:scale-95 transition-all duration-300"
+            className="xl:hidden relative z-50 p-2.5 rounded-full text-gray-300 bg-white/[0.03] border border-white/[0.05] hover:text-white hover:bg-white/[0.1] active:scale-95 transition-all duration-300 shrink-0"
             aria-label="Toggle menu"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -128,13 +132,13 @@ const Navigation = () => {
 
       {/* Floating Liquid Glass Mobile Menu */}
       <div 
-        className={`lg:hidden fixed left-4 right-4 origin-top transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`xl:hidden fixed left-4 right-4 origin-top transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isOpen 
             ? "top-[90px] opacity-100 scale-100 pointer-events-auto" 
             : "top-[80px] opacity-0 scale-95 pointer-events-none"
         }`}
       >
-        <div className="bg-[#111111]/70 backdrop-blur-[50px] backdrop-saturate-[200%] border border-white/[0.1] rounded-[2rem] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)] overflow-hidden">
+        <div className="bg-[#111111]/90 backdrop-blur-[50px] backdrop-saturate-[200%] border border-white/[0.1] rounded-[2rem] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)] overflow-hidden">
           <div className="flex flex-col p-4 space-y-2">
             
             {/* Links Section */}

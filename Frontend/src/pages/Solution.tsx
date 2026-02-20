@@ -8,6 +8,8 @@ const Solution = () => {
   return (
     <div className=" min-h-screen text-white font-sans selection:bg-amber-500/30 pt-20">
       <ScrollProgress className="top-[65px]" />
+
+      <div className="absolute top-1/5 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
       <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
         {/* =========================================
             HEADER SECTION
@@ -29,9 +31,9 @@ const Solution = () => {
         ========================================= */}
         <div className="relative mb-8">
           {/* Glowing Background Effect behind the box */}
-          <div className="absolute inset-0 bg-amber-500/5 blur-3xl rounded-full opacity-20 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-amber-500/2 blur-3xl rounded-full  pointer-events-none"></div>
 
-          <div className="relative z-10 border border-amber-500/30 bg-zinc-800/50  rounded-3xl p-10 md:p-20 text-center max-w-5xl mx-auto backdrop-blur-sm">
+          <div className="relative z-10 border border-amber-500/30 bg-black-800/70  rounded-3xl p-10 md:p-20 text-center max-w-5xl mx-auto backdrop-blur-sm">
             <ShineBorder
               shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]}
             />

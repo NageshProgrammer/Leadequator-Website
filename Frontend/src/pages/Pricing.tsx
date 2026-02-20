@@ -1,99 +1,35 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import CongestedPricing from "@/[components]/plansection";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Pricing = () => {
-  /* -------- FUNCTIONAL LOGIC -------- */
-
-  const handlePilotCTA = () => {
-    // This logic remains for the bottom button if you prefer an alert, 
-    // but typically you'd wrap this in a Link as well.
-    alert("Pilot Program request initiated");
-  };
-
-  const plans = [
-    {
-      name: "Pilot",
-      price: "Custom",
-      description: "Test the platform with limited scope",
-      features: [
-        "1 brand/product to monitor",
-        "Up to 1,000 conversations/month",
-        "AI-suggested replies (manual send)",
-        "LinkedIn + Reddit monitoring",
-        "Basic intent scoring",
-        "Email support",
-        "30-day pilot program",
-      ],
-      cta: "Request Pilot Quote",
-      path: "/sign-up/", // Redirects to Sign Up as requested
-      highlighted: false,
-    },
-    {
-      name: "Scale",
-      price: "Custom",
-      description: "Full platform for growing teams",
-      features: [
-        "Up to 5 brands/products",
-        "Unlimited conversations",
-        "Auto-replies with approval workflows",
-        "All 5 platforms (LinkedIn, Quora, Reddit, X, YouTube)",
-        "Advanced intent scoring + sentiment",
-        "CRM integrations (Salesforce, HubSpot)",
-        "Competitor watch + alerts",
-        "Analytics dashboard + reports",
-        "Dedicated success manager",
-        "Priority support",
-      ],
-      cta: "Request Scale Quote",
-      path: "/sign-up/",
-      highlighted: true,
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      description: "For agencies and large organizations",
-      features: [
-        "Unlimited brands/workspaces",
-        "Unlimited conversations",
-        "White-label option for agencies",
-        "Custom AI training on brand voice",
-        "Multi-tenant workspace management",
-        "SSO (Okta, Azure AD)",
-        "Advanced security & compliance (SOC 2)",
-        "Custom integrations + API access",
-        "Dedicated infrastructure (optional)",
-        "24/7 premium support + SLA",
-        "Quarterly business reviews",
-      ],
-      cta: "Contact Sales",
-      path: "/contact", // Redirects to Contact as requested
-      highlighted: false,
-    },
-  ];
-
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    // ADDED: bg-black and overflow-x-hidden to lock the layout and prevent mobile side-scrolling
+    <div className="min-h-screen  pt-24 pb-12 text-white selection:bg-[#fbbf24]/30 relative z-10 overflow-x-hidden">
       <ScrollProgress className="top-[65px]" />
-      <div className="container mx-auto px-4">
-        
-        
+      
+      {/* Background Glow */}
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
-        {/* Pricing Cards */}
+      <div className="container mx-auto px-4 max-w-7xl">
         
-          <CongestedPricing/>
-
-
+        {/* Pricing Cards Component */}
+        <CongestedPricing/>
 
         {/* FAQ Section */}
-        <div className="mt-24">
-          <h2 className="text-4xl font-bold text-center mb-12">
-            Pricing <span className="text-primary">Questions</span>
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="mt-32">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] text-[#fbbf24] font-bold tracking-widest text-xs uppercase mb-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+              FAQ
+            </span>
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              Pricing <span className="text-[#fbbf24]">Questions</span>
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {[
               {
                 q: "What determines custom pricing?",
@@ -112,26 +48,30 @@ const Pricing = () => {
                 a: "Yes, you can upgrade from Pilot → Scale → Enterprise at any time with pro-rated pricing.",
               },
             ].map((faq, index) => (
-              <Card key={index} className="p-6 bg-card border-border">
-                <h3 className="font-bold mb-2">{faq.q}</h3>
-                <p className="text-muted-foreground text-sm">{faq.a}</p>
-              </Card>
+              <div 
+                key={index} 
+                className="p-8 bg-[#050505]/60 backdrop-blur-xl border border-white/[0.05] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] hover:border-white/[0.1] transition-colors"
+              >
+                <h3 className="text-xl font-bold mb-3 text-zinc-100">{faq.q}</h3>
+                <p className="text-zinc-400 leading-relaxed">{faq.a}</p>
+              </div>
             ))}
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-24 text-center bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-12">
-          <h2 className="text-3xl font-bold mb-4">
+        <div className="mt-24 text-center bg-[#050505]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[3rem] p-16 relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-[#fbbf24]/10 to-transparent opacity-50 pointer-events-none" />
+          
+          <h2 className="text-4xl font-bold mb-4 text-white relative z-10">
             Ready to See ROI in 30 Days?
           </h2>
-          <p className="text-muted-foreground text-lg mb-6">
+          <p className="text-zinc-400 text-xl mb-10 max-w-2xl mx-auto relative z-10">
             Start with a Pilot program and scale when you see results.
           </p>
-          <Link to="/sign-up">
+          <Link to="/sign-up" className="relative z-10">
             <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-2xl px-10 h-14 text-lg shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:scale-105 transition-all duration-300"
             >
               Request Pilot Program
             </Button>

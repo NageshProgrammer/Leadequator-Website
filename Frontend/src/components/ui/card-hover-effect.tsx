@@ -34,7 +34,8 @@ export const HoverEffect = ({
           <AnimatePresence>
             {hoveredIndex === idx && (
               <motion.span
-                className="absolute inset-0 h-full w-full bg-amber-400 dark:bg-slate-800/[0.8] block  rounded-3xl"
+                // CHANGED THIS LINE: Replaced solid amber-400 with a subtle, glowing transparent yellow that works with glassmorphism
+                className="absolute inset-0 h-full w-full bg-[#fbbf24]/10 block rounded-[2.5rem] border border-[#fbbf24]/20 shadow-[0_0_20px_rgba(251,191,36,0.1)]"
                 layoutId="hoverBackground"
                 initial={{ opacity: 0 }}
                 animate={{
@@ -60,6 +61,7 @@ export const HoverEffect = ({
   );
 };
 
+
 export const Card = ({
   className,
   children,
@@ -70,7 +72,7 @@ export const Card = ({
   return (
     <div
       className={cn(
-        "rounded-2xl h-full w-full p-4 overflow-hidden bg-background border border-transparent dark:border-white/[0.2] group-hover:border-slate-700 relative z-20",
+        "rounded-[2rem] h-full w-full p-4 overflow-hidden bg-[#050505]/60 backdrop-blur-xl border border-white/[0.05] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] group-hover:bg-[#111111]/80 group-hover:border-white/[0.1] group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.2),inset_0_1px_0_0_rgba(255,255,255,0.1)] transition-all duration-500 ease-out relative z-20",
         className
       )}
     >
