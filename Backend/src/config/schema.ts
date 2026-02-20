@@ -10,7 +10,6 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core";
 
-
 /* =========================
    USERS
 ========================= */
@@ -19,6 +18,12 @@ export const usersTable = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }),
   credits: integer("credits").default(300).notNull(),
+  
+  // 🔥 Missing columns added back so TypeScript/Drizzle can update the user's plan!
+  plan: varchar("plan", { length: 50 }),
+  planCycle: varchar("plan_cycle", { length: 50 }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -82,17 +87,18 @@ export const platformsToMonitor = pgTable("platforms_to_monitor", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
+/* =========================
+   REDDIT POSTS & REPLIES
+========================= */
 export const redditPosts = pgTable("reddit_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
   platform: text("platform").default("reddit"),
   text: text("text").notNull(),
-  url: text("url").notNull().unique(),   // 🔥 add this
+  url: text("url").notNull().unique(),
   author: text("author"),
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 
 export const redditAiReplies = pgTable("reddit_ai_replies", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -102,9 +108,9 @@ export const redditAiReplies = pgTable("reddit_ai_replies", {
   generatedReply: text("generated_reply"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 /* =========================
    PYTHON AI COMPATIBILITY
-   (DO NOT REMOVE)
 ========================= */
 export const socialPosts = pgTable("social_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -129,80 +135,44 @@ export const aiReplies = pgTable("ai_replies", {
 });
 
 /* =========================
-   QUORA POSTS
-   (NEW – SAFE ADDITION)
-========================= */
-/* =========================
-   QUORA POSTS
+   QUORA POSTS & REPLIES
 ========================= */
 export const quoraPosts = pgTable("quora_posts", {
   id: uuid("id").defaultRandom().primaryKey(),
-
   userId: text("user_id").notNull(),
-
-  platform: text("platform")
-    .default("quora")
-    .notNull(),
-
+  platform: text("platform").default("quora").notNull(),
   question: text("question").notNull(),
-
   url: text("url").notNull().unique(),
-
   author: text("author"),
-
-  createdAt: timestamp("created_at")
-    .defaultNow()
-    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
-/* =========================
-   QUORA AI REPLIES
-========================= */
 export const quoraAiReplies = pgTable("quora_ai_replies", {
   id: uuid("id").defaultRandom().primaryKey(),
-
   quoraPostId: uuid("quora_post_id")
     .references(() => quoraPosts.id, { onDelete: "cascade" })
     .notNull(),
-
   replyOption1: text("reply_option_1").notNull(),
-
   replyOption2: text("reply_option_2").notNull(),
-
-  approved: boolean("approved")
-    .default(false)
-    .notNull(),
-
-  createdAt: timestamp("created_at")
-    .defaultNow()
-    .notNull(),
+  approved: boolean("approved").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
-
-// Update this specific block at the bottom of your schema.ts
+/* =========================
+   USER SUBSCRIPTIONS
+========================= */
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
-
-  // 🔥 CHANGED FROM uuid TO varchar to match usersTable.id (Clerk IDs)
-  userId: varchar("user_id", { length: 255 }).notNull(),
-
-  // PLAN INFO
+  userId: varchar("user_id", { length: 255 }).notNull(), // Matching Clerk IDs
   planName: varchar("plan_name", { length: 50 }).notNull(), 
   billingCycle: varchar("billing_cycle", { length: 20 }).notNull(), 
   currency: varchar("currency", { length: 10 }).notNull(),
   amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
-
-  // SUBSCRIPTION STATUS
   status: varchar("status", { length: 20 }).notNull(), 
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date").notNull(),
-
-  // PAYPAL INFO
   paypalOrderId: varchar("paypal_order_id", { length: 255 }).notNull(),
   paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
   paypalRawResponse: jsonb("paypal_raw_response"),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

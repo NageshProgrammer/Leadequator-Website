@@ -11,7 +11,7 @@ const PAYPAL_API = process.env.NODE_ENV === "production"
   ? "https://api-m.paypal.com" 
   : "https://api-m.sandbox.paypal.com";
 
-router.post("/verify-payment", async (req: Request, res: Response) => {
+router.post("/verify-payment", async (req: Request, res: Response): Promise<any> => {
   try {
     const {
       userId,
