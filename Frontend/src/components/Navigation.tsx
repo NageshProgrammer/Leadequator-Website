@@ -42,8 +42,8 @@ const Navigation = () => {
     { to: "/problems", label: "Problems" },
     { to: "/solutions", label: "Solutions" },
     { to: "/working", label: "How it works" },
-    { to: "/contact", label: "Contact Us " },
     { to: "/pricing", label: "Pricing" },
+    { to: "/contact", label: "Contact Us " },
   ];
 
   const closeMenu = () => setIsOpen(false);
@@ -112,8 +112,8 @@ const Navigation = () => {
                     Dashboard
                   </Button>
                 </Link>
-                <div className="ml-2 ring-2 ring-white/[0.08] p-0.5 rounded-full bg-white/[0.02] hover:ring-[#fbbf24]/50 transition-all">
-                  <UserButton afterSignOutUrl="/" />
+                <div className="p-2 mt-2 ">
+                  <UserButton afterSignOutUrl="/"/>
                 </div>
               </SignedIn>
             </div>
