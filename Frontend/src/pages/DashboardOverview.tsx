@@ -108,27 +108,20 @@ const DashboardOverview = () => {
     fetchLiveLeads();
   }, [isLoaded, user?.id]);
 
-  /* ================= DERIVED DATA (KPIs) ================= */
-  const totalLeads = leads.length;
+ const totalLeads = leads.length;
   const highIntent = leads.filter((l) => l.intent >= 80).length;
+  const neutralIntent = leads.filter((l) => l.intent >= 60 && l.intent < 80).length;
+  const negativeIntent = leads.filter((l) => l.intent < 60).length;
+  
   const repliesSent = leads.filter((l) => l.status === "Sent").length;
   const impressions = totalLeads * 3; // Simulated metric
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
 
   const sentimentData = [
     { name: "Positive", value: highIntent, color: "#FACC15" }, 
-    { name: "Neutral", value: Math.max(0, totalLeads - highIntent), color: "#4B5563" },
-    { name: "Negative", value: 50, color: "#EF4444" },
+    { name: "Neutral", value: neutralIntent, color: "#4B5563" },
+    { name: "Negative", value: negativeIntent, color: "#EF4444" },
   ];
-
-  const platformStats = Object.values(
-    leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
-      if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
-      acc[l.platform].threads += 1;
-      acc[l.platform].leads += l.intent >= 80 ? 1 : 0;
-      return acc;
-    }, {})
-  );
 
   const kpiData = [
     { icon: MessageSquare, label: "TOTAL POST", value: totalLeads.toString() },
