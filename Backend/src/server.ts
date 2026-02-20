@@ -88,12 +88,14 @@ cron.schedule("0 0 * * *", async () => {
    PAYPAL CONFIGURATION
 ================================ */
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-// ✅ Dynamically pull the API base URL from .env, with sandbox as a safe fallback
-const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE;
+// ✅ FIX 1: Updated to match your .env variable perfectly
+const PAYPAL_SECRET = process.env.PAYPAL_SECRET; 
+
+// Dynamically pull the API base URL from .env, with sandbox as a safe fallback
+const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com";
 
 async function generatePayPalAccessToken() {
-  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString("base64");
+  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET}`).toString("base64");
   
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: "POST",
@@ -143,7 +145,7 @@ app.post("/api/verify-payment", async (req, res) => {
         endDate.setFullYear(endDate.getFullYear() + 1); // Add 1 year
       }
 
-      // Insert into DB
+      // 1. Insert into Subscriptions DB
       await db.insert(userSubscriptions).values({
         userId: userId,
         planName: planName,
@@ -157,6 +159,24 @@ app.post("/api/verify-payment", async (req, res) => {
         paypalCaptureId: captureId,
         paypalRawResponse: orderDetails, 
       });
+
+      // ✅ FIX 2: Added the logic to update the user's credits and active plan in the main usersTable
+      let creditBoost = 0;
+      if (planName === "PILOT") creditBoost = 1000;
+      else if (planName === "SCALE") creditBoost = 5000;
+      else if (planName === "ENTERPRISE") creditBoost = 20000;
+
+      await db
+        .update(usersTable)
+        .set({
+          plan: planName,
+          planCycle: billingCycle,
+          credits: creditBoost > 0 ? creditBoost : undefined, 
+          updatedAt: new Date(),
+        })
+        .where(eq(usersTable.id, userId));
+
+      console.log(`✅ User ${userId} successfully upgraded to ${planName}.`);
       
       return res.status(200).json({ success: true, message: "Payment verified and subscription saved." });
     } else {
