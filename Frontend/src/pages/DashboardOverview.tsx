@@ -110,7 +110,7 @@ const DashboardOverview = () => {
 
   /* ================= DERIVED DATA (KPIs) ================= */
   const totalLeads = leads.length;
-  const highIntent = leads.filter((l) => l.intent >= 60).length;
+  const highIntent = leads.filter((l) => l.intent >= 80).length;
   const repliesSent = leads.filter((l) => l.status === "Sent").length;
   const impressions = totalLeads * 3; // Simulated metric
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
