@@ -125,7 +125,7 @@ const DashboardOverview = () => {
     leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
       if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
       acc[l.platform].threads += 1;
-      acc[l.platform].leads += l.intent >= 60 ? 1 : 0;
+      acc[l.platform].leads += l.intent >= 80 ? 1 : 0;
       return acc;
     }, {})
   );
