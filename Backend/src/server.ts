@@ -90,7 +90,7 @@ cron.schedule("0 0 * * *", async () => {
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 // ✅ Dynamically pull the API base URL from .env, with sandbox as a safe fallback
-const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com";
+const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE;
 
 async function generatePayPalAccessToken() {
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString("base64");
