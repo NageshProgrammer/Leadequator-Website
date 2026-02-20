@@ -26,6 +26,7 @@ import {
   Trash2,
   RefreshCcw
 } from "lucide-react";
+import Loader from "@/[components]/loader";
 
 // ==========================================
 // 🔧 API CONFIGURATION
@@ -228,7 +229,7 @@ const SettingsIntegrations = () => {
   ];
 
   if (isLoading) {
-      return <div className="min-h-screen  flex items-center justify-center text-[#FFD700]"><Loader2 className="animate-spin h-8 w-8" /></div>;
+      return <div className="min-h-screen  flex items-center justify-center text-[#FFD700]"><Loader/></div>;
   }
 
   return (

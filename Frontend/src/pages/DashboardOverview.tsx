@@ -39,6 +39,7 @@ import html2canvas from "html2canvas";
 
 // 👇 Import the Smart Alert Component
 import CreditAlert from "@/components/creditalert";
+import Loader from "@/[components]/loader";
 
 /* ================= TYPES ================= */
 type Lead = {
@@ -165,7 +166,7 @@ const DashboardOverview = () => {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <Loader2 className="h-10 w-10 animate-spin text-yellow-400 mx-auto" />
+          <Loader/>
           <p className="text-muted-foreground animate-pulse">Synchronizing live stream data...</p>
         </div>
       </div>

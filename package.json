@@ -9,5 +9,8 @@
     "dev:frontend": "npm run dev --workspace Frontend",
     "dev:backend": "npm run dev --workspace Backend",
     "dev": "npm run dev:frontend & npm run dev:backend"
+  },
+  "dependencies": {
+    "styled-components": "^6.3.11"
   }
 }

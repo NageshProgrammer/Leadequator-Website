@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Loader from "@/[components]/loader";
 
 /* ================= TYPES ================= */
 type Thread = {
@@ -241,7 +242,7 @@ const MonitorStream = () => {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-10">
-                    Loading...
+                    <Loader  />
                   </TableCell>
                 </TableRow>
               ) : (

@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import Loader from "@/[components]/loader";
 
 /* -------------------- Types -------------------- */
 type Lead = {
@@ -230,7 +231,7 @@ const LeadsPipeline = () => {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 space-y-4 border rounded-lg border-dashed">
-            <Loader2 className="h-10 w-10 animate-spin text-yellow-400" />
+            <Loader/>
             <p className="text-muted-foreground animate-pulse">
               Synchronizing leads...
             </p>
