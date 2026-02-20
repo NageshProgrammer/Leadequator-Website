@@ -53,7 +53,7 @@ const Footer = () => {
             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Company</h4>
             <ul className="space-y-4">
               <li><FooterLink to="/about">About Us</FooterLink></li>
-              <li><FooterLink to="/resources">Resources</FooterLink></li>
+              {/* <li><FooterLink to="/resources">Resources</FooterLink></li> */}
               <li><FooterLink to="/contact">Contact Support</FooterLink></li>
             </ul>
           </div>
