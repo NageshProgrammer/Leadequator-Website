@@ -118,7 +118,7 @@ const DashboardOverview = () => {
   const sentimentData = [
     { name: "Positive", value: highIntent, color: "#FACC15" }, 
     { name: "Neutral", value: Math.max(0, totalLeads - highIntent), color: "#4B5563" },
-    { name: "Negative", value: 0, color: "#EF4444" },
+    { name: "Negative", value: 50, color: "#EF4444" },
   ];
 
   const platformStats = Object.values(
