@@ -30,7 +30,6 @@ import {
   RefreshCcw,
   User2,
   Link as LinkIcon,
-  Loader2,
   Search,
   Filter,
   Copy,
@@ -50,7 +49,7 @@ type Lead = {
   status: string;
   url: string;
   createdAt: string;
-  postTitle: string; // This stores the content/question/text
+  postTitle: string; 
 };
 
 const STATUSES = [
@@ -63,6 +62,18 @@ const STATUSES = [
   "Closed Lost",
 ];
 
+// Helper to color-code status badges
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "New": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    case "Contacted": return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+    case "Qualified": return "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20";
+    case "Closed Won": return "bg-green-500/10 text-green-400 border-green-500/20";
+    case "Closed Lost": return "bg-red-500/10 text-red-400 border-red-500/20";
+    default: return "bg-white/[0.03] text-zinc-300 border-white/[0.1]";
+  }
+};
+
 const LeadsPipeline = () => {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
@@ -72,7 +83,6 @@ const LeadsPipeline = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
@@ -106,9 +116,7 @@ const LeadsPipeline = () => {
         status: p.replyStatus === "Sent" ? "Contacted" : "New",
         url: p.url || "#",
         createdAt: p.createdAt || new Date().toISOString(),
-        // FIX: Added `p.text` here to catch Reddit content correctly
-        postTitle:
-          p.text || p.question || p.body || p.content || "Content unavailable",
+        postTitle: p.text || p.question || p.body || p.content || "Content unavailable",
       }));
 
       setLeads(mapped);
@@ -140,7 +148,7 @@ const LeadsPipeline = () => {
     const headers = ["Lead ID", "Username", "Platform", "Status", "Link", "Content"];
     const rows = leads.map((l) =>
       [l.leadId, l.name, l.platform, l.status, l.url, l.postTitle]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`) // Safe CSV escaping
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`) 
         .join(","),
     );
     const csv = [headers.join(","), ...rows].join("\n");
@@ -163,143 +171,133 @@ const LeadsPipeline = () => {
     });
   }, [leads, searchQuery, statusFilter]);
 
+  // Reusable style string
+  const glassPanelStyle = "bg-black/30 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
+
   return (
-    <div className="min-h-screen pt-8 pb-12 bg-background">
-      <div className="container mx-auto px-4 max-w-7xl space-y-6">
+    // Changed to bg-black/10 to match dashboard background
+    <div className="min-h-[90vh] pt-4 pb-12 rounded-3xl bg-black/10 text-white selection:bg-[#fbbf24]/30 relative ">
+      <div className="container mx-auto px-4 max-w-7xl space-y-8 relative z-10 ">
+        
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Leads <span className="text-yellow-400">Pipeline</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+              Leads <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.2)]">Pipeline</span>
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Track and convert high-intent leads from your streams.
+            <p className="text-zinc-400 font-medium">
+              Track, manage, and convert high-intent leads.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap gap-3 w-full md:w-auto">
             <Button
               variant="outline"
               onClick={exportCSV}
-              className="flex-1 md:flex-none"
+              className="flex-1 md:flex-none bg-white/[0.03] border-white/[0.1] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] rounded-xl h-11 transition-all"
             >
-              <Download className="h-4 w-4 mr-2" /> Export
+              <Download className="h-4 w-4 mr-2" /> Export CSV
             </Button>
             <Button
               onClick={fetchLiveLeads}
               disabled={loading}
-              className="flex-1 md:flex-none bg-yellow-400 text-black hover:bg-yellow-500"
+              className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              <RefreshCcw
-                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-              />
+              <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               {loading ? "Syncing..." : "Sync Pipeline"}
             </Button>
           </div>
         </div>
 
         {/* FILTERS TOOLBAR */}
-        <div className="flex flex-col sm:flex-row gap-3 items-center bg-card/50 p-3 rounded-lg border border-border/50">
-          <div className="relative w-full sm:w-[300px]">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className={`flex flex-col sm:flex-row gap-4 items-center p-4 md:p-5 ${glassPanelStyle} animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100`}>
+          <div className="relative w-full sm:w-[320px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <Input
               placeholder="Search by ID or username..."
-              className="pl-9 bg-background"
+              className="pl-10 bg-white/[0.02] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 focus-visible:border-[#fbbf24]/50 rounded-xl h-11 transition-all placeholder:text-zinc-600"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-background">
+            <SelectTrigger className="w-full sm:w-[200px] bg-white/[0.02] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-11">
               <div className="flex items-center">
-                <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+                <Filter className="mr-2 h-4 w-4 text-zinc-500" />
                 <SelectValue placeholder="Filter Status" />
               </div>
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Statuses</SelectItem>
+            <SelectContent className="bg-zinc-950/85 border-white/[0.1] text-white rounded-xl">
+              <SelectItem value="All" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">All Statuses</SelectItem>
               {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
+                <SelectItem key={s} value={s} className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">
                   {s}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <div className="ml-auto text-sm text-muted-foreground hidden sm:block">
+          <div className="ml-auto text-sm font-medium text-zinc-500 tracking-wide hidden sm:block px-4">
             Showing {filteredLeads.length} leads
           </div>
         </div>
 
+        {/* DATA DISPLAY */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center p-20 space-y-4 border rounded-lg border-dashed">
+          <div className={`flex flex-col items-center justify-center h-[400px] ${glassPanelStyle}`}>
             <Loader/>
-            <p className="text-muted-foreground animate-pulse">
+            <p className="text-[#fbbf24] font-medium tracking-widest uppercase text-xs mt-4 animate-pulse">
               Synchronizing leads...
             </p>
           </div>
         ) : filteredLeads.length === 0 ? (
-          <div className="p-12 text-center border rounded-lg bg-card/50">
-            <p className="text-muted-foreground">
+          <div className={`flex flex-col items-center justify-center h-[300px] ${glassPanelStyle}`}>
+            <p className="text-zinc-400 font-medium mb-4">
               No leads found matching your filters.
             </p>
             <Button
               variant="link"
-              onClick={() => {
-                setSearchQuery("");
-                setStatusFilter("All");
-              }}
-              className="text-yellow-400"
+              onClick={() => { setSearchQuery(""); setStatusFilter("All"); }}
+              className="text-[#fbbf24] font-semibold hover:text-[#fbbf24]/80"
             >
               Clear Filters
             </Button>
           </div>
         ) : (
-          <>
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
             {/* --- DESKTOP VIEW: TABLE --- */}
-            <Card className="hidden md:block overflow-hidden border-border bg-card">
+            <div className={`hidden md:block overflow-hidden ${glassPanelStyle} !p-0`}>
               <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow>
-                    <TableHead className="w-[100px]">ID</TableHead>
-                    <TableHead className="w-[250px]">Lead Source</TableHead>
-                    <TableHead>Platform</TableHead>
-                    <TableHead>Link</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                <TableHeader className="bg-white/[0.02] border-b border-white/[0.05]">
+                  <TableRow className="hover:bg-transparent border-none">
+                    <TableHead className="w-[100px] text-zinc-400 font-bold py-5 pl-6">ID</TableHead>
+                    <TableHead className="w-[280px] text-zinc-400 font-bold py-5">Lead Target</TableHead>
+                    <TableHead className="text-zinc-400 font-bold py-5">Platform</TableHead>
+                    <TableHead className="text-zinc-400 font-bold py-5">Link</TableHead>
+                    <TableHead className="text-zinc-400 font-bold py-5">Pipeline Status</TableHead>
+                    <TableHead className="text-right text-zinc-400 font-bold py-5 pr-6">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead) => (
                     <TableRow
                       key={lead._id}
-                      className="group hover:bg-muted/40 transition-colors"
+                      className="border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors"
                     >
-                      <TableCell className="font-mono text-xs text-muted-foreground">
+                      <TableCell className="font-mono text-xs text-zinc-500 pl-6">
                         {lead.leadId}
                       </TableCell>
 
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
-                            <User2 className="h-4 w-4 text-yellow-500" />
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-full bg-[#fbbf24]/10 border border-[#fbbf24]/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
+                            <User2 className="h-5 w-5 text-[#fbbf24]" />
                           </div>
                           <div className="min-w-0">
-                            <div className="font-medium text-sm flex items-center gap-1">
-                              <span
-                                className="truncate max-w-[140px]"
-                                title={lead.name}
-                              >
-                                {lead.name}
-                              </span>
+                            <div className="font-bold text-sm text-zinc-100 truncate max-w-[180px]" title={lead.name}>
+                              {lead.name}
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              <span
-                                className={
-                                  lead.intent >= 70
-                                    ? "text-green-500 font-bold"
-                                    : "text-yellow-500"
-                                }
-                              >
-                                {lead.intent}% Intent
+                            <div className="text-xs font-medium mt-0.5">
+                              <span className={lead.intent >= 70 ? "text-green-400 font-bold" : "text-[#fbbf24]"}>
+                                {lead.intent}% Intent Score
                               </span>
                             </div>
                           </div>
@@ -307,10 +305,7 @@ const LeadsPipeline = () => {
                       </TableCell>
 
                       <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className="font-normal capitalize"
-                        >
+                        <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm">
                           {lead.platform}
                         </Badge>
                       </TableCell>
@@ -320,11 +315,10 @@ const LeadsPipeline = () => {
                           href={lead.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 hover:underline"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.03] hover:bg-white/[0.1] hover:text-[#fbbf24] text-zinc-400 transition-all"
+                          title="View Original Post"
                         >
-                          <LinkIcon className="h-3 w-3" />
-                          <span className="hidden lg:inline">View Source</span>
-                          <span className="lg:hidden">Link</span>
+                          <ExternalLink className="h-4 w-4" />
                         </a>
                       </TableCell>
 
@@ -333,12 +327,12 @@ const LeadsPipeline = () => {
                           value={lead.status}
                           onValueChange={(v) => updateStatus(lead._id, v)}
                         >
-                          <SelectTrigger className="w-[140px] h-8 text-xs bg-background/50">
+                          <SelectTrigger className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl">
                             {STATUSES.map((s) => (
-                              <SelectItem key={s} value={s} className="text-xs">
+                              <SelectItem key={s} value={s} className="text-xs focus:bg-white/[0.05] focus:text-white cursor-pointer font-medium">
                                 {s}
                               </SelectItem>
                             ))}
@@ -346,10 +340,10 @@ const LeadsPipeline = () => {
                         </Select>
                       </TableCell>
 
-                      <TableCell className="text-right">
+                      <TableCell className="text-right pr-6">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          className="bg-white/[0.05] hover:bg-[#fbbf24] text-white hover:text-black font-semibold rounded-xl transition-all"
                           onClick={() => setSelectedLead(lead)}
                         >
                           Details
@@ -359,36 +353,36 @@ const LeadsPipeline = () => {
                   ))}
                 </TableBody>
               </Table>
-            </Card>
+            </div>
 
             {/* --- MOBILE VIEW: CARDS --- */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
               {filteredLeads.map((lead) => (
-                <Card
+                <div
                   key={lead._id}
-                  className="p-4 space-y-4 border-l-4 border-l-yellow-400"
+                  className="p-5 space-y-5 bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-lg rounded-[1.5rem] relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="text-xs font-mono text-muted-foreground">
+                  {/* Left border highlight based on intent */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${lead.intent >= 70 ? 'bg-green-500' : 'bg-[#fbbf24]'}`} />
+                  
+                  <div className="flex justify-between items-start pl-2">
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-mono font-bold tracking-widest text-zinc-500">
                         {lead.leadId}
                       </div>
-                      <div className="font-semibold truncate max-w-[200px]">
+                      <div className="font-bold text-white text-lg truncate max-w-[180px]">
                         {lead.name}
                       </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className="bg-yellow-400/10 text-yellow-500 border-yellow-400/20"
-                    >
-                      {lead.intent}% Intent
+                    <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 font-black px-2 py-1 shadow-sm">
+                      {lead.intent}%
                     </Badge>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="flex gap-3 pl-2">
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="flex-1"
+                      className="flex-1 bg-white/[0.03] border-white/[0.1] text-white hover:bg-white/[0.1] rounded-xl h-10"
                       onClick={() => setSelectedLead(lead)}
                     >
                       Details
@@ -397,22 +391,22 @@ const LeadsPipeline = () => {
                       value={lead.status}
                       onValueChange={(v) => updateStatus(lead._id, v)}
                     >
-                      <SelectTrigger className="flex-1 h-9 text-xs">
+                      <SelectTrigger className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
                         {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>
+                          <SelectItem key={s} value={s} className="text-xs font-medium focus:bg-white/[0.05] focus:text-white">
                             {s}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
-          </>
+          </div>
         )}
 
         {/* --- LEAD DETAILS MODAL --- */}
@@ -420,103 +414,100 @@ const LeadsPipeline = () => {
           open={!!selectedLead}
           onOpenChange={() => setSelectedLead(null)}
         >
-          <DialogContent className="max-w-md bg-card border border-border p-6 shadow-xl">
-            <DialogHeader className="mb-2">
-              <DialogTitle className="flex items-center justify-between">
-                <span className="text-xl font-bold">Lead Overview</span>
-                <Badge
-                  variant="outline"
-                  className="font-mono text-xs text-muted-foreground"
-                >
+          <DialogContent className="max-w-md bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] p-6 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]">
+            <DialogHeader className="mb-6">
+              <DialogTitle className="flex items-center justify-between text-white">
+                <span className="text-2xl font-extrabold tracking-tight">Lead Overview</span>
+                <Badge variant="outline" className="font-mono text-xs font-bold tracking-widest text-zinc-500 border-white/[0.1] bg-black/50 px-3 py-1">
                   {selectedLead?.leadId}
                 </Badge>
               </DialogTitle>
             </DialogHeader>
 
             {selectedLead && (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {/* 1. Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[90px]">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  <div className="flex flex-col items-start justify-center p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] min-h-[100px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
                       Intent Score
                     </span>
-                    <span className="text-3xl font-bold text-yellow-400">
+                    <span className={`text-4xl font-black ${selectedLead.intent >= 70 ? 'text-green-400' : 'text-[#fbbf24]'}`}>
                       {selectedLead.intent}%
                     </span>
                   </div>
-                  <div className="flex flex-col items-start justify-center p-4 rounded-lg bg-muted/40 border border-border/50 min-h-[90px]">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  <div className="flex flex-col items-start justify-center p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] min-h-[100px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
                       Platform
                     </span>
-                    <span className="text-xl font-semibold capitalize text-foreground truncate w-full">
+                    <span className="text-2xl font-bold capitalize text-white truncate w-full tracking-tight">
                       {selectedLead.platform}
                     </span>
                   </div>
                 </div>
 
                 {/* 2. Post Context */}
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase block">
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
                     Post Context
                   </span>
-                  <div className="relative p-4 rounded-md bg-muted/30 border border-border/50">
-                    <div className="text-sm italic text-foreground/90 leading-relaxed max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="relative p-5 rounded-2xl bg-black/40 border border-white/[0.05] shadow-inner">
+                    <div className="text-sm italic text-zinc-300 leading-relaxed max-h-[140px] overflow-y-auto pr-2 custom-scrollbar font-medium">
                       "{selectedLead.postTitle}"
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-5">
                   {/* 3. Username Field */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase block">
-                      Username / Author
+                  <div className="space-y-3">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
+                      Username / Target
                     </span>
-                    <div className="flex items-center gap-2 p-3 rounded-md bg-background border border-input shadow-sm overflow-hidden">
-                      <User2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-mono truncate flex-1 min-w-0">
+                    <div className="flex items-center gap-3 p-2 pl-4 rounded-xl bg-white/[0.03] border border-white/[0.08] shadow-sm overflow-hidden group hover:border-white/[0.15] transition-colors">
+                      <User2 className="h-5 w-5 text-[#fbbf24] shrink-0" />
+                      <span className="text-base font-bold text-white truncate flex-1 min-w-0">
                         {selectedLead.name}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 shrink-0"
+                        className="h-9 w-9 shrink-0 text-zinc-400 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] rounded-lg mr-1"
                         onClick={() => copyToClipboard(selectedLead.name)}
                       >
                         {isCopied ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle2 className="h-4 w-4 text-green-400" />
                         ) : (
-                          <Copy className="h-3.5 w-3.5" />
+                          <Copy className="h-4 w-4" />
                         )}
                       </Button>
                     </div>
                   </div>
 
                   {/* 4. Source URL Field */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase block">
-                      Source URL
+                  <div className="space-y-3">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
+                      Source Link
                     </span>
                     <a
                       href={selectedLead.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group overflow-hidden"
+                      className="flex items-center gap-3 p-4 rounded-xl bg-[#fbbf24]/10 border border-[#fbbf24]/20 hover:bg-[#fbbf24]/15 hover:border-[#fbbf24]/30 transition-all group overflow-hidden shadow-[inset_0_1px_0_0_rgba(251,191,36,0.1)]"
                     >
-                      <LinkIcon className="h-4 w-4 text-blue-400 shrink-0" />
-                      <span className="text-sm text-blue-400 truncate flex-1 min-w-0 underline-offset-4 group-hover:underline">
-                        {selectedLead.url}
+                      <LinkIcon className="h-5 w-5 text-[#fbbf24] shrink-0" />
+                      <span className="text-sm font-semibold text-[#fbbf24] truncate flex-1 min-w-0 group-hover:underline underline-offset-4">
+                        View Original Post
                       </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-blue-400 opacity-50 group-hover:opacity-100 shrink-0" />
+                      <ExternalLink className="h-4 w-4 text-[#fbbf24] transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
                     </a>
                   </div>
                 </div>
 
                 {/* 5. Action Button */}
-                <div className="pt-2">
-                  <Button className="w-full h-12 text-base font-bold bg-yellow-400 text-black hover:bg-yellow-500 shadow-lg shadow-yellow-400/20 transition-all active:scale-[0.98]">
-                    Engage on {selectedLead.platform}
+                <div className="pt-4">
+                  <Button className="w-full h-14 text-lg font-bold bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]">
+                    Engage Target on {selectedLead.platform}
                   </Button>
                 </div>
               </div>
