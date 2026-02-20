@@ -108,7 +108,10 @@ const DashboardOverview = () => {
     fetchLiveLeads();
   }, [isLoaded, user?.id]);
 
- const totalLeads = leads.length;
+  /* ================= DERIVED DATA (KPIs) ================= */
+  const totalLeads = leads.length;
+  
+  // Updated Intent Groupings
   const highIntent = leads.filter((l) => l.intent >= 80).length;
   const neutralIntent = leads.filter((l) => l.intent >= 60 && l.intent < 80).length;
   const negativeIntent = leads.filter((l) => l.intent < 60).length;
@@ -117,11 +120,21 @@ const DashboardOverview = () => {
   const impressions = totalLeads * 3; // Simulated metric
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
 
+  // Updated Sentiment Data for Pie Chart
   const sentimentData = [
     { name: "Positive", value: highIntent, color: "#FACC15" }, 
     { name: "Neutral", value: neutralIntent, color: "#4B5563" },
     { name: "Negative", value: negativeIntent, color: "#EF4444" },
   ];
+
+  const platformStats = Object.values(
+    leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
+      if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
+      acc[l.platform].threads += 1;
+      acc[l.platform].leads += l.intent >= 80 ? 1 : 0;
+      return acc;
+    }, {})
+  );
 
   const kpiData = [
     { icon: MessageSquare, label: "TOTAL POST", value: totalLeads.toString() },
@@ -258,6 +271,8 @@ const DashboardOverview = () => {
         </div>
         <div className="space-y-3">
           {leads
+            // Note: The UI label above says 'Recent High-Intent Leads' but filters >= 60 
+            // If you want it to match the 'Positive' sentiment only, change this to >= 80
             .filter((l) => l.intent >= 60)
             .sort((a, b) => b.intent - a.intent)
             .slice(0, 5)
@@ -287,6 +302,7 @@ const DashboardOverview = () => {
                 </Button>
               </div>
             ))}
+          {/* Note: This empty state checks for >= 80, which conflicts slightly with the filter above (>= 60) */}
           {leads.filter(l => l.intent >= 80).length === 0 && (
             <div className="text-center py-10 text-muted-foreground border border-dashed rounded-lg">
               No high-intent leads detected yet. Run the scraper in Monitor Stream to start.
