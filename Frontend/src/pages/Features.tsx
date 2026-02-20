@@ -15,7 +15,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 const Features = () => {
   return (
     // ADDED: bg-black and overflow-x-hidden here to lock the layout
-    <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24]/30 pt-20 relative z-10 overflow-x-hidden">
+    <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24]/30 relative z-10 overflow-x-hidden">
       <ScrollProgress className="top-[65px]" />
       
       {/* Background Glow */}

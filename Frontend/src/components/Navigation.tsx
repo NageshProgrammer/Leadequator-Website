@@ -42,7 +42,7 @@ const Navigation = () => {
     { to: "/problems", label: "Problems" },
     { to: "/solutions", label: "Solutions" },
     { to: "/working", label: "How it works" },
-    { to: "/features", label: "Features" },
+    { to: "/contact", label: "Contact Us " },
     { to: "/pricing", label: "Pricing" },
   ];
 

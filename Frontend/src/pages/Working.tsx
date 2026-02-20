@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Brain, PenTool, MousePointerClick, Shield, User, Lock } from 'lucide-react';
 import { AuroraText } from '@/components/ui/aurora-text';
 import { ScrollProgress } from '@/components/ui/scroll-progress';
+import Features from './Features';
 
 const Working = () => {
   return (
@@ -10,7 +11,7 @@ const Working = () => {
       <ScrollProgress className="top-[65px]" />
       
       {/* Optional Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
+      <div className="absolute -top-1/8 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
       {/* =========================================
          SECTION 1: FOUR STEPS TO ORGANIC GROWTH
@@ -81,6 +82,9 @@ const Working = () => {
           <Badge icon={<Lock className="w-4 h-4" />} text="No Account Risk" />
         </div>
 
+      </section>
+      <section>
+        <Features/>
       </section>
     </div>
   );
