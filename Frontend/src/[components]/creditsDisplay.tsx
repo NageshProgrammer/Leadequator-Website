@@ -1,4 +1,3 @@
-// @/components/dashboard/CreditDisplay.tsx
 import { useState, useEffect } from "react";
 import { Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -12,8 +11,11 @@ export const CreditDisplay = ({ sidebarOpen }: CreditDisplayProps) => {
   const { credits, loading } = useCredits();
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Set this to whatever your total plan limit is
   const TOTAL_PLAN_CREDITS = 300;
-  const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
+  
+  // Calculate percentages, ensuring we don't go below 0
+  const remainingPercentage = Math.max(0, Math.min(100, (credits / TOTAL_PLAN_CREDITS) * 100));
   const usedPercentage = 100 - remainingPercentage;
 
   // Trigger animation when credits change
