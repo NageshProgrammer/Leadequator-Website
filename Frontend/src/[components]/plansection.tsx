@@ -6,12 +6,12 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Check, Star, IndianRupee, DollarSign, LogIn, Loader2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link, useNavigate } from "react-router-dom";
-import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
+import { PayPalButtons, FUNDING } from "@paypal/react-paypal-js"; // Added FUNDING, Removed Reducer
 import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
 
@@ -96,17 +96,9 @@ export default function CongestedPricing() {
   const switchRef = useRef<HTMLButtonElement>(null);
   
   const { isSignedIn, user, isLoaded } = useUser();
-  const [{ options }, dispatch] = usePayPalScriptReducer();
 
-  useEffect(() => {
-    dispatch({
-        type: "resetOptions",
-        value: {
-            ...options,
-            currency: currency,
-        },
-    });
-  }, [currency]);
+  // NOTE: Deleted the useEffect and dispatch here so the PayPal script 
+  // stays stable in USD and stops crashing on INR selection!
 
   const handleToggle = (checked: boolean) => {
     setIsMonthly(!checked);
@@ -266,7 +258,7 @@ export default function CongestedPricing() {
                       className="flex items-start gap-3 text-sm text-zinc-300"
                     >
                       <Check className="text-primary h-5 w-5 shrink-0" />
-                      <span>{feature}</span>
+                      <span className="text-left">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -306,6 +298,7 @@ export default function CongestedPricing() {
                       </div>
                     ) : (
                       <PayPalButtons
+                        fundingSource={FUNDING.PAYPAL} // 🚀 FIX: This forces ONLY the yellow PayPal button to appear
                         style={{
                           layout: "vertical",
                           label: "buynow",
@@ -323,7 +316,6 @@ export default function CongestedPricing() {
                               chargeCurrency = "USD";
                           }
 
-                          // ✅ FIX: Ensure standard decimal formatting for PayPal
                           const formattedValue = Number(chargeAmount).toFixed(2);
 
                           return actions.order.create({
