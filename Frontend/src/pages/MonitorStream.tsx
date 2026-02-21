@@ -21,8 +21,7 @@ import {
   Bot,
   X,
   Target,
-  MessageSquare,
-  StarsIcon
+  MessageSquare
 } from "lucide-react";
 import { DetailPane } from "@/components/dashboard/DetailPane";
 import {
@@ -96,9 +95,14 @@ const MonitorStream = () => {
 
       const mapped: Thread[] = combined.map((p: any, idx: number) => {
         const intent = 50 + (idx % 40);
+        
+        // ✅ FIX 1: Safely determine the platform and FORCE capitalization so filters match exactly
+        const rawPlatform = p.platform || (p.question ? "Quora" : "Reddit");
+        const formattedPlatform = rawPlatform.charAt(0).toUpperCase() + rawPlatform.slice(1).toLowerCase();
+
         return {
           id: String(p.id),
-          platform: p.platform || "Quora",
+          platform: formattedPlatform,
           user: p.userId ?? "Unknown",
           intent,
           sentiment: intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
@@ -155,7 +159,9 @@ const MonitorStream = () => {
         t.user.toLowerCase().includes(searchLower) ||
         t.post.toLowerCase().includes(searchLower);
 
-      const matchesPlatform = platformFilter === "All" || t.platform === platformFilter;
+      // ✅ FIX 2: Case-insensitive check just to be totally bulletproof
+      const matchesPlatform = platformFilter === "All" || t.platform.toLowerCase() === platformFilter.toLowerCase();
+      
       const matchesSentiment = sentimentFilter === "All" || t.sentiment === sentimentFilter;
       const matchesStatus = statusFilter === "All" || t.replyStatus === statusFilter;
       const matchesIntent = t.intent >= parseInt(minIntent);
@@ -222,7 +228,7 @@ const MonitorStream = () => {
               disabled={running}
               className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <StarsIcon className="mr-2 h-4 w-4" />}
+              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
               {running ? "Scanning..." : "Run Scraper"}
             </Button>
           </div>
@@ -396,7 +402,6 @@ const MonitorStream = () => {
                               <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm mb-1.5">
                                 {t.platform}
                               </Badge>
-                              {/* ✅ FIXED: Now shows Date AND Time properly formatted */}
                               <div className="flex flex-col">
                                 <span className="text-zinc-400 text-xs font-medium">{t.timestamp.split(',')[0]}</span>
                                 <span className="text-zinc-500 text-[10px] tracking-wide">{t.timestamp.split(',')[1]}</span>
@@ -469,7 +474,6 @@ const MonitorStream = () => {
                               <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] text-[10px] px-1.5 py-0">
                                 {t.platform}
                               </Badge>
-                              {/* ✅ FIXED: Now shows Date AND Time on mobile */}
                               <span className="text-[10px] text-zinc-400 font-medium">
                                 {t.timestamp.split(',')[0]} <span className="text-zinc-600">{t.timestamp.split(',')[1]}</span>
                               </span>
