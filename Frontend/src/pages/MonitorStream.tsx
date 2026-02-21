@@ -191,7 +191,7 @@ const MonitorStream = () => {
     setThreads((prev) => prev.map((t) => (t.id === id ? { ...t, replyStatus: "Sent" } : t)));
   };
 
-  const glassPanelStyle = "bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
+  const glassPanelStyle = "bg-[#050505]/30 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
   const filterLabelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
 
   return (
@@ -217,7 +217,7 @@ const MonitorStream = () => {
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex-1 md:flex-none border-white/[0.1] text-white hover:text-[#fbbf24] h-11 rounded-xl transition-all ${showFilters ? 'bg-white/[0.1] border-[#fbbf24]/50' : 'bg-white/[0.03] hover:bg-white/[0.08]'}`}
+              className={`flex-1 md:flex-none border-white/[0.1] text-white  h-11 rounded-xl transition-all ${showFilters ? 'bg-white/[0.1] border-[#fbbf24]/50 ' : 'bg-white/[0.03] hover:bg-[#fbbf24]'}`}
             >
               <FilterIcon className="mr-2 h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
