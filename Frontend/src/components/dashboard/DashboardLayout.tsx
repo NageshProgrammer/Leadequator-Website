@@ -1,42 +1,20 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, Radio, Users, FileText, Menu, Home, ArrowUpCircle, Zap, X, UserCog2 } from "lucide-react";
+import { LayoutDashboard, Radio, Users, FileText, Menu, Home, ArrowUpCircle, X, UserCog2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
-import { Link } from "react-router-dom";
 
-// 👇 IMPORT CONTEXT
-import { CreditProvider, useCredits } from "@/context/CreditContext";
+// 👇 IMPORT CONTEXT & NEW COMPONENT
+import { CreditProvider } from "@/context/CreditContext";
+import { CreditDisplay } from "@/[components]/creditsDisplay";
 
 // 1. Inner Component (Consumes Context)
 const DashboardLayoutContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, isLoaded } = useUser();
-  
-  // 👇 USE THE HOOK
-  const { credits, loading: loadingCredits } = useCredits();
-
-  // Logic (Example Plan Limit)
-  const TOTAL_PLAN_CREDITS = 300; 
-  const remainingPercentage = (credits / TOTAL_PLAN_CREDITS) * 100;
-  const usedPercentage = 100 - remainingPercentage; 
-
-  // Adjusted colors for dark mode (using your brand yellow)
-  const getStatusColor = () => {
-    if (remainingPercentage <= 20) return "text-red-500";
-    if (remainingPercentage <= 50) return "text-[#fbbf24]";
-    return "text-green-500";
-  };
-
-  const getBarColor = () => {
-    if (remainingPercentage <= 20) return "bg-red-500";
-    if (remainingPercentage <= 50) return "bg-[#fbbf24]";
-    return "bg-green-500";
-  };
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
@@ -108,31 +86,9 @@ const DashboardLayoutContent = () => {
             </Button>
           </Link>
 
-          <div className={`w-full flex flex-col items-center ${sidebarOpen ? "px-1" : ""}`}>
-            {sidebarOpen ? (
-              <div className="w-full space-y-2.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-                    <Zap className={`h-3.5 w-3.5 fill-current ${getStatusColor()}`} /> Credits
-                  </span>
-                  <span className={`font-bold ${getStatusColor()} drop-shadow-md`}>
-                    {loadingCredits ? "..." : Math.round(remainingPercentage)}%
-                  </span>
-                </div>
-                {/* Visualizing Used % vs Remaining */}
-                <Progress value={loadingCredits ? 0 : usedPercentage} className={`h-2 bg-white/[0.05] border border-white/[0.02] [&>div]:${getBarColor()} [&>div]:shadow-[0_0_10px_currentColor]`} />
-                <div className="text-[10px] text-zinc-500 font-medium text-right tracking-wide">{credits} / {TOTAL_PLAN_CREDITS} remaining</div>
-              </div>
-            ) : (
-              <div className="relative h-11 w-11 flex items-center justify-center">
-                <svg className="h-full w-full transform -rotate-90">
-                  <circle cx="22" cy="22" r="18" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-white/[0.05]" />
-                  <circle cx="22" cy="22" r="18" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray={113} strokeDashoffset={113 - ((loadingCredits ? 0 : remainingPercentage) / 100 * 113)} strokeLinecap="round" className={`transition-all duration-500 ${getStatusColor()}`} />
-                </svg>
-                <Zap className={`absolute h-3.5 w-3.5 fill-current ${getStatusColor()}`} />
-              </div>
-            )}
-          </div>
+          {/* 👇 Dynamic Credit Component */}
+          <CreditDisplay sidebarOpen={sidebarOpen} />
+
         </div>
       </aside>
 

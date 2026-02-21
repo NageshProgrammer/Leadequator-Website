@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useToast } from "@/hooks/use-toast";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +16,11 @@ import {
   Filter as FilterIcon,
   Sparkles,
   Loader2,
-  ExternalLink,
   Bot,
   X,
   Target,
-  MessageSquare
+  MessageSquare,
+  StarsIcon
 } from "lucide-react";
 import { DetailPane } from "@/components/dashboard/DetailPane";
 import {
@@ -33,6 +32,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Loader from "@/[components]/loader";
+
+// 👇 IMPORT THE CREDIT CONTEXT HOOK
+import { useCredits } from "@/context/CreditContext";
 
 /* ================= TYPES ================= */
 type Thread = {
@@ -58,6 +60,9 @@ const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
 const MonitorStream = () => {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
+  
+  // 👇 EXTRACT refreshCredits
+  const { refreshCredits } = useCredits();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +101,6 @@ const MonitorStream = () => {
       const mapped: Thread[] = combined.map((p: any, idx: number) => {
         const intent = 50 + (idx % 40);
         
-        // ✅ FIX 1: Safely determine the platform and FORCE capitalization so filters match exactly
         const rawPlatform = p.platform || (p.question ? "Quora" : "Reddit");
         const formattedPlatform = rawPlatform.charAt(0).toUpperCase() + rawPlatform.slice(1).toLowerCase();
 
@@ -142,6 +146,10 @@ const MonitorStream = () => {
       if (!response.ok) throw new Error(await response.text() || "Scraper failed");
 
       toast({ title: "Scraping Started 🚀", description: "Reddit and Quora scraping in progress." });
+      
+      // 👇 UPDATE CREDITS IN REAL-TIME
+      await refreshCredits();
+
       setTimeout(loadPosts, 6000);
     } catch (err: any) {
       toast({ title: "Scraper Failed", description: err.message || "Check backend / AI service.", variant: "destructive" });
@@ -159,9 +167,7 @@ const MonitorStream = () => {
         t.user.toLowerCase().includes(searchLower) ||
         t.post.toLowerCase().includes(searchLower);
 
-      // ✅ FIX 2: Case-insensitive check just to be totally bulletproof
       const matchesPlatform = platformFilter === "All" || t.platform.toLowerCase() === platformFilter.toLowerCase();
-      
       const matchesSentiment = sentimentFilter === "All" || t.sentiment === sentimentFilter;
       const matchesStatus = statusFilter === "All" || t.replyStatus === statusFilter;
       const matchesIntent = t.intent >= parseInt(minIntent);
@@ -228,7 +234,7 @@ const MonitorStream = () => {
               disabled={running}
               className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <StarsIcon className="mr-2 h-4 w-4" />}
               {running ? "Scanning..." : "Run Scraper"}
             </Button>
           </div>
