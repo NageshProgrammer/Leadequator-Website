@@ -36,7 +36,7 @@ import {
   CheckCircle2,
   X,
   Target,
-  ListTodo
+  MessageSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -86,12 +86,12 @@ const LeadsPipeline = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  // ✅ FILTER STATES
-  const [showFilters, setShowFilters] = useState(true); // Default to showing sidebar
+  // ✅ ENHANCED FILTER STATES
+  const [showFilters, setShowFilters] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [platformFilter, setPlatformFilter] = useState<string>("All");
-  const [minIntent, setMinIntent] = useState<string>("0");
+  const [platformFilter, setPlatformFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [minIntent, setMinIntent] = useState("0");
 
   /* ================= FETCH DATA ================= */
   const fetchLiveLeads = useCallback(async () => {
@@ -115,7 +115,6 @@ const LeadsPipeline = () => {
       ];
 
       const mapped: Lead[] = combined.map((p: any, idx: number) => {
-        // Safe platform formatting to ensure filters match
         const rawPlatform = p.platform || (p.question ? "Quora" : "Reddit");
         const formattedPlatform = rawPlatform.charAt(0).toUpperCase() + rawPlatform.slice(1).toLowerCase();
 
@@ -144,7 +143,7 @@ const LeadsPipeline = () => {
     fetchLiveLeads();
   }, [fetchLiveLeads]);
 
-  /* ================= HELPERS & ACTIONS ================= */
+  /* ================= HELPERS & FILTERS ================= */
   const updateStatus = (id: string, status: string) => {
     setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, status } : l)));
   };
@@ -173,24 +172,18 @@ const LeadsPipeline = () => {
     a.click();
   };
 
-  /* ================= FILTER LOGIC ================= */
+  // ✅ ENHANCED FILTER LOGIC
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
-      // 1. Search (ID, Name, or Post Content)
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
         searchQuery === "" ||
         lead.name.toLowerCase().includes(searchLower) ||
         lead.leadId.toLowerCase().includes(searchLower) ||
         lead.postTitle.toLowerCase().includes(searchLower);
-      
-      // 2. Status
+
       const matchesStatus = statusFilter === "All" || lead.status === statusFilter;
-      
-      // 3. Platform
       const matchesPlatform = platformFilter === "All" || lead.platform.toLowerCase() === platformFilter.toLowerCase();
-      
-      // 4. Intent
       const matchesIntent = lead.intent >= parseInt(minIntent);
 
       return matchesSearch && matchesStatus && matchesPlatform && matchesIntent;
@@ -199,19 +192,18 @@ const LeadsPipeline = () => {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setStatusFilter("All");
     setPlatformFilter("All");
+    setStatusFilter("All");
     setMinIntent("0");
   };
 
-  // Reusable style strings
   const glassPanelStyle = "bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
   const filterLabelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
 
   return (
     <div className="min-h-[90vh] pt-4 pb-12 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
       
-      {/* Background Glow */}
+      {/* Subtle Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
       <div className="container mx-auto px-4 max-w-[1400px] space-y-6 md:space-y-8 relative z-10">
@@ -226,7 +218,8 @@ const LeadsPipeline = () => {
               Track, manage, and convert high-intent leads.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3 w-full md:w-auto">
+
+          <div className="flex gap-3 w-full md:w-auto">
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
@@ -235,31 +228,32 @@ const LeadsPipeline = () => {
               <FilterIcon className="mr-2 h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
             </Button>
+            
             <Button
-              variant="outline"
               onClick={exportCSV}
-              className="flex-1 md:flex-none bg-white/[0.03] border-white/[0.1] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] rounded-xl h-11 transition-all"
+              className="flex-1 md:flex-none bg-white/[0.03] border border-white/[0.1] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] font-bold rounded-xl h-11 transition-all"
             >
-              <Download className="h-4 w-4 mr-2" /> Export CSV
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
             </Button>
+
             <Button
               onClick={fetchLiveLeads}
               disabled={loading}
               className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               {loading ? "Syncing..." : "Sync Pipeline"}
             </Button>
           </div>
         </div>
 
-        {/* MAIN LAYOUT: SIDEBAR (LEFT) + RESULTS */}
-        {/* ✅ Flex direction is row (standard) so sidebar naturally falls on the left */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+        {/* MAIN LAYOUT: SIDEBAR + RESULTS */}
+        <div className="flex flex-col lg:flex-row-reverse gap-6 lg:gap-8 items-start">
           
-          {/* ================= FILTER SIDEBAR (LEFT) ================= */}
+          {/* ================= FILTER SIDEBAR ================= */}
           {showFilters && (
-            <div className={`w-full lg:w-[320px] flex-shrink-0 ${glassPanelStyle} p-6 animate-in slide-in-from-left-8 duration-500 lg:sticky lg:top-24`}>
+            <div className={`w-full lg:w-[320px] flex-shrink-0 ${glassPanelStyle} p-6 animate-in slide-in-from-right-8 duration-500 lg:sticky lg:top-24`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <FilterIcon className="h-4 w-4 text-[#fbbf24]" /> Pipeline Filters
@@ -276,7 +270,7 @@ const LeadsPipeline = () => {
                   <div className="relative">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     <Input 
-                      placeholder="Name, ID, post..." 
+                      placeholder="Name, ID, post content..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10 bg-white/[0.02] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 rounded-xl h-11 transition-all" 
@@ -284,35 +278,14 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* Pipeline Status */}
-                <div>
-                  <label className={filterLabelStyle}>Pipeline Status</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full bg-white/[0.02] border-white/[0.08] text-white rounded-xl h-11">
-                      <div className="flex items-center gap-2">
-                        <ListTodo className="h-4 w-4 text-[#fbbf24]" />
-                        <SelectValue placeholder="Select status" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
-                      <SelectItem value="All" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">All Statuses</SelectItem>
-                      {STATUSES.map((s) => (
-                        <SelectItem key={s} value={s} className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Minimum Intent */}
+                {/* Intent Slider/Select */}
                 <div>
                   <label className={filterLabelStyle}>Minimum Intent Score</label>
                   <Select value={minIntent} onValueChange={setMinIntent}>
                     <SelectTrigger className="w-full bg-white/[0.02] border-white/[0.08] text-white rounded-xl h-11">
                       <div className="flex items-center gap-2">
                         <Target className="h-4 w-4 text-[#fbbf24]" />
-                        <SelectValue placeholder="Select intent" />
+                        <SelectValue placeholder="Select intent..." />
                       </div>
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
@@ -320,6 +293,27 @@ const LeadsPipeline = () => {
                       <SelectItem value="50" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Warm Leads (50%+)</SelectItem>
                       <SelectItem value="70" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Hot Leads (70%+)</SelectItem>
                       <SelectItem value="90" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Urgent Buyers (90%+)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Pipeline Status */}
+                <div>
+                  <label className={filterLabelStyle}>Pipeline Stage</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full bg-white/[0.02] border-white/[0.08] text-white rounded-xl h-11">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-[#fbbf24]" />
+                        <SelectValue placeholder="Select status..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
+                      <SelectItem value="All" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">All Stages</SelectItem>
+                      {STATUSES.map((s) => (
+                        <SelectItem key={s} value={s} className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">
+                          {s}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -360,7 +354,7 @@ const LeadsPipeline = () => {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-4 px-2">
               <span className="text-zinc-400 font-medium">
-                Found <strong className="text-white">{filteredLeads.length}</strong> leads
+                Found <strong className="text-white">{filteredLeads.length}</strong> leads in pipeline
               </span>
             </div>
 
@@ -371,22 +365,8 @@ const LeadsPipeline = () => {
                   Synchronizing pipeline...
                 </p>
               </div>
-            ) : filteredLeads.length === 0 ? (
-              <div className={`flex flex-col items-center justify-center h-[300px] ${glassPanelStyle}`}>
-                <Search className="h-10 w-10 text-zinc-600 mb-4" />
-                <p className="text-zinc-400 font-medium mb-4">
-                  No leads found matching your criteria.
-                </p>
-                <Button
-                  variant="link"
-                  onClick={clearFilters}
-                  className="text-[#fbbf24] font-semibold hover:text-[#fbbf24]/80"
-                >
-                  Clear Filters
-                </Button>
-              </div>
             ) : (
-              <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+              <>
                 {/* --- DESKTOP VIEW: TABLE --- */}
                 <div className={`hidden md:block overflow-hidden ${glassPanelStyle} !p-0`}>
                   <Table>
@@ -394,147 +374,161 @@ const LeadsPipeline = () => {
                       <TableRow className="hover:bg-transparent border-none">
                         <TableHead className="w-[100px] text-zinc-400 font-bold py-5 pl-6">ID</TableHead>
                         <TableHead className="w-[280px] text-zinc-400 font-bold py-5">Lead Target</TableHead>
-                        <TableHead className="text-zinc-400 font-bold py-5">Source</TableHead>
+                        <TableHead className="text-zinc-400 font-bold py-5">Platform</TableHead>
                         <TableHead className="text-zinc-400 font-bold py-5">Link</TableHead>
-                        <TableHead className="text-zinc-400 font-bold py-5">Pipeline Status</TableHead>
+                        <TableHead className="text-zinc-400 font-bold py-5">Pipeline Stage</TableHead>
                         <TableHead className="text-right text-zinc-400 font-bold py-5 pr-6">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredLeads.map((lead) => (
-                        <TableRow
-                          key={lead._id}
-                          className="border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors"
-                        >
-                          <TableCell className="font-mono text-xs text-zinc-500 pl-6">
-                            {lead.leadId}
-                          </TableCell>
-
-                          <TableCell>
-                            <div className="flex items-center gap-4">
-                              <div className="h-10 w-10 rounded-full bg-[#fbbf24]/10 border border-[#fbbf24]/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
-                                <User2 className="h-5 w-5 text-[#fbbf24]" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-bold text-sm text-zinc-100 truncate max-w-[180px]" title={lead.name}>
-                                  {lead.name}
-                                </div>
-                                <div className="text-xs font-medium mt-0.5">
-                                  <span className={lead.intent >= 70 ? "text-green-400 font-bold" : "text-[#fbbf24]"}>
-                                    {lead.intent}% Intent Score
-                                  </span>
-                                </div>
-                              </div>
+                      {filteredLeads.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-20">
+                            <div className="flex flex-col items-center justify-center">
+                              <Search className="h-10 w-10 text-zinc-600 mb-4" />
+                              <p className="text-zinc-400 text-lg font-medium">No leads found.</p>
+                              <p className="text-zinc-500 text-sm mt-1">Try adjusting your filters.</p>
                             </div>
                           </TableCell>
-
-                          <TableCell>
-                            <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm">
-                              {lead.platform}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell>
-                            <a
-                              href={lead.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.03] hover:bg-white/[0.1] hover:text-[#fbbf24] text-zinc-400 transition-all"
-                              title="View Original Post"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </TableCell>
-
-                          <TableCell>
-                            <Select
-                              value={lead.status}
-                              onValueChange={(v) => updateStatus(lead._id, v)}
-                            >
-                              <SelectTrigger className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl">
-                                {STATUSES.map((s) => (
-                                  <SelectItem key={s} value={s} className="text-xs focus:bg-white/[0.05] focus:text-white cursor-pointer font-medium">
-                                    {s}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-
-                          <TableCell className="text-right pr-6">
-                            <Button
-                              size="sm"
-                              className="bg-white/[0.05] hover:bg-[#fbbf24] text-white hover:text-black font-semibold rounded-xl transition-all"
-                              onClick={() => setSelectedLead(lead)}
-                            >
-                              Details
-                            </Button>
-                          </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        filteredLeads.map((lead) => (
+                          <TableRow
+                            key={lead._id}
+                            className="border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors"
+                          >
+                            <TableCell className="font-mono text-xs text-zinc-500 pl-6">
+                              {lead.leadId}
+                            </TableCell>
+
+                            <TableCell>
+                              <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-full bg-[#fbbf24]/10 border border-[#fbbf24]/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
+                                  <User2 className="h-5 w-5 text-[#fbbf24]" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-bold text-sm text-zinc-100 truncate max-w-[180px]" title={lead.name}>
+                                    {lead.name}
+                                  </div>
+                                  <div className="text-xs font-medium mt-0.5">
+                                    <span className={lead.intent >= 70 ? "text-green-400 font-bold" : "text-[#fbbf24]"}>
+                                      {lead.intent}% Intent Score
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+
+                            <TableCell>
+                              <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm">
+                                {lead.platform}
+                              </Badge>
+                            </TableCell>
+
+                            <TableCell>
+                              <a
+                                href={lead.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.03] hover:bg-white/[0.1] hover:text-[#fbbf24] text-zinc-400 transition-all"
+                                title="View Original Post"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </TableCell>
+
+                            <TableCell>
+                              <Select
+                                value={lead.status}
+                                onValueChange={(v) => updateStatus(lead._id, v)}
+                              >
+                                <SelectTrigger className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl">
+                                  {STATUSES.map((s) => (
+                                    <SelectItem key={s} value={s} className="text-xs focus:bg-white/[0.05] focus:text-white cursor-pointer font-medium">
+                                      {s}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+
+                            <TableCell className="text-right pr-6">
+                              <Button
+                                size="sm"
+                                className="bg-white/[0.05] hover:bg-[#fbbf24] text-white hover:text-black font-semibold rounded-xl transition-all"
+                                onClick={() => setSelectedLead(lead)}
+                              >
+                                Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
 
                 {/* --- MOBILE VIEW: CARDS --- */}
                 <div className="grid grid-cols-1 gap-4 md:hidden">
-                  {filteredLeads.map((lead) => (
-                    <div
-                      key={lead._id}
-                      className="p-5 space-y-5 bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-lg rounded-[1.5rem] relative overflow-hidden"
-                    >
-                      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${lead.intent >= 70 ? 'bg-green-500' : 'bg-[#fbbf24]'}`} />
-                      
-                      <div className="flex justify-between items-start pl-2">
-                        <div className="space-y-1.5">
-                          <div className="text-[10px] font-mono font-bold tracking-widest text-zinc-500">
-                            {lead.leadId}
-                          </div>
-                          <div className="font-bold text-white text-lg truncate max-w-[180px]">
-                            {lead.name}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] text-[10px] px-1.5 py-0">
-                              {lead.platform}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 font-black px-2 py-1 shadow-sm">
-                          {lead.intent}%
-                        </Badge>
-                      </div>
-
-                      <div className="flex gap-3 pl-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 bg-white/[0.03] border-white/[0.1] text-white hover:bg-white/[0.1] rounded-xl h-10"
-                          onClick={() => setSelectedLead(lead)}
-                        >
-                          Details
-                        </Button>
-                        <Select
-                          value={lead.status}
-                          onValueChange={(v) => updateStatus(lead._id, v)}
-                        >
-                          <SelectTrigger className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
-                            {STATUSES.map((s) => (
-                              <SelectItem key={s} value={s} className="text-xs font-medium focus:bg-white/[0.05] focus:text-white cursor-pointer">
-                                {s}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  {filteredLeads.length === 0 ? (
+                    <div className={`p-10 text-center flex flex-col items-center justify-center ${glassPanelStyle}`}>
+                      <Search className="h-8 w-8 text-zinc-600 mb-3" />
+                      <p className="text-zinc-400 font-medium">No leads found.</p>
                     </div>
-                  ))}
+                  ) : (
+                    filteredLeads.map((lead) => (
+                      <div
+                        key={lead._id}
+                        className="p-5 space-y-5 bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-lg rounded-[1.5rem] relative overflow-hidden"
+                      >
+                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${lead.intent >= 70 ? 'bg-green-500' : 'bg-[#fbbf24]'}`} />
+                        
+                        <div className="flex justify-between items-start pl-2">
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] font-mono font-bold tracking-widest text-zinc-500">
+                              {lead.leadId}
+                            </div>
+                            <div className="font-bold text-white text-lg truncate max-w-[180px]">
+                              {lead.name}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 font-black px-2 py-1 shadow-sm">
+                            {lead.intent}%
+                          </Badge>
+                        </div>
+
+                        <div className="flex gap-3 pl-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1 bg-white/[0.03] border-white/[0.1] text-white hover:bg-white/[0.1] rounded-xl h-10"
+                            onClick={() => setSelectedLead(lead)}
+                          >
+                            Details
+                          </Button>
+                          <Select
+                            value={lead.status}
+                            onValueChange={(v) => updateStatus(lead._id, v)}
+                          >
+                            <SelectTrigger className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
+                              {STATUSES.map((s) => (
+                                <SelectItem key={s} value={s} className="text-xs font-medium focus:bg-white/[0.05] focus:text-white">
+                                  {s}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -636,9 +630,7 @@ const LeadsPipeline = () => {
 
                 {/* 5. Action Button */}
                 <div className="pt-4">
-                  <Button className="w-full h-14 text-lg font-bold bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]"
-                    onClick={() => window.open(selectedLead.url, "_blank")}
-                  >
+                  <Button className="w-full h-14 text-lg font-bold bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]">
                     Engage Target on {selectedLead.platform}
                   </Button>
                 </div>
