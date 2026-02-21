@@ -3,12 +3,10 @@ import { Outlet } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, Radio, Users, FileText, Search, Menu, Home, ArrowUpCircle, Zap, X, UserCog2 } from "lucide-react";
+import { LayoutDashboard, Radio, Users, FileText, Menu, Home, ArrowUpCircle, Zap, X, UserCog2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
-import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 
 // 👇 IMPORT CONTEXT
@@ -95,7 +93,7 @@ const DashboardLayoutContent = () => {
                     {sidebarOpen && <span>{item.label}</span>}
                   </NavLink>
                 </TooltipTrigger>
-                {!sidebarOpen && <TooltipContent side="right" className="ml-2 bg-black/80   border-white/[0.1] text-white font-medium">{item.label}</TooltipContent>}
+                {!sidebarOpen && <TooltipContent side="right" className="ml-2 bg-black/80 border-white/[0.1] text-white font-medium">{item.label}</TooltipContent>}
               </Tooltip>
             ))}
           </TooltipProvider>
@@ -135,16 +133,6 @@ const DashboardLayoutContent = () => {
               </div>
             )}
           </div>
-
-          <div className={`flex items-center w-full mt-2 ${sidebarOpen ? "gap-3 px-2 bg-white/[0.03] p-2 rounded-xl border border-white/[0.05]" : "justify-center"}`}>
-            <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "h-9 w-9 shadow-md" } }} />
-            {sidebarOpen && (
-              <div className="flex flex-col overflow-hidden">
-                <p className="text-sm font-bold text-white truncate">{user?.fullName || "My Account"}</p>
-                <p className="text-[11px] text-zinc-400 truncate tracking-wide">{user?.primaryEmailAddress?.emailAddress || "Manage Settings"}</p>
-              </div>
-            )}
-          </div>
         </div>
       </aside>
 
@@ -152,8 +140,10 @@ const DashboardLayoutContent = () => {
       <div className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${sidebarOpen ? "lg:ml-64" : "lg:ml-20"} relative z-10`}>
         
         {/* Header - Glassmorphism */}
-        <header className=" backdrop-blur-2xl border-b border-white/[0.08] px-4 lg:px-8 py-4 h-20 flex items-center flex-shrink-0 sticky top-0 z-30">
-          <div className="flex items-center justify-between gap-4 w-full">
+        <header className="backdrop-blur-2xl border-b border-white/[0.08] px-4 lg:px-8 py-4 h-20 flex items-center flex-shrink-0 sticky top-0 z-30">
+          <div className="flex items-center justify-between w-full">
+            
+            {/* Left: Mobile Menu & Logo */}
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" className="lg:hidden text-zinc-400 hover:text-white hover:bg-white/[0.05] rounded-xl" onClick={() => setSidebarOpen(true)}>
                 <Menu className="h-5 w-5" />
@@ -166,24 +156,21 @@ const DashboardLayoutContent = () => {
               </Badge>
             </div>
             
-            <div className="flex items-center gap-4 flex-1 max-w-xl justify-end">
-              <div className="relative flex-1 hidden md:block">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
-                <Input 
-                  placeholder="Search comments..." 
-                  className="pl-10 bg-white/[0.03] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 focus-visible:border-[#fbbf24]/50 rounded-xl h-10 transition-all placeholder:text-zinc-600" 
-                />
+            {/* Right: User Account Profile */}
+            <div className="flex items-center justify-end">
+              <div className="flex items-center gap-3 bg-white/[0.03] hover:bg-white/[0.05] p-1.5 md:pr-4 rounded-full border border-white/[0.05] transition-colors">
+                <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "h-8 w-8 shadow-md" } }} />
+                <div className="hidden md:flex flex-col overflow-hidden justify-center">
+                  <p className="text-sm font-bold text-white truncate leading-tight">
+                    {user?.fullName || "My Account"}
+                  </p>
+                  <p className="text-[10px] text-zinc-400 truncate tracking-wide leading-tight">
+                    {user?.primaryEmailAddress?.emailAddress || "Manage Settings"}
+                  </p>
+                </div>
               </div>
-              <Select defaultValue="utc">
-                <SelectTrigger className="w-[100px] md:w-[120px] bg-white/[0.03] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-black/20 border-white/[0.1] text-white rounded-xl">
-                  <SelectItem value="utc" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">UTC</SelectItem>
-                  <SelectItem value="pst" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">PST</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
+
           </div>
         </header>
 
