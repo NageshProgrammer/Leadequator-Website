@@ -21,7 +21,8 @@ import {
   Bot,
   X,
   Target,
-  MessageSquare
+  MessageSquare,
+  StarsIcon
 } from "lucide-react";
 import { DetailPane } from "@/components/dashboard/DetailPane";
 import {
@@ -66,7 +67,7 @@ const MonitorStream = () => {
   const [selected, setSelected] = useState<Thread | null>(null);
   
   // FILTER STATES
-  const [showFilters, setShowFilters] = useState(true); 
+  const [showFilters, setShowFilters] = useState(false); 
   const [searchQuery, setSearchQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState("All");
   const [sentimentFilter, setSentimentFilter] = useState("All");
@@ -221,7 +222,7 @@ const MonitorStream = () => {
               disabled={running}
               className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <StarsIcon className="mr-2 h-4 w-4" />}
               {running ? "Scanning..." : "Run Scraper"}
             </Button>
           </div>
