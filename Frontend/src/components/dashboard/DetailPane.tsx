@@ -116,10 +116,11 @@ export const DetailPane = ({
   const textAreaStyle = "w-full bg-black/40 border border-white/[0.08] text-zinc-200 focus:border-[#fbbf24]/50 focus:ring-1 focus:ring-[#fbbf24]/30 rounded-xl p-4 text-sm md:text-base leading-relaxed transition-all resize-none custom-scrollbar";
 
   return (
-    <div className="flex flex-col h-full w-full bg-transparent text-white">
+    // ✅ FIXED: Changed to overflow-hidden so the internal body dictates the scrolling
+    <div className="flex flex-col h-full max-h-full w-full bg-transparent text-white overflow-hidden">
       
-      {/* Header (Sticky) */}
-      <div className="p-4 md:p-6 border-b border-white/[0.08] flex items-center justify-between sticky top-0 bg-[#09090b]/90 backdrop-blur-xl z-20">
+      {/* Header (Fixed Height) */}
+      <div className="shrink-0 p-4 md:px-6 md:py-5 border-b border-white/[0.08] flex items-center justify-between bg-black/20 z-20">
         <div className="flex items-center gap-3">
           <h3 className="text-xl md:text-2xl font-extrabold tracking-tight">Post Detail</h3>
           {comment.replyStatus === "Sent" && (
@@ -133,11 +134,11 @@ export const DetailPane = ({
         </Button>
       </div>
 
-      {/* Body (Scrollable) */}
-      <div className="flex-1 p-4 md:p-6 space-y-6 md:space-y-8">
+      {/* Body (Scrollable Area) */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar">
         
         {/* Author & Meta */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="font-bold text-lg md:text-xl text-white">{comment.user}</div>
             <div className="text-xs md:text-sm text-zinc-400 font-medium mt-1">
@@ -205,7 +206,7 @@ export const DetailPane = ({
               <textarea
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                className={`${textAreaStyle} min-h-[140px] border-none bg-transparent`}
+                className={`${textAreaStyle} min-h-[120px] border-none bg-transparent`}
                 placeholder="Write your response here..."
               />
               <div className="flex flex-col sm:flex-row justify-end gap-2 p-2 pt-0 mt-2">
@@ -291,8 +292,8 @@ export const DetailPane = ({
         )}
       </div>
 
-      {/* Footer (Sticky) */}
-      <div className="p-4 md:p-6 border-t border-white/[0.08] flex flex-col sm:flex-row gap-3 bg-[#09090b]/90 backdrop-blur-xl sticky bottom-0 z-20 rounded-b-[2rem]">
+      {/* Footer (Fixed Height) */}
+      <div className="shrink-0 p-4 md:px-6 md:py-5 border-t border-white/[0.08] flex flex-col sm:flex-row gap-3 bg-black/20 z-20">
         <Button 
           variant="outline" 
           className="flex-1 bg-transparent border-white/[0.1] text-white hover:bg-white/[0.05] rounded-xl h-12" 
