@@ -1,9 +1,9 @@
-import { NavLink as RouterNavLink } from "react-router-dom"; // Assuming standard react-router setup
+import { NavLink as RouterNavLink } from "react-router-dom"; 
 
-// A simplified helper component just for the footer so links don't get the heavy navbar active styling
 const FooterLink = ({ to, children }) => (
   <RouterNavLink 
     to={to} 
+    onClick={() => window.scrollTo(0, 0)}
     className="text-sm text-zinc-400 hover:text-[#fbbf24] hover:translate-x-1 inline-flex transition-all duration-300"
   >
     {children}
@@ -22,7 +22,11 @@ const Footer = () => {
           
           {/* Brand Column */}
           <div className="lg:col-span-2 pr-8">
-            <RouterNavLink to="/" className="text-2xl font-bold flex items-center gap-2 mb-6 group cursor-pointer inline-flex">
+            <RouterNavLink 
+              to="/" 
+              onClick={() => window.scrollTo(0, 0)}
+              className="text-2xl font-bold flex items-center gap-2 mb-6 group cursor-pointer inline-flex"
+            >
               <img
                 src="/leadequator_logo.png"
                 alt="Leadequator Logo"
@@ -53,7 +57,6 @@ const Footer = () => {
             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Company</h4>
             <ul className="space-y-4">
               <li><FooterLink to="/about">About Us</FooterLink></li>
-              {/* <li><FooterLink to="/resources">Resources</FooterLink></li> */}
               <li><FooterLink to="/contact">Contact Support</FooterLink></li>
             </ul>
           </div>
@@ -75,7 +78,7 @@ const Footer = () => {
             © {new Date().getFullYear()} Leadequator. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="https://x.com" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-blue-white transition-colors">
+            <a href="https://x.com" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-white transition-colors">
               <span className="sr-only">Twitter</span>
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg>
             </a>

@@ -7,22 +7,29 @@ import { ShimmerButton } from "./ui/shimmer-button";
 import { UserButton, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { Menu, X } from "lucide-react";
 
-// Helper component for active link styling
-const NavLink = ({ to, children, className, onClick }) => (
-  <RouterNavLink
-    to={to}
-    onClick={onClick}
-    className={({ isActive }) =>
-      `transition-all duration-300 ease-out flex items-center justify-center ${
-        isActive 
-          ? "text-[#fbbf24] bg-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-full" 
-          : "text-gray-300 hover:text-white hover:bg-white/[0.04] rounded-full"
-      } ${className}`
-    }
-  >
-    {children}
-  </RouterNavLink>
-);
+// ✅ FIX: Updated helper component to handle scroll-to-top while preserving other onClick events (like closeMenu)
+const NavLink = ({ to, children, className, onClick }) => {
+  const handleClick = (e) => {
+    window.scrollTo(0, 0); // Scroll to top
+    if (onClick) onClick(e); // Fire any other passed functions (like closeMenu)
+  };
+
+  return (
+    <RouterNavLink
+      to={to}
+      onClick={handleClick}
+      className={({ isActive }) =>
+        `transition-all duration-300 ease-out flex items-center justify-center ${
+          isActive 
+            ? "text-[#fbbf24] bg-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-full" 
+            : "text-gray-300 hover:text-white hover:bg-white/[0.04] rounded-full"
+        } ${className}`
+      }
+    >
+      {children}
+    </RouterNavLink>
+  );
+};
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +50,7 @@ const Navigation = () => {
     { to: "/solutions", label: "Solutions" },
     { to: "/working", label: "How it works" },
     { to: "/pricing", label: "Pricing" },
-    { to: "/contact", label: "Contact Us " },
+    { to: "/contact", label: "Contact Us" }, // Fixed trailing space
   ];
 
   const closeMenu = () => setIsOpen(false);
@@ -56,13 +63,16 @@ const Navigation = () => {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      {/* 1. Added max-w-7xl here so the navbar perfectly aligns with the page content below it */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           
           {/* Logo */}
-          {/* 2. Added shrink-0 so the logo never gets squished on weird screen sizes */}
-          <Link to="/" className="text-2xl font-bold flex items-center gap-2 group cursor-pointer relative z-50 shrink-0">
+          {/* ✅ FIX: Added scroll-to-top to the Logo */}
+          <Link 
+            to="/" 
+            onClick={() => window.scrollTo(0, 0)}
+            className="text-2xl font-bold flex items-center gap-2 group cursor-pointer relative z-50 shrink-0"
+          >
             <img
               src="/leadequator_logo.png"
               alt="Leadequator Logo"
@@ -75,7 +85,6 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          {/* 3. Changed lg:flex to xl:flex so it collapses to mobile menu before getting crowded */}
           <div className="hidden xl:flex items-center gap-2">
             <div className="flex items-center p-1.5 rounded-full bg-white/[0.02] border border-white/[0.05] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] backdrop-blur-md">
               {navLinks.map((link) => (
@@ -91,7 +100,8 @@ const Navigation = () => {
 
             <div className="flex items-center gap-4 pl-4 ml-2 border-l border-white/[0.08]">
               <SignedOut>
-                <Link to="/sign-in">
+                {/* ✅ FIX: Added scroll-to-top to Login & Pricing */}
+                <Link to="/sign-in" onClick={() => window.scrollTo(0, 0)}>
                   <ShimmerButton 
                     shimmerColor="#fbbf24" 
                     borderRadius="9999px" 
@@ -100,19 +110,20 @@ const Navigation = () => {
                     Login
                   </ShimmerButton>
                 </Link>
-                <Link to="/pricing">
+                <Link to="/pricing" onClick={() => window.scrollTo(0, 0)}>
                   <Button className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-semibold rounded-full px-6 h-10 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_25px_rgba(251,191,36,0.4)] transition-all duration-300 hover:scale-105 active:scale-95">
                     Start a Free Trial
                   </Button>
                 </Link>
               </SignedOut>
               <SignedIn>
-                <Link to="/onboarding">
+                {/* ✅ FIX: Added scroll-to-top to Dashboard button */}
+                <Link to="/onboarding" onClick={() => window.scrollTo(0, 0)}>
                   <Button variant="outline" className="border-white/[0.08] bg-white/[0.02] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] rounded-full h-10 px-6 backdrop-blur-md transition-all">
                     Dashboard
                   </Button>
                 </Link>
-                <div className="p-2 mt-2 ">
+                <div className="p-2 mt-2">
                   <UserButton afterSignOutUrl="/"/>
                 </div>
               </SignedIn>
@@ -148,7 +159,7 @@ const Navigation = () => {
                   key={link.to}
                   to={link.to}
                   className="text-base font-medium px-4 py-3.5 w-full justify-start rounded-2xl"
-                  onClick={closeMenu}
+                  onClick={closeMenu} // NavLink automatically merges this with the scrollTo logic!
                 >
                   {link.label}
                 </NavLink>
@@ -158,7 +169,8 @@ const Navigation = () => {
             {/* Action Section */}
             <div className="flex flex-col space-y-3 pt-2">
               <SignedOut>
-                <Link to="/sign-in" onClick={closeMenu} className="w-full">
+                {/* ✅ FIX: Added scroll-to-top to Mobile Actions */}
+                <Link to="/sign-in" onClick={() => { window.scrollTo(0, 0); closeMenu(); }} className="w-full">
                   <ShimmerButton 
                     className="w-full h-14 text-base rounded-2xl bg-white/[0.03] border border-white/[0.05]" 
                     shimmerColor="#fbbf24"
@@ -166,7 +178,7 @@ const Navigation = () => {
                     Login
                   </ShimmerButton>
                 </Link>
-                <Link to="/pricing" onClick={closeMenu} className="w-full">
+                <Link to="/pricing" onClick={() => { window.scrollTo(0, 0); closeMenu(); }} className="w-full">
                   <Button className="w-full h-14 text-base font-bold bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 rounded-2xl shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:scale-[1.02] transition-transform">
                     Start a Free Trial
                   </Button>
@@ -174,7 +186,8 @@ const Navigation = () => {
               </SignedOut>
 
               <SignedIn>
-                <Link to="/onboarding" onClick={closeMenu} className="w-full">
+                {/* ✅ FIX: Added scroll-to-top to Mobile Actions */}
+                <Link to="/onboarding" onClick={() => { window.scrollTo(0, 0); closeMenu(); }} className="w-full">
                   <Button variant="outline" className="w-full h-14 text-base border-white/[0.08] bg-white/[0.02] text-white rounded-2xl hover:bg-white/[0.08]">
                     Go to Dashboard
                   </Button>
