@@ -21,8 +21,7 @@ import {
   Bot,
   X,
   Target,
-  MessageSquare,
-  SparklesIcon
+  MessageSquare
 } from "lucide-react";
 import { DetailPane } from "@/components/dashboard/DetailPane";
 import {
@@ -185,11 +184,11 @@ const MonitorStream = () => {
     setThreads((prev) => prev.map((t) => (t.id === id ? { ...t, replyStatus: "Sent" } : t)));
   };
 
-  const glassPanelStyle = "bg-[#050505]/25 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
+  const glassPanelStyle = "bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
   const filterLabelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
 
   return (
-    <div className="min-h-[90vh] pt-4 pb-12 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden rounded-3xl">
+    <div className="min-h-[90vh] pt-4 pb-12 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
       
       {/* Subtle Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />
@@ -211,7 +210,7 @@ const MonitorStream = () => {
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex-1 md:flex-none border-white/[0.1] text-white hover:bg-[#fbbf24] h-11 rounded-xl transition-all ${showFilters ? 'bg-white/[0.1] border-[#fbbf24]/50' : 'bg-white/[0.03] hover:bg-[#fbbf24]'}`}
+              className={`flex-1 md:flex-none border-white/[0.1] text-white hover:text-[#fbbf24] h-11 rounded-xl transition-all ${showFilters ? 'bg-white/[0.1] border-[#fbbf24]/50' : 'bg-white/[0.03] hover:bg-white/[0.08]'}`}
             >
               <FilterIcon className="mr-2 h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
@@ -222,19 +221,17 @@ const MonitorStream = () => {
               disabled={running}
               className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SparklesIcon className="mr-2 h-4 w-4" />}
+              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
               {running ? "Scanning..." : "Run Scraper"}
             </Button>
           </div>
         </div>
 
         {/* MAIN LAYOUT: SIDEBAR + RESULTS */}
-        {/* ✅ CHANGED: Used lg:flex-row-reverse to push the sidebar to the right side on desktop */}
         <div className="flex flex-col lg:flex-row-reverse gap-6 lg:gap-8 items-start">
           
-          {/* ================= FILTER SIDEBAR (NOW ON RIGHT) ================= */}
+          {/* ================= FILTER SIDEBAR (RIGHT) ================= */}
           {showFilters && (
-            // ✅ CHANGED: Updated animation to slide-in-from-right-8
             <div className={`w-full lg:w-[320px] flex-shrink-0 ${glassPanelStyle} p-6 animate-in slide-in-from-right-8 duration-500 lg:sticky lg:top-24`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -395,11 +392,13 @@ const MonitorStream = () => {
                             onClick={() => setSelected(t)}
                           >
                             <TableCell className="pl-6">
-                              <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm">
+                              <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm mb-1.5">
                                 {t.platform}
                               </Badge>
-                              <div className="text-zinc-600 text-[10px] mt-1.5 font-medium tracking-wide">
-                                {t.timestamp.split(',')[0]}
+                              {/* ✅ FIXED: Now shows Date AND Time properly formatted */}
+                              <div className="flex flex-col">
+                                <span className="text-zinc-400 text-xs font-medium">{t.timestamp.split(',')[0]}</span>
+                                <span className="text-zinc-500 text-[10px] tracking-wide">{t.timestamp.split(',')[1]}</span>
                               </div>
                             </TableCell>
                             
@@ -469,7 +468,10 @@ const MonitorStream = () => {
                               <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] text-[10px] px-1.5 py-0">
                                 {t.platform}
                               </Badge>
-                              <span className="text-[10px] text-zinc-500">{t.timestamp.split(',')[0]}</span>
+                              {/* ✅ FIXED: Now shows Date AND Time on mobile */}
+                              <span className="text-[10px] text-zinc-400 font-medium">
+                                {t.timestamp.split(',')[0]} <span className="text-zinc-600">{t.timestamp.split(',')[1]}</span>
+                              </span>
                             </div>
                             <span className="font-bold text-white text-base truncate max-w-[160px]">{t.user}</span>
                           </div>
