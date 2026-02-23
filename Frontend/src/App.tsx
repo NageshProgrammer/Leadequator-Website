@@ -44,7 +44,7 @@ const queryClient = new QueryClient();
 
 // PayPal Configuration
 const initialPayPalOptions = {
-  "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", 
+  clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", 
   currency: "USD",
   intent: "capture",
 };
