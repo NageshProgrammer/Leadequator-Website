@@ -8,9 +8,8 @@ import { dark } from "@clerk/themes";
 import { Menu, X, ShieldCheck, CheckCircle2, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// REMOVED TYPESCRIPT SYNTAX HERE
-const NavLink = ({ to, children, className, onClick }) => {
-  const handleClick = (e) => {
+const NavLink = ({ to, children, className, onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     window.scrollTo(0, 0); 
     if (onClick) onClick(e); 
   };
@@ -37,7 +36,7 @@ const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
   
   // REMOVED TYPESCRIPT SYNTAX HERE
-  const [authModal, setAuthModal] = useState(null);
+  const [authModal, setAuthModal] = useState<null | "sign-in" | "signup">(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
