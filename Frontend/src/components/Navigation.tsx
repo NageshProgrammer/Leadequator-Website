@@ -1,17 +1,33 @@
 "use client";
 import { useState, useEffect } from "react";
-import { NavLink as RouterNavLink, Link } from "react-router-dom"; 
+import { NavLink as RouterNavLink, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShimmerButton } from "./ui/shimmer-button";
-import { UserButton, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
+import {
+  UserButton,
+  SignedIn,
+  SignedOut,
+  SignIn,
+  SignUp,
+} from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { Menu, X, ShieldCheck, CheckCircle2, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const NavLink = ({ to, children, className, onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) => {
+const NavLink = ({
+  to,
+  children,
+  className,
+  onClick,
+}: {
+  to: string;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+}) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    window.scrollTo(0, 0); 
-    if (onClick) onClick(e); 
+    window.scrollTo(0, 0);
+    if (onClick) onClick(e);
   };
 
   return (
@@ -20,8 +36,8 @@ const NavLink = ({ to, children, className, onClick }: { to: string; children: R
       onClick={handleClick}
       className={({ isActive }) =>
         `transition-all duration-300 ease-out flex items-center justify-center ${
-          isActive 
-            ? "text-[#fbbf24] bg-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-full" 
+          isActive
+            ? "text-[#fbbf24] bg-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-full"
             : "text-gray-300 hover:text-white hover:bg-white/[0.04] rounded-full"
         } ${className}`
       }
@@ -34,7 +50,7 @@ const NavLink = ({ to, children, className, onClick }: { to: string; children: R
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   // REMOVED TYPESCRIPT SYNTAX HERE
   const [authModal, setAuthModal] = useState<null | "sign-in" | "signup">(null);
 
@@ -50,7 +66,9 @@ const Navigation = () => {
     } else {
       document.body.style.overflow = "unset";
     }
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen, authModal]);
 
   const navLinks = [
@@ -66,18 +84,17 @@ const Navigation = () => {
 
   return (
     <>
-      <nav 
+      <nav
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ease-out ${
-          scrolled 
-            ? "bg-[#050505]/40 backdrop-blur-[40px] backdrop-saturate-[150%] border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.1)]" 
+          scrolled
+            ? "bg-[#050505]/40 backdrop-blur-[40px] backdrop-saturate-[150%] border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
             : "bg-transparent border-b border-transparent"
         }`}
       >
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between">
-            
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               onClick={() => window.scrollTo(0, 0)}
               className="text-2xl font-bold flex items-center gap-2 group cursor-pointer relative z-50 shrink-0"
             >
@@ -95,7 +112,11 @@ const Navigation = () => {
             <div className="hidden xl:flex items-center gap-2">
               <div className="flex items-center p-1.5 rounded-full bg-white/[0.02] border border-white/[0.05] shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] backdrop-blur-md">
                 {navLinks.map((link) => (
-                  <NavLink key={link.to} to={link.to} className="text-sm font-medium px-4 py-2">
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className="text-sm font-medium px-4 py-2"
+                  >
                     {link.label}
                   </NavLink>
                 ))}
@@ -104,24 +125,31 @@ const Navigation = () => {
               <div className="flex items-center gap-4 pl-4 ml-2 border-l border-white/[0.08]">
                 <SignedOut>
                   <button onClick={() => setAuthModal("sign-in")}>
-                    <ShimmerButton shimmerColor="#fbbf24" borderRadius="9999px" className="h-10 px-6 text-sm font-medium bg-white/[0.03] border border-white/[0.05]">
+                    <ShimmerButton
+                      shimmerColor="#fbbf24"
+                      borderRadius="9999px"
+                      className="h-10 px-6 text-sm font-medium bg-white/[0.03] border border-white/[0.05]"
+                    >
                       Login
                     </ShimmerButton>
                   </button>
-                  <button onClick={() => setAuthModal("signup")}>
+                  <NavLink to="/pricing">
                     <Button className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-semibold rounded-full px-6 h-10 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_25px_rgba(251,191,36,0.4)] transition-all duration-300 hover:scale-105 active:scale-95">
                       Start a Free Trial
                     </Button>
-                  </button>
+                  </NavLink>
                 </SignedOut>
                 <SignedIn>
                   <Link to="/onboarding" onClick={() => window.scrollTo(0, 0)}>
-                    <Button variant="outline" className="border-white/[0.08] bg-white/[0.02] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] rounded-full h-10 px-6 backdrop-blur-md transition-all">
+                    <Button
+                      variant="outline"
+                      className="border-white/[0.08] bg-white/[0.02] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] rounded-full h-10 px-6 backdrop-blur-md transition-all"
+                    >
                       Dashboard
                     </Button>
                   </Link>
                   <div className="p-2 mt-2">
-                    <UserButton afterSignOutUrl="/"/>
+                    <UserButton afterSignOutUrl="/" />
                   </div>
                 </SignedIn>
               </div>
@@ -137,37 +165,71 @@ const Navigation = () => {
           </div>
         </div>
 
-        <div className={`xl:hidden fixed left-4 right-4 origin-top transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "top-[90px] opacity-100 scale-100 pointer-events-auto" : "top-[80px] opacity-0 scale-95 pointer-events-none"}`}>
+        <div
+          className={`xl:hidden fixed left-4 right-4 origin-top transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "top-[90px] opacity-100 scale-100 pointer-events-auto" : "top-[80px] opacity-0 scale-95 pointer-events-none"}`}
+        >
           <div className="bg-[#111111]/90 backdrop-blur-[50px] backdrop-saturate-[200%] border border-white/[0.1] rounded-[2rem] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)] overflow-hidden">
             <div className="flex flex-col p-4 space-y-2">
               <div className="flex flex-col p-2 bg-white/[0.02] rounded-3xl border border-white/[0.03]">
                 {navLinks.map((link) => (
-                  <NavLink key={link.to} to={link.to} className="text-base font-medium px-4 py-3.5 w-full justify-start rounded-2xl" onClick={closeMenu}>
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className="text-base font-medium px-4 py-3.5 w-full justify-start rounded-2xl"
+                    onClick={closeMenu}
+                  >
                     {link.label}
                   </NavLink>
                 ))}
               </div>
               <div className="flex flex-col space-y-3 pt-2">
                 <SignedOut>
-                  <button onClick={() => { closeMenu(); setAuthModal("sign-in"); }} className="w-full">
-                    <ShimmerButton className="w-full h-14 text-base rounded-2xl bg-white/[0.03] border border-white/[0.05]" shimmerColor="#fbbf24">
+                  <button
+                    onClick={() => {
+                      closeMenu();
+                      setAuthModal("sign-in");
+                    }}
+                    className="w-full"
+                  >
+                    <ShimmerButton
+                      className="w-full h-14 text-base rounded-2xl bg-white/[0.03] border border-white/[0.05]"
+                      shimmerColor="#fbbf24"
+                    >
                       Login
                     </ShimmerButton>
                   </button>
-                  <button onClick={() => { closeMenu(); setAuthModal("signup"); }} className="w-full">
+                  <button
+                    onClick={() => {
+                      closeMenu();
+                      setAuthModal("signup");
+                    }}
+                    className="w-full"
+                  >
                     <Button className="w-full h-14 text-base font-bold bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 rounded-2xl shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:scale-[1.02] transition-transform">
                       Start a Free Trial
                     </Button>
                   </button>
                 </SignedOut>
                 <SignedIn>
-                  <Link to="/onboarding" onClick={() => { window.scrollTo(0, 0); closeMenu(); }} className="w-full">
-                    <Button variant="outline" className="w-full h-14 text-base border-white/[0.08] bg-white/[0.02] text-white rounded-2xl hover:bg-white/[0.08]">
+                  <Link
+                    to="/onboarding"
+                    onClick={() => {
+                      window.scrollTo(0, 0);
+                      closeMenu();
+                    }}
+                    className="w-full"
+                  >
+                    <Button
+                      variant="outline"
+                      className="w-full h-14 text-base border-white/[0.08] bg-white/[0.02] text-white rounded-2xl hover:bg-white/[0.08]"
+                    >
                       Go to Dashboard
                     </Button>
                   </Link>
                   <div className="flex items-center justify-between px-5 py-4 mt-2 bg-white/[0.03] rounded-2xl border border-white/[0.05]">
-                    <span className="text-sm text-gray-300 font-medium">Account Settings</span>
+                    <span className="text-sm text-gray-300 font-medium">
+                      Account Settings
+                    </span>
                     <UserButton afterSignOutUrl="/" />
                   </div>
                 </SignedIn>
@@ -210,34 +272,49 @@ const Navigation = () => {
               <div className="hidden lg:flex w-1/2 flex-col p-12 relative bg-[#0a0a0a] border-r border-white/[0.05] rounded-l-[2rem]">
                 <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[300px] h-[300px] bg-[#fbbf24]/10 blur-[100px] rounded-full pointer-events-none" />
                 <div className="flex items-center gap-3 mb-12 relative z-10">
-                  <img src="/leadequator_logo.png" className="w-8 h-8 object-contain" alt="Logo" />
-                  <span className="text-white font-bold text-xl tracking-tight">Leadequator</span>
+                  <img
+                    src="/leadequator_logo.png"
+                    className="w-8 h-8 object-contain"
+                    alt="Logo"
+                  />
+                  <span className="text-white font-bold text-xl tracking-tight">
+                    Leadequator
+                  </span>
                 </div>
                 <div className="relative z-10 flex-1">
                   <h2 className="text-4xl xl:text-5xl font-bold text-white leading-[1.1] mb-6 tracking-tight">
-                    Start converting <br/>conversations into <br/>customers.
+                    Start converting <br />
+                    conversations into <br />
+                    customers.
                   </h2>
                   <p className="text-gray-400 text-lg mb-10 leading-relaxed max-w-md">
-                    Join the conversations where real buyers already exist — without ads or automation risk.
+                    Join the conversations where real buyers already exist —
+                    without ads or automation risk.
                   </p>
                   <div className="space-y-6">
                     <div className="flex items-center gap-4">
                       <div className="p-2 rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/10 text-[#fbbf24]">
                         <ShieldCheck size={20} />
                       </div>
-                      <span className="text-white font-medium">No bots. No auto-commenting.</span>
+                      <span className="text-white font-medium">
+                        No bots. No auto-commenting.
+                      </span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="p-2 rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/10 text-[#fbbf24]">
                         <CheckCircle2 size={20} />
                       </div>
-                      <span className="text-white font-medium">100% platform-compliant</span>
+                      <span className="text-white font-medium">
+                        100% platform-compliant
+                      </span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="p-2 rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/10 text-[#fbbf24]">
                         <Users size={20} />
                       </div>
-                      <span className="text-white font-medium">Built for founders, agencies & growth teams</span>
+                      <span className="text-white font-medium">
+                        Built for founders, agencies & growth teams
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -246,8 +323,14 @@ const Navigation = () => {
               {/* RIGHT PANEL - CLERK FORM */}
               <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 lg:p-12 relative rounded-b-[2rem] lg:rounded-r-[2rem] lg:rounded-bl-none">
                 <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
-                  <img src="/leadequator_logo.png" className="w-6 h-6 object-contain" alt="Logo" />
-                  <span className="font-bold text-lg text-white">Leadequator</span>
+                  <img
+                    src="/leadequator_logo.png"
+                    className="w-6 h-6 object-contain"
+                    alt="Logo"
+                  />
+                  <span className="font-bold text-lg text-white">
+                    Leadequator
+                  </span>
                 </div>
 
                 <div className="w-full max-w-[400px] mt-8 lg:mt-0 flex justify-center">
@@ -257,24 +340,28 @@ const Navigation = () => {
                       signUpUrl="/sign-up"
                       appearance={{
                         baseTheme: dark,
-                        variables: { 
-                          colorPrimary: '#fbbf24',
-                          colorBackground: 'transparent',
+                        variables: {
+                          colorPrimary: "#fbbf24",
+                          colorBackground: "transparent",
                         },
                         elements: {
                           cardBox: "shadow-none border-none",
                           card: "shadow-none", // <--- Removed w-full and p-0 to prevent cropping
                           headerTitle: "text-white text-2xl font-bold",
                           headerSubtitle: "text-gray-400",
-                          socialButtonsBlockButton: "bg-white/[0.03] border-white/[0.08] text-white hover:bg-white/[0.08] transition-all",
+                          socialButtonsBlockButton:
+                            "bg-white/[0.03] border-white/[0.08] text-white hover:bg-white/[0.08] transition-all",
                           dividerLine: "bg-white/[0.08]",
                           dividerText: "text-gray-500",
                           formFieldLabel: "text-gray-300",
-                          formFieldInput: "bg-white/[0.03] border-white/[0.08] text-white focus:border-[#fbbf24] focus:ring-[#fbbf24]/20",
-                          formButtonPrimary: "bg-[#fbbf24] text-black font-bold hover:bg-[#fbbf24]/90",
+                          formFieldInput:
+                            "bg-white/[0.03] border-white/[0.08] text-white focus:border-[#fbbf24] focus:ring-[#fbbf24]/20",
+                          formButtonPrimary:
+                            "bg-[#fbbf24] text-black font-bold hover:bg-[#fbbf24]/90",
                           footerActionText: "text-gray-400",
-                          footerActionLink: "text-[#fbbf24] hover:text-[#fbbf24]/80 font-medium"
-                        }
+                          footerActionLink:
+                            "text-[#fbbf24] hover:text-[#fbbf24]/80 font-medium",
+                        },
                       }}
                     />
                   ) : (
@@ -283,24 +370,28 @@ const Navigation = () => {
                       signInUrl="/sign-in"
                       appearance={{
                         baseTheme: dark,
-                        variables: { 
-                          colorPrimary: '#fbbf24',
-                          colorBackground: 'transparent',
+                        variables: {
+                          colorPrimary: "#fbbf24",
+                          colorBackground: "transparent",
                         },
                         elements: {
                           cardBox: "shadow-none border-none",
                           card: "shadow-none", // <--- Removed w-full and p-0 to prevent cropping
                           headerTitle: "text-white text-2xl font-bold",
                           headerSubtitle: "text-gray-400",
-                          socialButtonsBlockButton: "bg-white/[0.03] border-white/[0.08] text-white hover:bg-white/[0.08] transition-all",
+                          socialButtonsBlockButton:
+                            "bg-white/[0.03] border-white/[0.08] text-white hover:bg-white/[0.08] transition-all",
                           dividerLine: "bg-white/[0.08]",
                           dividerText: "text-gray-500",
                           formFieldLabel: "text-gray-300",
-                          formFieldInput: "bg-white/[0.03] border-white/[0.08] text-white focus:border-[#fbbf24] focus:ring-[#fbbf24]/20",
-                          formButtonPrimary: "bg-[#fbbf24] text-black font-bold hover:bg-[#fbbf24]/90",
+                          formFieldInput:
+                            "bg-white/[0.03] border-white/[0.08] text-white focus:border-[#fbbf24] focus:ring-[#fbbf24]/20",
+                          formButtonPrimary:
+                            "bg-[#fbbf24] text-black font-bold hover:bg-[#fbbf24]/90",
                           footerActionText: "text-gray-400",
-                          footerActionLink: "text-[#fbbf24] hover:text-[#fbbf24]/80 font-medium"
-                        }
+                          footerActionLink:
+                            "text-[#fbbf24] hover:text-[#fbbf24]/80 font-medium",
+                        },
                       }}
                     />
                   )}
