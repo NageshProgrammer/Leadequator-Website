@@ -5,8 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SignedIn, SignIn, SignUp } from "@clerk/clerk-react";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js"; // Import added
-
-import Navigation from "./components/Navigation";
+import Navigation from "./components/Navigation"
 import Footer from "./components/Footer";
 import { DashboardLayout } from "./components/dashboard/DashboardLayout";
 
