@@ -9,8 +9,8 @@ import { Menu, X, ShieldCheck, CheckCircle2, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Helper component to handle scroll-to-top while preserving other onClick events
-const NavLink = ({ to, children, className, onClick }) => {
-  const handleClick = (e) => {
+const NavLink = ({ to, children, className, onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     window.scrollTo(0, 0); // Scroll to top
     if (onClick) onClick(e); // Fire any other passed functions (like closeMenu)
   };
@@ -37,7 +37,7 @@ const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
   
   // Custom Auth Modal State
-  const [authModal, setAuthModal] = useState(null); // "signin" | "signup" | null
+  const [authModal, setAuthModal] = useState<"sign-in" | "signup" | null>(null);
 
   // Add a liquid glass shadow/border transition on scroll
   useEffect(() => {
@@ -183,7 +183,7 @@ const Navigation = () => {
               <div className="flex flex-col space-y-3 pt-2">
                 <SignedOut>
                   {/* Triggers Auth Modal on mobile */}
-                  <button onClick={() => { closeMenu(); setAuthModal("signin"); }} className="w-full">
+                  <button onClick={() => { closeMenu(); setAuthModal("sign-in"); }} className="w-full">
                     <ShimmerButton 
                       className="w-full h-14 text-base rounded-2xl bg-white/[0.03] border border-white/[0.05]" 
                       shimmerColor="#fbbf24"
