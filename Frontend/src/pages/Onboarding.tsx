@@ -11,13 +11,17 @@ import StepIndustry from "@/components/onboarding/StepIndustry";
 import StepTargetMarket from "@/components/onboarding/StepTargetMarket";
 import StepKeywords from "@/components/onboarding/StepKeywords";
 import StepPlatforms from "@/components/onboarding/StepPlatforms";
+import Loader from "@/[components]/loader";
 
 // ✅ API base from env
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Onboarding = () => {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded: isClerkLoaded } = useUser();
   const navigate = useNavigate();
+
+  // 1. ADDED STRICT LOADING STATE (Default to true so form is hidden initially)
+  const [isCheckingDB, setIsCheckingDB] = useState(true);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isComplete, setIsComplete] = useState(false);
@@ -60,10 +64,16 @@ const Onboarding = () => {
   });
 
   // ======================
-  // LOAD PROGRESS
+  // LOAD PROGRESS & CHECK ONBOARDING
   // ======================
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isClerkLoaded) return;
+
+    // Safety fallback: if somehow they hit this page without being logged in
+    if (!user) {
+      navigate("/");
+      return;
+    }
 
     const loadProgress = async () => {
       try {
@@ -76,17 +86,26 @@ const Onboarding = () => {
         const data = await res.json();
 
         if (data?.completed) {
-          navigate("/dashboard");
-        } else if (data?.currentStep) {
-          setCurrentStep(data.currentStep);
+          // If already onboarded, immediately route to dashboard.
+          // Because isCheckingDB is still true, the user never sees the form.
+          navigate("/dashboard", { replace: true });
+        } else {
+          // If not completed, set the correct step...
+          if (data?.currentStep) {
+            setCurrentStep(data.currentStep);
+          }
+          // ...and FINALLY turn off the loading screen to reveal the form
+          setIsCheckingDB(false);
         }
       } catch (err) {
         console.error("Load progress error:", err);
+        // If the DB call fails, we still need to turn off the loader so they aren't stuck forever
+        setIsCheckingDB(false);
       }
     };
 
     loadProgress();
-  }, [isLoaded, user, navigate]);
+  }, [isClerkLoaded, user, navigate]);
 
   // ======================
   // STATE HANDLERS
@@ -177,8 +196,8 @@ const Onboarding = () => {
       // ✅ THIS IS THE KEY FIX
       localStorage.setItem("userId", userId);
 
-      // ✅ Go directly to Lead Discovery
-      navigate("/");
+      // ✅ Go directly to Dashboard after completion
+      navigate("/dashboard");
     } catch (err) {
       console.error("Finish onboarding error:", err);
       alert("Failed to save onboarding. Please try again.");
@@ -188,14 +207,34 @@ const Onboarding = () => {
   };
 
   // ======================
-  // UI
+  // THE STRICT LOADING SCREEN
   // ======================
+  // Blocks UI rendering until Clerk is ready AND Neon DB has returned the user's status
+  if (!isClerkLoaded || isCheckingDB) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#050505]">
+        {/* Spinner matching your branding */}
+        <Loader/>
+        <h2 className="text-white text-xl font-bold tracking-tight animate-pulse">
+          Syncing your workspace...
+        </h2>
+        <p className="text-gray-500 text-sm mt-2">
+          Preparing your Leadequator environment
+        </p>
+      </div>
+    );
+  }
+
+  // ======================
+  // UI - ONBOARDING FORM
+  // ======================
+  // This is only reached if isCheckingDB === false (meaning they definitely need to onboard)
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/leadequator_logo.png" className="h-10" />
+            <img src="/leadequator_logo.png" className="h-10" alt="Logo" />
             <span className="text-xl font-bold">Leadequator</span>
           </Link>
         </div>

@@ -51,7 +51,6 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // REMOVED TYPESCRIPT SYNTAX HERE
   const [authModal, setAuthModal] = useState<null | "sign-in" | "signup">(null);
 
   useEffect(() => {
@@ -338,6 +337,7 @@ const Navigation = () => {
                     <SignIn
                       routing="hash"
                       signUpUrl="/sign-up"
+                      fallbackRedirectUrl="/onboarding" // Ensures they go to onboarding first
                       appearance={{
                         baseTheme: dark,
                         variables: {
@@ -346,7 +346,7 @@ const Navigation = () => {
                         },
                         elements: {
                           cardBox: "shadow-none border-none",
-                          card: "shadow-none", // <--- Removed w-full and p-0 to prevent cropping
+                          card: "shadow-none", 
                           headerTitle: "text-white text-2xl font-bold",
                           headerSubtitle: "text-gray-400",
                           socialButtonsBlockButton:
@@ -368,6 +368,7 @@ const Navigation = () => {
                     <SignUp
                       routing="hash"
                       signInUrl="/sign-in"
+                      fallbackRedirectUrl="/onboarding" // Ensures they go to onboarding first
                       appearance={{
                         baseTheme: dark,
                         variables: {
@@ -376,7 +377,7 @@ const Navigation = () => {
                         },
                         elements: {
                           cardBox: "shadow-none border-none",
-                          card: "shadow-none", // <--- Removed w-full and p-0 to prevent cropping
+                          card: "shadow-none",
                           headerTitle: "text-white text-2xl font-bold",
                           headerSubtitle: "text-gray-400",
                           socialButtonsBlockButton:

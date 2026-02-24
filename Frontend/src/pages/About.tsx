@@ -1,3 +1,4 @@
+import DeviceMockup from "@/[components]/devicemockup";
 import { Card } from "@/components/ui/card";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { Target, Users, Lightbulb, Award } from "lucide-react";
@@ -148,6 +149,7 @@ const About = () => {
         </div>
 
       </div>
+      <DeviceMockup/>
     </div>
   );
 };
