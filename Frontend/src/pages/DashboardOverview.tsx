@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,19 +108,32 @@ const DashboardOverview = () => {
     fetchLiveLeads();
   }, [isLoaded, user?.id]);
 
+  /* ================= DATE FILTERING LOGIC ================= */
+  const filteredLeads = useMemo(() => {
+    const now = new Date();
+    return leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      const diffHours = (now.getTime() - leadDate.getTime()) / (1000 * 60 * 60);
+
+      if (range === "24h") return diffHours <= 24;
+      if (range === "7d") return diffHours <= 24 * 7;
+      if (range === "30d") return diffHours <= 24 * 30;
+      return true; // Fallback
+    });
+  }, [leads, range]);
+
   /* ================= DERIVED DATA (KPIs) ================= */
-  const totalLeads = leads.length;
+  // Use filteredLeads instead of leads for all metric calculations
+  const totalLeads = filteredLeads.length;
   
-  // Updated Intent Groupings
-  const highIntent = leads.filter((l) => l.intent >= 80).length;
-  const neutralIntent = leads.filter((l) => l.intent >= 60 && l.intent < 80).length;
-  const negativeIntent = leads.filter((l) => l.intent < 60).length;
+  const highIntent = filteredLeads.filter((l) => l.intent >= 80).length;
+  const neutralIntent = filteredLeads.filter((l) => l.intent >= 60 && l.intent < 80).length;
+  const negativeIntent = filteredLeads.filter((l) => l.intent < 60).length;
   
-  const repliesSent = leads.filter((l) => l.status === "Sent").length;
+  const repliesSent = filteredLeads.filter((l) => l.status === "Sent").length;
   const impressions = totalLeads * 3; // Simulated metric
   const engageRate = totalLeads > 0 ? ((highIntent / totalLeads) * 100).toFixed(1) : "0";
 
-  // Updated Sentiment Data for Pie Chart (Using Brand Yellow & Grays)
   const sentimentData = [
     { name: "Positive", value: highIntent, color: "#fbbf24" }, 
     { name: "Neutral", value: neutralIntent, color: "#52525b" },
@@ -128,7 +141,7 @@ const DashboardOverview = () => {
   ];
 
   const platformStats = Object.values(
-    leads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
+    filteredLeads.reduce<Record<string, { platform: string; threads: number; leads: number }>>((acc, l) => {
       if (!acc[l.platform]) acc[l.platform] = { platform: l.platform, threads: 0, leads: 0 };
       acc[l.platform].threads += 1;
       acc[l.platform].leads += l.intent >= 80 ? 1 : 0;
@@ -149,14 +162,13 @@ const DashboardOverview = () => {
   const exportPDF = async () => {
     if (!dashboardRef.current) return;
     try {
-      // Temporarily change styling to improve PDF readability if needed
       const canvas = await html2canvas(dashboardRef.current, { scale: 2, backgroundColor: "#09090b" });
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("dashboard-overview.pdf");
+      pdf.save(`dashboard-overview-${range}.pdf`);
     } catch (e) {
       console.error("Failed to export PDF", e);
     }
@@ -173,11 +185,9 @@ const DashboardOverview = () => {
     );
   }
 
-  
   const glassCardStyle = "bg-[#050505]/20 backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
 
   return (
-    // Changed to bg-black/10 as requested
     <div ref={dashboardRef} className="p-4 md:p-8 space-y-8 bg-black/10 text-white min-h-screen relative z-10 selection:bg-[#fbbf24]/30 rounded-3xl">
       
       {/* HEADER WITH SMART CREDIT ALERT */}
@@ -215,7 +225,6 @@ const DashboardOverview = () => {
 
       {/* KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-        {/* Note: Assuming KPICard handles its own styling. If they look out of place, let me know and we will update that component too! */}
         {kpiData.map((kpi, index) => (
           <KPICard key={index} {...kpi} />
         ))}
@@ -284,7 +293,7 @@ const DashboardOverview = () => {
         </div>
 
         <div className="space-y-4">
-          {leads
+          {filteredLeads
             .filter((l) => l.intent >= 60)
             .sort((a, b) => b.intent - a.intent)
             .slice(0, 5)
@@ -315,10 +324,9 @@ const DashboardOverview = () => {
               </div>
             ))}
 
-          {/* Fixed the filter logic here to match the list rendering (>= 60) so it doesn't show empty state incorrectly */}
-          {leads.filter(l => l.intent >= 60).length === 0 && (
+          {filteredLeads.filter(l => l.intent >= 60).length === 0 && (
             <div className="text-center py-12 text-zinc-500 border border-dashed border-white/[0.1] rounded-[1.5rem] bg-white/[0.01] font-medium">
-              No high-intent leads detected yet. Run the scraper in Monitor Stream to start.
+              No high-intent leads detected in this timeframe. Adjust your filter or run the scraper in Monitor Stream.
             </div>
           )}
         </div>
