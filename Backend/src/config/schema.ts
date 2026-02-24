@@ -19,7 +19,6 @@ export const usersTable = pgTable("users", {
   name: varchar("name", { length: 255 }),
   credits: integer("credits").default(300).notNull(),
   
-  // 🔥 Missing columns added back so TypeScript/Drizzle can update the user's plan!
   plan: varchar("plan", { length: 50 }),
   planCycle: varchar("plan_cycle", { length: 50 }),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -159,11 +158,11 @@ export const quoraAiReplies = pgTable("quora_ai_replies", {
 });
 
 /* =========================
-   USER SUBSCRIPTIONS
+   USER SUBSCRIPTIONS (UPDATED FOR CASHFREE)
 ========================= */
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: varchar("user_id", { length: 255 }).notNull(), // Matching Clerk IDs
+  userId: varchar("user_id", { length: 255 }).notNull(),
   planName: varchar("plan_name", { length: 50 }).notNull(), 
   billingCycle: varchar("billing_cycle", { length: 20 }).notNull(), 
   currency: varchar("currency", { length: 10 }).notNull(),
@@ -171,8 +170,11 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   status: varchar("status", { length: 20 }).notNull(), 
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date").notNull(),
-  paypalOrderId: varchar("paypal_order_id", { length: 255 }).notNull(),
-  paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
-  paypalRawResponse: jsonb("paypal_raw_response"),
+  
+  // Cashfree Tracking Columns
+  cashfreeOrderId: varchar("cashfree_order_id", { length: 255 }).notNull(),
+  cashfreeSessionId: varchar("cashfree_session_id", { length: 255 }),
+  cashfreeRawResponse: jsonb("cashfree_raw_response"),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

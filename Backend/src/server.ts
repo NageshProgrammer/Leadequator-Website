@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { eq, and, lte } from "drizzle-orm";
 import cron from "node-cron";
+import crypto from "crypto";
 
 import { db } from "./db.js";
 // ✅ Routes
@@ -57,7 +58,6 @@ app.get("/", (_req, res) => {
 // Lead Discovery ( /api/lead-discovery/... )
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 
-
 /* ===============================
    CRON JOBS (DAILY EXPIRATION CHECK)
 ================================ */
@@ -83,84 +83,101 @@ cron.schedule("0 0 * * *", async () => {
   }
 });
 
-
 /* ===============================
-   PAYPAL CONFIGURATION
+   CASHFREE PAYMENT INTEGRATION
 ================================ */
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-// ✅ FIX 1: Updated to match your .env variable perfectly
-const PAYPAL_SECRET = process.env.PAYPAL_SECRET; 
+const getCashfreeBaseUrl = () => {
+  return process.env.CASHFREE_ENVIRONMENT === "PRODUCTION"
+    ? "https://api.cashfree.com/pg"
+    : "https://sandbox.cashfree.com/pg";
+};
 
-// Dynamically pull the API base URL from .env, with sandbox as a safe fallback
-const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com";
-
-async function generatePayPalAccessToken() {
-  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET}`).toString("base64");
-  
-  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
-    method: "POST",
-    body: "grant_type=client_credentials",
-    headers: {
-      Authorization: `Basic ${auth}`,
-    },
-  });
-  const data = await response.json();
-  return data.access_token;
-}
-
-/* ===============================
-   PAYMENT VERIFICATION ENDPOINT
-================================ */
-app.post("/api/verify-payment", async (req, res) => {
-  const { orderID, userId, planName, billingCycle, currency } = req.body;
-
+// 1. Create Order Session
+app.post("/api/create-cashfree-order", async (req, res) => {
   try {
-    const accessToken = await generatePayPalAccessToken();
-    
-    // Fetch order details from PayPal
-    const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderID}`, {
+    const { userId, userEmail, userPhone, planName, amount, currency } = req.body;
+
+    // Cashfree requires a strictly unique order ID every time
+    const orderId = `order_${userId.slice(-6)}_${crypto.randomBytes(4).toString("hex")}`;
+
+    const response = await fetch(`${getCashfreeBaseUrl()}/orders`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+        "x-client-id": process.env.CASHFREE_APP_ID as string,
+        "x-client-secret": process.env.CASHFREE_SECRET_KEY as string,
+        "x-api-version": "2023-08-01",
+      },
+      body: JSON.stringify({
+        order_id: orderId,
+        order_amount: amount,
+        order_currency: currency, 
+        customer_details: {
+          customer_id: userId || "guest",
+          customer_phone: userPhone || "9999999999",
+          customer_email: userEmail || "guest@example.com",
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.payment_session_id) {
+      res.json({ payment_session_id: data.payment_session_id, order_id: orderId });
+    } else {
+      console.error("Cashfree Order Error:", data);
+      res.status(400).json({ error: "Failed to create order", details: data });
+    }
+  } catch (error) {
+    console.error("Server Error creating order:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// 2. Verify Payment
+app.post("/api/verify-cashfree", async (req, res) => {
+  const { order_id, userId, planName, billingCycle, currency } = req.body;
+
+  try {
+    const response = await fetch(`${getCashfreeBaseUrl()}/orders/${order_id}`, {
+      method: "GET",
+      headers: {
+        "x-client-id": process.env.CASHFREE_APP_ID as string,
+        "x-client-secret": process.env.CASHFREE_SECRET_KEY as string,
+        "x-api-version": "2023-08-01",
       },
     });
-    
+
     const orderDetails = await response.json();
 
-    if (orderDetails.status === "COMPLETED") {
-      // Parse PayPal Data
-      const purchaseUnit = orderDetails.purchase_units[0];
-      const capture = purchaseUnit.payments.captures[0];
+    if (orderDetails.order_status === "PAID") {
+      const amountPaid = orderDetails.order_amount;
       
-      const amountPaid = capture.amount.value;
-      const captureId = capture.id;
-
       // Calculate End Date
       const startDate = new Date();
       const endDate = new Date(startDate);
       
       if (billingCycle === "MONTHLY") {
-        endDate.setMonth(endDate.getMonth() + 1); // Add 1 month
+        endDate.setMonth(endDate.getMonth() + 1);
       } else {
-        endDate.setFullYear(endDate.getFullYear() + 1); // Add 1 year
+        endDate.setFullYear(endDate.getFullYear() + 1);
       }
 
-      // 1. Insert into Subscriptions DB
+      // Insert into Subscriptions DB
       await db.insert(userSubscriptions).values({
         userId: userId,
         planName: planName,
         billingCycle: billingCycle,
         currency: currency,
-        amountPaid: amountPaid,
+        amountPaid: amountPaid.toString(),
         status: "ACTIVE",
         startDate: startDate,
         endDate: endDate,
-        paypalOrderId: orderID,
-        paypalCaptureId: captureId,
-        paypalRawResponse: orderDetails, 
+        cashfreeOrderId: order_id,
+        cashfreeRawResponse: orderDetails, 
       });
 
-      // ✅ FIX 2: Added the logic to update the user's credits and active plan in the main usersTable
+      // Update the user's credits and active plan
       let creditBoost = 0;
       if (planName === "PILOT") creditBoost = 1000;
       else if (planName === "SCALE") creditBoost = 5000;
@@ -177,73 +194,14 @@ app.post("/api/verify-payment", async (req, res) => {
         .where(eq(usersTable.id, userId));
 
       console.log(`✅ User ${userId} successfully upgraded to ${planName}.`);
-      
       return res.status(200).json({ success: true, message: "Payment verified and subscription saved." });
     } else {
-      return res.status(400).json({ success: false, message: "Payment not completed on PayPal's end." });
+      return res.status(400).json({ success: false, message: "Payment not completed." });
     }
 
   } catch (error: any) {
     console.error("Failed to verify payment:", error.message || error);
     return res.status(500).json({ success: false, message: "Internal server error." });
-  }
-});
-
-/* ===============================
-   PAYPAL WEBHOOKS (Refunds & Disputes)
-================================ */
-app.post("/api/webhooks/paypal", async (req, res) => {
-  const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
-  
-  try {
-    const accessToken = await generatePayPalAccessToken(); 
-    
-    // 1. Verify the webhook signature with PayPal
-    const verifyResponse = await fetch(`${PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        auth_algo: req.headers["paypal-auth-algo"],
-        cert_url: req.headers["paypal-cert-url"],
-        transmission_id: req.headers["paypal-transmission-id"],
-        transmission_sig: req.headers["paypal-transmission-sig"],
-        transmission_time: req.headers["paypal-transmission-time"],
-        webhook_id: webhookId,
-        webhook_event: req.body,
-      }),
-    });
-
-    const verifyData = await verifyResponse.json();
-
-    if (verifyData.verification_status !== "SUCCESS") {
-      console.warn("⚠️ Invalid PayPal Webhook Signature Detected!");
-      return res.status(400).send("Invalid signature");
-    }
-
-    // 2. Handle the specific event
-    const event = req.body;
-    console.log(`🔔 Received PayPal Webhook: ${event.event_type}`);
-
-    // If the payment is refunded or reversed
-    if (event.event_type === "PAYMENT.CAPTURE.REFUNDED" || event.event_type === "PAYMENT.CAPTURE.REVERSED") {
-      const captureId = event.resource.id; 
-
-      // Update the DB to CANCELLED
-      await db.update(userSubscriptions)
-        .set({ status: "CANCELLED" })
-        .where(eq(userSubscriptions.paypalCaptureId, captureId)); 
-        
-      console.log(`🚫 Subscription cancelled due to refund/reversal for capture: ${captureId}`);
-    }
-
-    res.status(200).send("Webhook received");
-
-  } catch (error) {
-    console.error("❌ Webhook Error:", error);
-    res.status(500).send("Server Error");
   }
 });
 

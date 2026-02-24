@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SignedIn, SignIn, SignUp } from "@clerk/clerk-react";
-import { PayPalScriptProvider } from "@paypal/react-paypal-js"; // Import added
 import Navigation from "./components/Navigation"
 import Footer from "./components/Footer";
 import { DashboardLayout } from "./components/dashboard/DashboardLayout";
@@ -41,13 +40,6 @@ import ComingSoon from "./pages/comingsoon";
 
 const queryClient = new QueryClient();
 
-// PayPal Configuration
-const initialPayPalOptions = {
-  clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", 
-  currency: "USD",
-  intent: "capture",
-};
-
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
     <Navigation />
@@ -61,8 +53,6 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Provider>
-          {/* PayPal Provider wraps the Router */}
-          <PayPalScriptProvider options={initialPayPalOptions}>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -143,7 +133,6 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
-          </PayPalScriptProvider>
         </Provider>
       </TooltipProvider>
     </QueryClientProvider>
