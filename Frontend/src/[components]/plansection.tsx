@@ -23,7 +23,7 @@ const API_BASE = import.meta.env.MODE === "development"
 const plans = [
   {
     name: "PILOT",
-    pricing: { USD: { monthly: 49, yearly: 25 }, INR: { monthly: 3999, yearly: 1999 } },
+    pricing: { USD: { monthly: 49, yearly: 25 }, INR: { monthly: 1, yearly: 1999 } },
     period: "30-day pilot",
     features: [
       "1 brand/product to monitor", "Up to 1,000 conversations/month", "AI-suggested replies (manual send)",
