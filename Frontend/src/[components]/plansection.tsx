@@ -90,13 +90,14 @@ export default function CongestedPricing() {
     }
   };
 
-  const handleCashfreePayment = async (planName: string, monthlyPrice: number | string) => {
+  // ✅ NOW ACCEPTS THE FULL BILLED PRICE DIRECTLY
+  const handleCashfreePayment = async (planName: string, finalAmount: number | string) => {
     if (!user || !cashfreeRef.current) return;
     setIsCashfreeLoading(true);
     const toastId = toast.loading("Initializing secure payment gateway...");
 
     try {
-      const totalChargeForPeriod = isMonthly ? Number(monthlyPrice) : Number(monthlyPrice) * 12;
+      const totalChargeForPeriod = Number(finalAmount); // No longer multiplying by 12 here
       const currentCycle = isMonthly ? "MONTHLY" : "YEARLY";
 
       const rawPhone = user.primaryPhoneNumber?.phoneNumber || "";
@@ -177,8 +178,12 @@ export default function CongestedPricing() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0">
         {plans.map((plan, index) => {
+          // ✅ NEW PRICING MATH LOGIC
           const currentPrice = isMonthly ? plan.pricing[currency].monthly : plan.pricing[currency].yearly;
           const isCustom = currentPrice === "Custom";
+          
+          // If yearly, multiply the base price by 12 to show the total billed amount
+          const billedPrice = isCustom ? "Custom" : (isMonthly ? currentPrice : Number(currentPrice) * 12);
 
           return (
             <motion.div key={index} 
@@ -204,13 +209,23 @@ export default function CongestedPricing() {
                     <>
                       <span className="text-5xl font-bold text-white flex items-center justify-center gap-1">
                           <span>{currency === "USD" ? "$" : "₹"}</span>
-                          <NumberFlow value={Number(currentPrice)} format={{ style: "decimal", minimumFractionDigits: 0 }} />
+                          {/* ✅ DISPLAYS THE TOTAL BILLED AMOUNT */}
+                          <NumberFlow value={Number(billedPrice)} format={{ style: "decimal", minimumFractionDigits: 0 }} />
                       </span>
-                      <span className="text-zinc-500 text-sm">/{isMonthly ? "mo" : "mo"}</span>
+                      {/* ✅ CHANGES /mo to /yr IF ANNUAL */}
+                      <span className="text-zinc-500 text-sm">/{isMonthly ? "mo" : "yr"}</span>
                     </>
                   )}
                 </div>
-                <p className="text-zinc-500 text-xs mt-1 mb-8">{isCustom ? "Tailored for enterprises" : isMonthly ? "billed monthly" : "billed annually"}</p>
+                
+                {/* ✅ ADDS CLARITY TEXT BELOW THE PRICE */}
+                <p className="text-zinc-500 text-xs mt-1 mb-8">
+                  {isCustom 
+                    ? "Tailored for enterprises" 
+                    : isMonthly 
+                      ? "billed monthly" 
+                      : `billed annually ( ${currency === 'USD' ? '$' : '₹'}${currentPrice}/mo )`}
+                </p>
 
                 <ul className="space-y-4 mb-8 lg:pl-7">
                   {plan.features.map((feature, idx) => (
@@ -245,9 +260,10 @@ export default function CongestedPricing() {
                         <PayPalButtons
                           fundingSource={FUNDING.PAYPAL}
                           style={{ layout: "vertical", label: "buynow", height: 45, tagline: false }}
-                          forceReRender={[currentPrice, isMonthly]}
+                          forceReRender={[billedPrice, isMonthly]}
                           createOrder={(data, actions) => {
-                            const total = isMonthly ? Number(currentPrice) : Number(currentPrice) * 12;
+                            // ✅ USES THE TOTAL BILLED AMOUNT DIRECTLY
+                            const total = Number(billedPrice);
                             return actions.order.create({
                               intent: "CAPTURE",
                               purchase_units: [{
@@ -290,7 +306,7 @@ export default function CongestedPricing() {
                        // SHOW CASHFREE FOR INR
                        <Button 
                          disabled={isCashfreeLoading}
-                         onClick={() => handleCashfreePayment(plan.name, currentPrice)}
+                         onClick={() => handleCashfreePayment(plan.name, billedPrice)}
                          className="w-full h-[45px] text-lg bg-primary hover:bg-primary/90 text-black font-semibold flex items-center justify-center gap-2 rounded-md transition-all"
                        >
                          {isCashfreeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}

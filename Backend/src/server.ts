@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-// ✅ Added sql import here
+// ✅ sql imported for incrementing credits securely
 import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
@@ -148,13 +148,13 @@ app.post("/api/verify-paypal", async (req, res) => {
         .set({ 
           plan: planName, 
           planCycle: billingCycle, 
-          // ✅ FIX: Increment existing credits instead of replacing
+          // ✅ SECURE ADDITION: Adds purchased credits to their existing balance
           credits: sql`${usersTable.credits} + ${creditBoost}`, 
           updatedAt: new Date() 
         })
         .where(eq(usersTable.id, userId));
 
-      console.log(`✅ User ${userId} upgraded to ${planName} via PayPal.`);
+      console.log(`✅ User ${userId} upgraded to ${planName} via PayPal. Added ${creditBoost} credits.`);
       return res.status(200).json({ success: true, message: "Payment verified." });
     } else {
       return res.status(400).json({ success: false, message: "Payment not completed on PayPal's end." });
@@ -267,13 +267,13 @@ app.post("/api/verify-cashfree", async (req, res) => {
         .set({
           plan: planName,
           planCycle: billingCycle,
-          // ✅ FIX: Increment existing credits instead of replacing
+          // ✅ SECURE ADDITION: Adds purchased credits to their existing balance
           credits: sql`${usersTable.credits} + ${creditBoost}`, 
           updatedAt: new Date(),
         })
         .where(eq(usersTable.id, userId));
 
-      console.log(`✅ User ${userId} successfully upgraded to ${planName} via Cashfree.`);
+      console.log(`✅ User ${userId} successfully upgraded to ${planName} via Cashfree. Added ${creditBoost} credits.`);
       return res.status(200).json({ success: true, message: "Payment verified and subscription saved." });
     } else {
       return res.status(400).json({ success: false, message: "Payment not completed." });
@@ -293,15 +293,9 @@ app.get("/api/onboarding/progress", async (req, res) => {
     const { userId } = req.query as { userId?: string };
     if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    const result = await db
-      .select()
-      .from(onboardingProgress)
-      .where(eq(onboardingProgress.userId, userId))
-      .limit(1);
-
+    const result = await db.select().from(onboardingProgress).where(eq(onboardingProgress.userId, userId)).limit(1);
     res.json(result[0] ?? {});
   } catch (err: any) {
-    console.error("GET Onboarding Progress Error:", err.message || err);
     res.status(500).json({ error: "Failed to load progress" });
   }
 });
@@ -311,104 +305,47 @@ app.post("/api/onboarding/progress", async (req, res) => {
     const { userId, currentStep } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    await db
-      .insert(onboardingProgress)
-      .values({ userId, currentStep })
-      .onConflictDoUpdate({
-        target: onboardingProgress.userId,
-        set: { currentStep },
-      });
-
+    await db.insert(onboardingProgress).values({ userId, currentStep }).onConflictDoUpdate({ target: onboardingProgress.userId, set: { currentStep } });
     res.json({ success: true });
   } catch (err: any) {
-    console.error("POST Onboarding Progress Error:", err.message || err);
     res.status(500).json({ error: "Failed to save progress" });
   }
 });
 
 app.post("/api/onboarding", async (req, res) => {
   try {
-    const {
-      userId,
-      companyData = {},
-      industryData = {},
-      targetData = {},
-      keywordsData = { keywords: [] },
-      platformsData = {},
-    } = req.body;
-
+    const { userId, companyData = {}, industryData = {}, targetData = {}, keywordsData = { keywords: [] }, platformsData = {} } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId in payload" });
 
     console.log(`Processing onboarding for User: ${userId}`);
 
-    // 1. Company Details
-    await db
-      .insert(companyDetails)
-      .values({
-        userId,
-        companyName: companyData.companyName || "Unknown Company",
-        websiteUrl: companyData.websiteUrl || null,
-        businessEmail: companyData.businessEmail || null,
-        phoneNumber: companyData.phoneNumber || null,
-        industry: industryData.industry || null,
-        industryOther: industryData.industryOther || null,
-        productDescription: industryData.productDescription || null,
-      })
-      .onConflictDoUpdate({
-        target: companyDetails.userId,
-        set: { 
-          companyName: companyData.companyName || "Unknown Company",
-          websiteUrl: companyData.websiteUrl || null,
-          businessEmail: companyData.businessEmail || null,
-          phoneNumber: companyData.phoneNumber || null,
-          industry: industryData.industry || null,
-          industryOther: industryData.industryOther || null,
-          productDescription: industryData.productDescription || null,
-        },
-      });
+    await db.insert(companyDetails).values({
+      userId, companyName: companyData.companyName || "Unknown Company", websiteUrl: companyData.websiteUrl || null,
+      businessEmail: companyData.businessEmail || null, phoneNumber: companyData.phoneNumber || null,
+      industry: industryData.industry || null, industryOther: industryData.industryOther || null, productDescription: industryData.productDescription || null,
+    }).onConflictDoUpdate({
+      target: companyDetails.userId, set: { 
+        companyName: companyData.companyName || "Unknown Company", websiteUrl: companyData.websiteUrl || null,
+        businessEmail: companyData.businessEmail || null, phoneNumber: companyData.phoneNumber || null,
+        industry: industryData.industry || null, industryOther: industryData.industryOther || null, productDescription: industryData.productDescription || null,
+      }
+    });
 
-    // 2. Target Market
     if (Object.keys(targetData).length > 0) {
-      await db
-        .insert(targetMarket)
-        .values({ userId, ...targetData })
-        .onConflictDoUpdate({
-          target: targetMarket.userId,
-          set: targetData,
-        });
+      await db.insert(targetMarket).values({ userId, ...targetData }).onConflictDoUpdate({ target: targetMarket.userId, set: targetData });
     }
 
-    // 3. Buyer Keywords
     await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
     if (keywordsData?.keywords?.length > 0) {
-      await db.insert(buyerKeywords).values(
-        keywordsData.keywords.map((k: string) => ({
-          userId,
-          keyword: k,
-        }))
-      );
+      await db.insert(buyerKeywords).values(keywordsData.keywords.map((k: string) => ({ userId, keyword: k })));
     }
 
-    // 4. Platforms
     if (Object.keys(platformsData).length > 0) {
-      await db
-        .insert(platformsToMonitor)
-        .values({ userId, ...platformsData })
-        .onConflictDoUpdate({
-          target: platformsToMonitor.userId,
-          set: platformsData,
-        });
+      await db.insert(platformsToMonitor).values({ userId, ...platformsData }).onConflictDoUpdate({ target: platformsToMonitor.userId, set: platformsData });
     }
 
-    // 5. Update Progress to Complete
-    await db
-      .insert(onboardingProgress)
-      .values({ userId, completed: true, currentStep: 5 })
-      .onConflictDoUpdate({
-        target: onboardingProgress.userId,
-        set: { completed: true, currentStep: 5 },
-      });
-
+    await db.insert(onboardingProgress).values({ userId, completed: true, currentStep: 5 }).onConflictDoUpdate({ target: onboardingProgress.userId, set: { completed: true, currentStep: 5 } });
+    
     console.log(`✅ User ${userId} completed onboarding.`);
     res.json({ success: true });
   } catch (err: any) {
@@ -418,19 +355,13 @@ app.post("/api/onboarding", async (req, res) => {
 });
 
 /* ===============================
-   SETTINGS & PROFILE (Consolidated)
+   SETTINGS & PROFILE
 ================================ */
-
-// 1. GET Profile Data
 app.get("/api/settings/profile", async (req, res) => {
   try {
     const { userId } = req.query as { userId?: string };
+    if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    if (!userId) {
-      return res.status(400).json({ error: "Missing userId" });
-    }
-
-    // Run fetches in parallel for speed
     const [userData] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
     const [companyData] = await db.select().from(companyDetails).where(eq(companyDetails.userId, userId)).limit(1);
     const [targetMarketData] = await db.select().from(targetMarket).where(eq(targetMarket.userId, userId)).limit(1);
@@ -438,75 +369,38 @@ app.get("/api/settings/profile", async (req, res) => {
     const keywordsRaw = await db.select().from(buyerKeywords).where(eq(buyerKeywords.userId, userId));
 
     res.json({
-      user: userData || {},
-      company: companyData || {},
-      targetMarket: targetMarketData || {},
-      platforms: platformsData || {},
-      keywords: keywordsRaw.map(k => k.keyword) || []
+      user: userData || {}, company: companyData || {}, targetMarket: targetMarketData || {},
+      platforms: platformsData || {}, keywords: keywordsRaw.map(k => k.keyword) || []
     });
-
   } catch (err: any) {
     console.error("Error fetching profile:", err.message || err);
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
 
-// 2. UPDATE Profile Data
 app.put("/api/settings/profile", async (req, res) => {
   try {
     const { userId, userData, companyData, targetData, platformsData, keywords } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    // 1. Update User Table (Name)
     if (userData && userData.name) {
-      await db.update(usersTable)
-        .set({ name: userData.name })
-        .where(eq(usersTable.id, userId));
+      await db.update(usersTable).set({ name: userData.name }).where(eq(usersTable.id, userId));
     }
-
-    // 2. Update Company Details (Upsert)
     if (companyData && Object.keys(companyData).length > 0) {
-      await db.insert(companyDetails)
-        .values({ userId, ...companyData })
-        .onConflictDoUpdate({
-          target: companyDetails.userId,
-          set: companyData,
-        });
+      await db.insert(companyDetails).values({ userId, ...companyData }).onConflictDoUpdate({ target: companyDetails.userId, set: companyData });
     }
-
-    // 3. Update Target Market Data (Upsert)
     if (targetData && Object.keys(targetData).length > 0) {
-      await db.insert(targetMarket)
-        .values({ userId, ...targetData })
-        .onConflictDoUpdate({
-          target: targetMarket.userId,
-          set: targetData,
-        });
+      await db.insert(targetMarket).values({ userId, ...targetData }).onConflictDoUpdate({ target: targetMarket.userId, set: targetData });
     }
-
-    // 4. Update Platforms (Upsert)
     if (platformsData && Object.keys(platformsData).length > 0) {
-      await db.insert(platformsToMonitor)
-        .values({ userId, ...platformsData })
-        .onConflictDoUpdate({
-          target: platformsToMonitor.userId,
-          set: platformsData,
-        });
+      await db.insert(platformsToMonitor).values({ userId, ...platformsData }).onConflictDoUpdate({ target: platformsToMonitor.userId, set: platformsData });
     }
-
-    // 5. Update Keywords (Delete All -> Re-insert)
     if (Array.isArray(keywords)) {
       await db.delete(buyerKeywords).where(eq(buyerKeywords.userId, userId));
       if (keywords.length > 0) {
-        await db.insert(buyerKeywords).values(
-          keywords.map((k: string) => ({
-            userId,
-            keyword: k,
-          }))
-        );
+        await db.insert(buyerKeywords).values(keywords.map((k: string) => ({ userId, keyword: k })));
       }
     }
-
     res.json({ success: true });
   } catch (err: any) {
     console.error("Error updating profile:", err.message || err);
@@ -522,19 +416,10 @@ app.post("/api/users/sync", async (req, res) => {
     const { clerkId, email, name } = req.body;
     if (!clerkId || !email) return res.status(400).json({ error: "Missing required sync data" });
 
-    const existing = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, clerkId))
-      .limit(1);
+    const existing = await db.select().from(usersTable).where(eq(usersTable.id, clerkId)).limit(1);
 
     if (!existing.length) {
-      await db.insert(usersTable).values({
-        id: clerkId,
-        email,
-        name: name || "New User",
-        credits: 300,
-      });
+      await db.insert(usersTable).values({ id: clerkId, email, name: name || "New User", credits: 300 });
       console.log(`✅ Synced new user: ${email}`);
     }
     res.json({ success: true });
