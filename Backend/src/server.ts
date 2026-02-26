@@ -1,7 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { eq, and, lte } from "drizzle-orm";
+// ✅ Added sql import here
+import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
 
@@ -84,7 +85,88 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 /* ===============================
-   CASHFREE PAYMENT INTEGRATION
+   PAYPAL PAYMENT INTEGRATION (USD)
+================================ */
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+const PAYPAL_SECRET = process.env.PAYPAL_SECRET;
+const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE || "https://api-m.paypal.com";
+
+async function generatePayPalAccessToken() {
+  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET}`).toString("base64");
+  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+    method: "POST",
+    body: "grant_type=client_credentials",
+    headers: { Authorization: `Basic ${auth}` },
+  });
+  const data = await response.json();
+  return data.access_token;
+}
+
+app.post("/api/verify-paypal", async (req, res) => {
+  const { orderID, userId, planName, billingCycle, currency } = req.body;
+
+  try {
+    const accessToken = await generatePayPalAccessToken();
+    const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderID}`, {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    });
+    
+    const orderDetails = await response.json();
+
+    if (orderDetails.status === "COMPLETED") {
+      const purchaseUnit = orderDetails.purchase_units[0];
+      const capture = purchaseUnit.payments.captures[0];
+      const amountPaid = capture.amount.value;
+      const captureId = capture.id;
+
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      if (billingCycle === "MONTHLY") endDate.setMonth(endDate.getMonth() + 1);
+      else endDate.setFullYear(endDate.getFullYear() + 1);
+
+      await db.insert(userSubscriptions).values({
+        userId: userId,
+        planName: planName,
+        billingCycle: billingCycle,
+        currency: currency,
+        amountPaid: amountPaid,
+        status: "ACTIVE",
+        startDate: startDate,
+        endDate: endDate,
+        paymentGateway: "PAYPAL",
+        paypalOrderId: orderID,
+        paypalCaptureId: captureId,
+        rawResponse: orderDetails, 
+      });
+
+      let creditBoost = 0;
+      if (planName === "PILOT") creditBoost = 1000;
+      else if (planName === "SCALE") creditBoost = 5000;
+      else if (planName === "ENTERPRISE") creditBoost = 20000;
+
+      await db.update(usersTable)
+        .set({ 
+          plan: planName, 
+          planCycle: billingCycle, 
+          // ✅ FIX: Increment existing credits instead of replacing
+          credits: sql`${usersTable.credits} + ${creditBoost}`, 
+          updatedAt: new Date() 
+        })
+        .where(eq(usersTable.id, userId));
+
+      console.log(`✅ User ${userId} upgraded to ${planName} via PayPal.`);
+      return res.status(200).json({ success: true, message: "Payment verified." });
+    } else {
+      return res.status(400).json({ success: false, message: "Payment not completed on PayPal's end." });
+    }
+  } catch (error: any) {
+    console.error("PayPal Verification Error:", error.message || error);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+});
+
+/* ===============================
+   CASHFREE PAYMENT INTEGRATION (INR)
 ================================ */
 const getCashfreeBaseUrl = () => {
   return process.env.CASHFREE_ENVIRONMENT === "PRODUCTION"
@@ -97,7 +179,6 @@ app.post("/api/create-cashfree-order", async (req, res) => {
   try {
     const { userId, userEmail, userPhone, planName, amount, currency } = req.body;
 
-    // Cashfree requires a strictly unique order ID every time
     const orderId = `order_${userId.slice(-6)}_${crypto.randomBytes(4).toString("hex")}`;
 
     const response = await fetch(`${getCashfreeBaseUrl()}/orders`, {
@@ -153,7 +234,6 @@ app.post("/api/verify-cashfree", async (req, res) => {
     if (orderDetails.order_status === "PAID") {
       const amountPaid = orderDetails.order_amount;
       
-      // Calculate End Date
       const startDate = new Date();
       const endDate = new Date(startDate);
       
@@ -163,7 +243,6 @@ app.post("/api/verify-cashfree", async (req, res) => {
         endDate.setFullYear(endDate.getFullYear() + 1);
       }
 
-      // Insert into Subscriptions DB
       await db.insert(userSubscriptions).values({
         userId: userId,
         planName: planName,
@@ -173,11 +252,11 @@ app.post("/api/verify-cashfree", async (req, res) => {
         status: "ACTIVE",
         startDate: startDate,
         endDate: endDate,
+        paymentGateway: "CASHFREE",
         cashfreeOrderId: order_id,
-        cashfreeRawResponse: orderDetails, 
+        rawResponse: orderDetails, 
       });
 
-      // Update the user's credits and active plan
       let creditBoost = 0;
       if (planName === "PILOT") creditBoost = 1000;
       else if (planName === "SCALE") creditBoost = 5000;
@@ -188,12 +267,13 @@ app.post("/api/verify-cashfree", async (req, res) => {
         .set({
           plan: planName,
           planCycle: billingCycle,
-          credits: creditBoost > 0 ? creditBoost : undefined, 
+          // ✅ FIX: Increment existing credits instead of replacing
+          credits: sql`${usersTable.credits} + ${creditBoost}`, 
           updatedAt: new Date(),
         })
         .where(eq(usersTable.id, userId));
 
-      console.log(`✅ User ${userId} successfully upgraded to ${planName}.`);
+      console.log(`✅ User ${userId} successfully upgraded to ${planName} via Cashfree.`);
       return res.status(200).json({ success: true, message: "Payment verified and subscription saved." });
     } else {
       return res.status(400).json({ success: false, message: "Payment not completed." });
@@ -204,7 +284,6 @@ app.post("/api/verify-cashfree", async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
-
 
 /* ===============================
    ONBOARDING ENDPOINTS
