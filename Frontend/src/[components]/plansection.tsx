@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
 import { load } from "@cashfreepayments/cashfree-js"; 
+import { PayPalScriptProvider, PayPalButtons, FUNDING } from "@paypal/react-paypal-js"; 
 
 // 🔧 API CONFIGURATION
 const API_BASE = import.meta.env.MODE === "development" 
@@ -68,7 +69,6 @@ export default function CongestedPricing() {
   
   const { isSignedIn, user, isLoaded } = useUser();
 
-  // Initialize Cashfree SDK instance
   const cashfreeRef = useRef<any>(null);
   useEffect(() => {
     const initializeCashfree = async () => {
@@ -85,16 +85,12 @@ export default function CongestedPricing() {
       const rect = switchRef.current.getBoundingClientRect();
       confetti({
         particleCount: 70, spread: 80,
-        origin: {
-          x: (rect.left + rect.width / 2) / window.innerWidth,
-          y: (rect.top + rect.height / 2) / window.innerHeight,
-        },
+        origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
       });
     }
   };
 
-  // Unified Payment Flow (Handles both INR and USD via Cashfree)
-  const handlePayment = async (planName: string, monthlyPrice: number | string) => {
+  const handleCashfreePayment = async (planName: string, monthlyPrice: number | string) => {
     if (!user || !cashfreeRef.current) return;
     setIsCashfreeLoading(true);
     const toastId = toast.loading("Initializing secure payment gateway...");
@@ -103,14 +99,17 @@ export default function CongestedPricing() {
       const totalChargeForPeriod = isMonthly ? Number(monthlyPrice) : Number(monthlyPrice) * 12;
       const currentCycle = isMonthly ? "MONTHLY" : "YEARLY";
 
-      // 1. Ask Backend to create Cashfree Order
+      const rawPhone = user.primaryPhoneNumber?.phoneNumber || "";
+      const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+      const finalPhone = cleanPhone.length === 10 ? cleanPhone : "9999999999";
+
       const response = await fetch(`${API_BASE}/api/create-cashfree-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
           userEmail: user.primaryEmailAddress?.emailAddress,
-          userPhone: "9999999999", 
+          userPhone: finalPhone, 
           planName: planName,
           amount: totalChargeForPeriod,
           currency: currency, 
@@ -123,43 +122,29 @@ export default function CongestedPricing() {
 
       toast.dismiss(toastId);
 
-      // 2. Open Cashfree Checkout Modal
-      const checkoutOptions = {
-        paymentSessionId: payment_session_id,
-        redirectTarget: "_modal",
-      };
+      const checkoutOptions = { paymentSessionId: payment_session_id, redirectTarget: "_modal" };
 
       cashfreeRef.current.checkout(checkoutOptions).then(async (result: any) => {
         if (result.error) {
-          console.error("Cashfree Error:", result.error);
           toast.error(`Payment failed: ${result.error.message}`);
         } else if (result.paymentDetails) {
-          
-          // 3. Verify Payment with Backend
           toast.loading("Verifying payment...", { id: toastId });
           const verifyRes = await fetch(`${API_BASE}/api/verify-cashfree`, {
              method: "POST",
              headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({ 
-               order_id, 
-               userId: user.id, 
-               planName,
-               billingCycle: currentCycle, // ✅ Added so backend knows
-               currency: currency // ✅ Added so backend knows
-             })
+             body: JSON.stringify({ order_id, userId: user.id, planName, billingCycle: currentCycle, currency })
           });
           
           if (verifyRes.ok) {
              toast.success("Payment successful! Redirecting...", { id: toastId });
              setTimeout(() => navigate("/onboarding"), 1500);
           } else {
-             toast.error("Payment received, but verification failed. Contact support.", { id: toastId });
+             toast.error("Payment received, but verification failed.", { id: toastId });
           }
         }
       });
 
     } catch (error) {
-      console.error(error);
       toast.error("Could not initiate payment. Please try again.", { id: toastId });
     } finally {
       setIsCashfreeLoading(false);
@@ -169,26 +154,16 @@ export default function CongestedPricing() {
   return (
     <div className="container py-12">
       <div className="text-center mb-16 animate-fade-in">
-        <h1 className="text-5xl font-bold mb-6">
-          Transparent <span className="text-primary">Pricing</span>
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          All plans include AI-powered engagement, real-time monitoring, and intent scoring.
-        </p>
+        <h1 className="text-5xl font-bold mb-6">Transparent <span className="text-primary">Pricing</span></h1>
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">All plans include AI-powered engagement, real-time monitoring, and intent scoring.</p>
       </div>
 
       <div className="flex flex-col items-center gap-6 mb-12">
         <div className="bg-zinc-900 p-1 rounded-lg inline-flex">
-            <button
-                onClick={() => setCurrency("USD")}
-                className={cn("px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2", currency === "USD" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white")}
-            >
+            <button onClick={() => setCurrency("USD")} className={cn("px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2", currency === "USD" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white")}>
                 <DollarSign className="w-4 h-4" /> USD ($)
             </button>
-            <button
-                onClick={() => setCurrency("INR")}
-                className={cn("px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2", currency === "INR" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white")}
-            >
+            <button onClick={() => setCurrency("INR")} className={cn("px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2", currency === "INR" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white")}>
                 <IndianRupee className="w-4 h-4" /> INR (₹)
             </button>
         </div>
@@ -235,9 +210,7 @@ export default function CongestedPricing() {
                     </>
                   )}
                 </div>
-                <p className="text-zinc-500 text-xs mt-1 mb-8">
-                  {isCustom ? "Tailored for enterprises" : isMonthly ? "billed monthly" : "billed annually"}
-                </p>
+                <p className="text-zinc-500 text-xs mt-1 mb-8">{isCustom ? "Tailored for enterprises" : isMonthly ? "billed monthly" : "billed annually"}</p>
 
                 <ul className="space-y-4 mb-8 lg:pl-7">
                   {plan.features.map((feature, idx) => (
@@ -266,10 +239,58 @@ export default function CongestedPricing() {
                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
                         Loading Payment...
                       </div>
+                    ) : currency === "USD" ? (
+                      // SHOW PAYPAL FOR USD
+                      <PayPalScriptProvider options={{ clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", currency: "USD", intent: "capture" }}>
+                        <PayPalButtons
+                          fundingSource={FUNDING.PAYPAL}
+                          style={{ layout: "vertical", label: "buynow", height: 45, tagline: false }}
+                          forceReRender={[currentPrice, isMonthly]}
+                          createOrder={(data, actions) => {
+                            const total = isMonthly ? Number(currentPrice) : Number(currentPrice) * 12;
+                            return actions.order.create({
+                              intent: "CAPTURE",
+                              purchase_units: [{
+                                description: `${plan.name} Plan - ${isMonthly ? "Monthly" : "Annual"}`,
+                                amount: { currency_code: "USD", value: total.toFixed(2) }
+                              }]
+                            });
+                          }}
+                          onApprove={async (data, actions) => {
+                            const toastId = toast.loading("Verifying PayPal payment...");
+                            try {
+                              if (!actions.order) throw new Error("Actions missing");
+                              const details = await actions.order.capture();
+                              
+                              const verifyRes = await fetch(`${API_BASE}/api/verify-paypal`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ 
+                                  orderID: data.orderID, 
+                                  userId: user.id, 
+                                  planName: plan.name, 
+                                  billingCycle: isMonthly ? "MONTHLY" : "YEARLY", 
+                                  currency: "USD" 
+                                })
+                              });
+                              
+                              if (verifyRes.ok) {
+                                toast.success("Payment successful! Redirecting...", { id: toastId });
+                                setTimeout(() => navigate("/onboarding"), 1500);
+                              } else {
+                                throw new Error("Verification failed");
+                              }
+                            } catch (e) {
+                              toast.error("Payment failed.", { id: toastId });
+                            }
+                          }}
+                        />
+                      </PayPalScriptProvider>
                     ) : (
+                       // SHOW CASHFREE FOR INR
                        <Button 
                          disabled={isCashfreeLoading}
-                         onClick={() => handlePayment(plan.name, currentPrice)}
+                         onClick={() => handleCashfreePayment(plan.name, currentPrice)}
                          className="w-full h-[45px] text-lg bg-primary hover:bg-primary/90 text-black font-semibold flex items-center justify-center gap-2 rounded-md transition-all"
                        >
                          {isCashfreeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
