@@ -35,7 +35,7 @@ const plans = [
   },
   {
     name: "SCALE",
-    pricing: { USD: { monthly: 149, yearly: 75 }, INR: { monthly: 11999, yearly: 5999 } },
+    pricing: { USD: { monthly: 0.01, yearly: 75 }, INR: { monthly: 11999, yearly: 5999 } },
     period: "per month",
     features: [
       "Up to 5 brands/products", "Unlimited conversations", "Auto-replies with approval workflows",
