@@ -6,17 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
-  Webhook,
-  Database,
-  Mail,
-  MessageSquare,
   Settings2,
-  Lock,
   User,
   Upload,
   Globe,
@@ -27,7 +21,6 @@ import {
   RefreshCcw,
   Zap
 } from "lucide-react";
-import Loader from "@/[components]/loader";
 
 // ==========================================
 // 🔧 API CONFIGURATION
@@ -36,11 +29,17 @@ const API_BASE = import.meta.env.MODE === "development"
   ? "http://localhost:5000" 
   : "https://api.leadequator.live"; 
 
+// Generic Glass Skeleton Component
+const Skeleton = ({ className = "h-11 w-full rounded-xl" }) => (
+  <div className={`bg-white/[0.04] border border-white/[0.02] animate-pulse ${className}`} />
+);
+
 const SettingsIntegrations = () => {
   const { user: clerkUser } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isLoading, setIsLoading] = useState(false);
+  // Set loading to true initially to show skeletons for backend data
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   // Image State
@@ -50,10 +49,10 @@ const SettingsIntegrations = () => {
   // Local state for the keyword input field
   const [keywordInput, setKeywordInput] = useState("");
 
-  // Form State
+  // Form State (Pre-fill Clerk data so it shows immediately)
   const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
+    name: clerkUser?.fullName || "",
+    email: clerkUser?.primaryEmailAddress?.emailAddress || "",
     companyName: "",
     phone: "",
     industry: "",
@@ -76,6 +75,7 @@ const SettingsIntegrations = () => {
   useEffect(() => {
     if (!clerkUser?.id) return;
 
+    // Set initial profile image from Clerk immediately
     setImagePreview(clerkUser.imageUrl);
 
     const fetchProfile = async () => {
@@ -214,22 +214,6 @@ const SettingsIntegrations = () => {
     }
   };
 
-  const integrations = [
-    { name: "HubSpot CRM", icon: Database, status: "Connected", description: "Sync leads and contacts automatically" },
-    { name: "Slack", icon: MessageSquare, status: "Connected", description: "Real-time alerts for high-intent comments" },
-    { name: "Webhook", icon: Webhook, status: "Configured", description: "Custom event streaming to your endpoint" },
-    { name: "Email Notifications", icon: Mail, status: "Active", description: "Daily summaries and weekly reports" },
-  ];
-
-  if (isLoading) {
-      return (
-        <div className="min-h-[80vh] flex flex-col items-center justify-center bg-black/10">
-          <Loader/>
-          <p className="text-[#fbbf24] font-medium tracking-widest uppercase text-xs mt-4 animate-pulse">Loading Profile...</p>
-        </div>
-      );
-  }
-
   // REUSABLE STYLES
   const glassCardStyle = "bg-[#050505]/25 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
   const inputStyle = "bg-white/[0.03] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 focus-visible:border-[#fbbf24]/50 rounded-xl h-11 transition-all placeholder:text-zinc-600";
@@ -241,7 +225,7 @@ const SettingsIntegrations = () => {
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
-      {/* Header */}
+      {/* Header (Always Visible) */}
       <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 tracking-tight">
           <div className="p-2 bg-[#fbbf24]/10 rounded-xl border border-[#fbbf24]/20 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
@@ -262,13 +246,9 @@ const SettingsIntegrations = () => {
             <TabsTrigger value="profile" className="px-6 py-2.5 rounded-xl text-zinc-400 data-[state=active]:bg-[#fbbf24]/10 data-[state=active]:text-[#fbbf24] data-[state=active]:border data-[state=active]:border-[#fbbf24]/20 font-bold transition-all data-[state=active]:shadow-sm">
               General Profile
             </TabsTrigger>
-            {/* Future Tabs can go here */}
           </TabsList>
         </div>
 
-        {/* =======================
-            PROFILE TAB
-           ======================= */}
         <TabsContent value="profile" className="space-y-6 mt-2 focus-visible:outline-none">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
                 
@@ -283,7 +263,7 @@ const SettingsIntegrations = () => {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* Photo Upload Area */}
+                            {/* Photo Upload Area (Always visible, derived from Clerk) */}
                             <div className="md:col-span-1 flex flex-col items-center sm:items-start justify-start">
                                 <Label className={labelStyle}>Profile Photo</Label>
                                 <input 
@@ -339,6 +319,7 @@ const SettingsIntegrations = () => {
                             <div className="md:col-span-2 space-y-5">
                                 <div className="space-y-2">
                                     <Label className={labelStyle}>Full Name</Label>
+                                    {/* Name pre-fills from Clerk, no skeleton needed unless strictly enforced */}
                                     <Input 
                                         className={inputStyle} 
                                         value={profileData.name}
@@ -355,12 +336,14 @@ const SettingsIntegrations = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className={labelStyle}>Phone Number</Label>
-                                    <Input 
-                                        className={inputStyle} 
-                                        placeholder="+1 (555) 000-0000"
-                                        value={profileData.phone}
-                                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                                    />
+                                    {isLoading ? <Skeleton /> : (
+                                      <Input 
+                                          className={inputStyle} 
+                                          placeholder="+1 (555) 000-0000"
+                                          value={profileData.phone}
+                                          onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                                      />
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -375,43 +358,51 @@ const SettingsIntegrations = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                             <div className="space-y-2">
                                 <Label className={labelStyle}>Company Name</Label>
-                                <Input 
-                                    className={inputStyle} 
-                                    placeholder="Acme Corp"
-                                    value={profileData.companyName}
-                                    onChange={(e) => setProfileData({...profileData, companyName: e.target.value})}
-                                />
+                                {isLoading ? <Skeleton /> : (
+                                  <Input 
+                                      className={inputStyle} 
+                                      placeholder="Acme Corp"
+                                      value={profileData.companyName}
+                                      onChange={(e) => setProfileData({...profileData, companyName: e.target.value})}
+                                  />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label className={labelStyle}>Industry</Label>
-                                <Input 
-                                    className={inputStyle} 
-                                    placeholder="e.g. SaaS, FinTech, Agency"
-                                    value={profileData.industry}
-                                    onChange={(e) => setProfileData({...profileData, industry: e.target.value})}
-                                />
+                                {isLoading ? <Skeleton /> : (
+                                  <Input 
+                                      className={inputStyle} 
+                                      placeholder="e.g. SaaS, FinTech, Agency"
+                                      value={profileData.industry}
+                                      onChange={(e) => setProfileData({...profileData, industry: e.target.value})}
+                                  />
+                                )}
                             </div>
                         </div>
                         <div className="space-y-2 mb-5">
                             <Label className={labelStyle}>Website URL</Label>
-                            <div className="relative">
-                                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                                <Input 
-                                    className={`${inputStyle} pl-10`} 
-                                    placeholder="https://yourcompany.com"
-                                    value={profileData.website}
-                                    onChange={(e) => setProfileData({...profileData, website: e.target.value})}
-                                />
-                            </div>
+                            {isLoading ? <Skeleton /> : (
+                              <div className="relative">
+                                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                                  <Input 
+                                      className={`${inputStyle} pl-10`} 
+                                      placeholder="https://yourcompany.com"
+                                      value={profileData.website}
+                                      onChange={(e) => setProfileData({...profileData, website: e.target.value})}
+                                  />
+                              </div>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label className={labelStyle}>Product / Service Description</Label>
-                            <Textarea 
-                                className={`${inputStyle} min-h-[120px] resize-none pt-4`} 
-                                placeholder="Describe what your company does. This helps our AI generate better replies..."
-                                value={profileData.services}
-                                onChange={(e) => setProfileData({...profileData, services: e.target.value})}
-                            />
+                            {isLoading ? <Skeleton className="h-[120px] w-full rounded-xl" /> : (
+                              <Textarea 
+                                  className={`${inputStyle} min-h-[120px] resize-none pt-4`} 
+                                  placeholder="Describe what your company does. This helps our AI generate better replies..."
+                                  value={profileData.services}
+                                  onChange={(e) => setProfileData({...profileData, services: e.target.value})}
+                              />
+                            )}
                         </div>
                     </Card>
 
@@ -422,9 +413,11 @@ const SettingsIntegrations = () => {
                               <Zap className="h-5 w-5 text-[#fbbf24]" />
                               <h3 className="text-xl font-bold tracking-wide">Target Keywords</h3>
                           </div>
-                          <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 hidden sm:flex">
-                            {profileData.keywords.length} Active
-                          </Badge>
+                          {!isLoading && (
+                            <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 hidden sm:flex">
+                              {profileData.keywords.length} Active
+                            </Badge>
+                          )}
                         </div>
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -435,29 +428,37 @@ const SettingsIntegrations = () => {
                                     value={keywordInput}
                                     onChange={(e) => setKeywordInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
+                                    disabled={isLoading}
                                 />
                                 <p className="text-xs text-zinc-500 font-medium pl-1">Press <kbd className="bg-white/[0.05] px-1.5 py-0.5 rounded text-zinc-300 mx-1">Enter</kbd> to add. These keywords tell the AI what to look for.</p>
                             </div>
                             
                             <div className="flex flex-wrap gap-2 pt-4 min-h-[60px]">
-                                {profileData.keywords.length === 0 && (
+                                {isLoading ? (
+                                  <>
+                                    <Skeleton className="h-8 w-24 rounded-md" />
+                                    <Skeleton className="h-8 w-32 rounded-md" />
+                                    <Skeleton className="h-8 w-20 rounded-md" />
+                                  </>
+                                ) : profileData.keywords.length === 0 ? (
                                     <span className="text-zinc-600 text-sm italic py-2">No keywords added yet. Start typing above!</span>
+                                ) : (
+                                  profileData.keywords.map((keyword, index) => (
+                                      <Badge 
+                                          key={index} 
+                                          variant="secondary" 
+                                          className="px-3 py-1.5 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08] border border-white/[0.1] flex items-center gap-2 text-sm font-medium transition-all"
+                                      >
+                                          {keyword}
+                                          <button 
+                                              onClick={() => removeKeyword(keyword)}
+                                              className="p-0.5 rounded-md hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors"
+                                          >
+                                              <X className="h-3.5 w-3.5" />
+                                          </button>
+                                      </Badge>
+                                  ))
                                 )}
-                                {profileData.keywords.map((keyword, index) => (
-                                    <Badge 
-                                        key={index} 
-                                        variant="secondary" 
-                                        className="px-3 py-1.5 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08] border border-white/[0.1] flex items-center gap-2 text-sm font-medium transition-all"
-                                    >
-                                        {keyword}
-                                        <button 
-                                            onClick={() => removeKeyword(keyword)}
-                                            className="p-0.5 rounded-md hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors"
-                                        >
-                                            <X className="h-3.5 w-3.5" />
-                                        </button>
-                                    </Badge>
-                                ))}
                             </div>
                         </div>
                     </Card>
@@ -483,16 +484,20 @@ const SettingsIntegrations = () => {
                                         <Badge className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 text-[9px] px-1.5 py-0 uppercase tracking-widest">{platform.badge}</Badge>
                                       )}
                                     </div>
-                                    <Switch 
-                                        className="data-[state=checked]:bg-[#fbbf24]"
-                                        checked={profileData.platforms[platform.id as keyof typeof profileData.platforms]}
-                                        onCheckedChange={(checked) => 
-                                            setProfileData({
-                                                ...profileData, 
-                                                platforms: { ...profileData.platforms, [platform.id]: checked }
-                                            })
-                                        }
-                                    />
+                                    {isLoading ? (
+                                      <Skeleton className="h-6 w-11 rounded-full" />
+                                    ) : (
+                                      <Switch 
+                                          className="data-[state=checked]:bg-[#fbbf24]"
+                                          checked={profileData.platforms[platform.id as keyof typeof profileData.platforms]}
+                                          onCheckedChange={(checked) => 
+                                              setProfileData({
+                                                  ...profileData, 
+                                                  platforms: { ...profileData.platforms, [platform.id]: checked }
+                                              })
+                                          }
+                                      />
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -500,11 +505,13 @@ const SettingsIntegrations = () => {
                         <div className="mt-10 pt-6 border-t border-white/[0.08]">
                              <Button 
                                 onClick={handleSave} 
-                                disabled={isSaving}
+                                disabled={isSaving || isLoading}
                                 className="w-full h-14 text-lg bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]"
                             >
                                 {isSaving ? (
                                     <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Saving Configuration...</>
+                                ) : isLoading ? (
+                                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Data...</>
                                 ) : (
                                     "Save All Changes"
                                 )}

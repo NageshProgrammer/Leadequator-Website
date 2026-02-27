@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Mail, FileText, Calendar, Clock, Loader2 } from "lucide-react";
+import { Download, Mail, FileText, Calendar, Clock, Loader2, BarChart4, Send } from "lucide-react";
 
 /* ================= TYPES ================= */
 type DataType = "comments" | "leads" | "replies";
@@ -188,112 +188,169 @@ const Reports = () => {
     }
   };
 
+  /* ================= UI REUSABLES ================= */
+  const glassPanelStyle = "bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
+  const filterLabelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
+  const selectTriggerStyle = "w-full bg-white/[0.02] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-12";
+  const selectContentStyle = "bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl";
+  const selectItemStyle = "focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer py-2.5";
+
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-background min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Reports & Exports</h1>
-          <p className="text-sm text-muted-foreground">Generate data extracts backed by Leadequator analytics</p>
-        </div>
-        <Button className="w-full sm:w-auto bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-bold">
-          <FileText className="mr-2 h-4 w-4" />
-          New Custom Report
-        </Button>
-      </div>
+    <div className="min-h-[90vh] pt-4 pb-12 bg-black/10 rounded-3xl text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
+      
+      {/* Subtle Background Glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
-      {/* Quick Export Form */}
-      <Card className="p-4 md:p-6 bg-card border-border">
-        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Quick CSV Export</h3>
-        <div className="flex flex-col md:flex-row items-end gap-4">
-          <div className="w-full md:flex-1">
-            <label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Date Range</label>
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="24h">Last 24 hours</SelectItem>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="container mx-auto px-4 max-w-[1200px] space-y-8 relative z-10">
+        
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+              Reports & <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.2)]">Exports</span>
+            </h1>
+            <p className="text-zinc-400 font-medium text-sm md:text-base">
+              Generate and schedule data extracts backed by Leadequator analytics.
+            </p>
           </div>
-
-          <div className="w-full md:flex-1">
-            <label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Data Type</label>
-            <Select value={dataType} onValueChange={(v) => setDataType(v as DataType)}>
-              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="leads">Leads / Prospects</SelectItem>
-                <SelectItem value="comments">Raw Posts / Comments</SelectItem>
-                <SelectItem value="replies">AI Generated Replies</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-full md:flex-1">
-            <label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Format</label>
-            <Select value={format} onValueChange={(v) => setFormat(v as ExportFormat)} disabled>
-              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="csv">Branded CSV</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button 
-            onClick={handleQuickExport} 
-            disabled={loading} 
-            className="w-full md:w-auto h-11 bg-[#FFD700] text-black hover:bg-[#FFD700]/90 px-8"
-          >
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-            {loading ? "Exporting..." : "Export Data"}
+          <Button className="w-full md:w-auto bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-12 px-6 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all">
+            <FileText className="mr-2 h-4 w-4" />
+            New Custom Report
           </Button>
         </div>
-      </Card>
 
-      {/* Scheduled Reports List */}
-      <Card className="p-4 md:p-6">
-        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Scheduled Reports</h3>
-        <div className="space-y-3 md:space-y-4">
-          {scheduledReports.map((r, i) => (
-            <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl bg-background/50 gap-4">
-              <div className="min-w-0">
-                <div className="flex gap-2 items-center mb-1">
-                  <h4 className="font-semibold text-sm md:text-base truncate">{r.name}</h4>
-                  <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[10px]">Active</Badge>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* QUICK EXPORT FORM (Left Side) */}
+          <div className="lg:col-span-5 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+            <Card className={`${glassPanelStyle} flex flex-col h-full`}>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2.5 rounded-xl bg-[#fbbf24]/10 border border-[#fbbf24]/20 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
+                  <Download className="h-5 w-5 text-[#fbbf24]" />
                 </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] md:text-sm text-muted-foreground">
-                  <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {r.frequency}</span>
-                  <span className="flex items-center"><Mail className="h-3 w-3 mr-1" /> {r.recipients}</span>
+                <h3 className="text-xl font-bold tracking-wide">Quick CSV Export</h3>
+              </div>
+
+              <div className="space-y-6 flex-grow">
+                <div>
+                  <label className={filterLabelStyle}>Date Range</label>
+                  <Select value={dateRange} onValueChange={setDateRange}>
+                    <SelectTrigger className={selectTriggerStyle}><SelectValue /></SelectTrigger>
+                    <SelectContent className={selectContentStyle}>
+                      <SelectItem value="24h" className={selectItemStyle}>Last 24 hours</SelectItem>
+                      <SelectItem value="7d" className={selectItemStyle}>Last 7 days</SelectItem>
+                      <SelectItem value="30d" className={selectItemStyle}>Last 30 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className={filterLabelStyle}>Data Type</label>
+                  <Select value={dataType} onValueChange={(v) => setDataType(v as DataType)}>
+                    <SelectTrigger className={selectTriggerStyle}><SelectValue /></SelectTrigger>
+                    <SelectContent className={selectContentStyle}>
+                      <SelectItem value="leads" className={selectItemStyle}>Leads / Prospects</SelectItem>
+                      <SelectItem value="comments" className={selectItemStyle}>Raw Posts / Comments</SelectItem>
+                      <SelectItem value="replies" className={selectItemStyle}>AI Generated Replies</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className={filterLabelStyle}>Format</label>
+                  <Select value={format} onValueChange={(v) => setFormat(v as ExportFormat)} disabled>
+                    <SelectTrigger className={`${selectTriggerStyle} opacity-70 cursor-not-allowed`}><SelectValue /></SelectTrigger>
+                    <SelectContent className={selectContentStyle}>
+                      <SelectItem value="csv" className={selectItemStyle}>Branded CSV</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <Button size="sm" variant="secondary" className="w-full sm:w-auto text-xs h-9">
-                Send Now
-              </Button>
-            </div>
-          ))}
-        </div>
-      </Card>
 
-      {/* Exportable Reports Grid */}
-      <div className="space-y-4">
-        <h3 className="text-lg md:text-xl font-bold">Library</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {exportableReports.map((r, i) => (
-            <Card key={i} className="p-4 flex flex-col justify-between hover:border-[#FFD700]/30 transition-colors">
-              <div>
-                <h4 className="font-semibold text-sm md:text-base">{r.name}</h4>
-                <p className="text-xs md:text-sm text-muted-foreground mb-4">{r.description}</p>
-              </div>
-              <div className="flex justify-between items-center">
-                <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tight">{r.format}</Badge>
-                <Button size="sm" variant="ghost" className="text-[#FFD700] hover:text-[#FFD700] hover:bg-[#FFD700]/10" onClick={handleQuickExport}>
-                  <Download className="mr-2 h-3 w-3" />
-                  Export
+              <div className="pt-8 mt-4 border-t border-white/[0.08]">
+                <Button 
+                  onClick={handleQuickExport} 
+                  disabled={loading} 
+                  className="w-full h-14 bg-white/[0.05] border border-white/[0.1] text-white hover:bg-[#fbbf24] hover:text-black hover:border-[#fbbf24] font-bold rounded-xl transition-all shadow-sm group"
+                >
+                  {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Download className="mr-2 h-5 w-5 text-zinc-400 group-hover:text-black transition-colors" />}
+                  {loading ? "Exporting Data..." : "Export Data Now"}
                 </Button>
               </div>
             </Card>
-          ))}
+          </div>
+
+          {/* SCHEDULED REPORTS LIST (Right Side) */}
+          <div className="lg:col-span-7 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <Card className={`${glassPanelStyle} flex flex-col h-full`}>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2.5 rounded-xl bg-white/[0.05] border border-white/[0.1] shadow-inner">
+                  <BarChart4 className="h-5 w-5 text-zinc-300" />
+                </div>
+                <h3 className="text-xl font-bold tracking-wide">Scheduled Reports</h3>
+              </div>
+
+              <div className="space-y-4">
+                {scheduledReports.map((r, i) => (
+                  <div 
+                    key={i} 
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-[1.5rem] border border-white/[0.05] bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/[0.1] transition-all gap-5 group"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex gap-3 items-center mb-2">
+                        <h4 className="font-bold text-base text-zinc-100 truncate tracking-wide">{r.name}</h4>
+                        <Badge className="bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] tracking-widest uppercase shadow-none px-2 py-0">
+                          {r.status}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-400 font-medium">
+                        <span className="flex items-center bg-black/40 px-2.5 py-1 rounded-md border border-white/[0.03]">
+                          <Calendar className="h-3.5 w-3.5 mr-1.5 text-zinc-500" /> 
+                          {r.frequency}
+                        </span>
+                        <span className="flex items-center bg-black/40 px-2.5 py-1 rounded-md border border-white/[0.03]">
+                          <Mail className="h-3.5 w-3.5 mr-1.5 text-zinc-500" /> 
+                          {r.recipients}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      size="sm" 
+                      variant="secondary" 
+                      className="w-full sm:w-auto text-xs h-10 px-5 bg-white/[0.05] border border-white/[0.1] text-zinc-300 hover:text-white hover:bg-white/[0.1] rounded-xl font-bold transition-all"
+                    >
+                      <Send className="h-3 w-3 mr-2 text-zinc-500 group-hover:text-white transition-colors" />
+                      Send Now
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Styled Exportable Reports Grid (Commented Out but styled properly) */}
+              {/* <div className="mt-10 pt-8 border-t border-white/[0.08]">
+                <h3 className="text-sm font-extrabold text-zinc-500 uppercase tracking-widest mb-6">Report Library</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {exportableReports.map((r, i) => (
+                    <div key={i} className="p-5 flex flex-col justify-between bg-white/[0.02] border border-white/[0.05] rounded-[1.5rem] hover:border-[#fbbf24]/30 hover:bg-white/[0.04] transition-colors group">
+                      <div>
+                        <h4 className="font-bold text-sm text-zinc-200 mb-1">{r.name}</h4>
+                        <p className="text-xs text-zinc-500 mb-5 leading-relaxed">{r.description}</p>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tight bg-black/50 border-white/[0.1] text-zinc-400">{r.format}</Badge>
+                        <Button size="sm" variant="ghost" className="text-[#fbbf24] hover:text-[#fbbf24] hover:bg-[#fbbf24]/10 h-8 text-xs rounded-lg px-3 opacity-0 group-hover:opacity-100 transition-all" onClick={handleQuickExport}>
+                          <Download className="mr-2 h-3.5 w-3.5" />
+                          Export
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div> 
+              */}
+            </Card>
+          </div>
         </div>
       </div>
     </div>

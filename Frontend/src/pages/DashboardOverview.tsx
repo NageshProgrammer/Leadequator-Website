@@ -51,6 +51,11 @@ type Lead = {
   createdAt: string;
 };
 
+// Generic Glass Skeleton Component for KPI cards
+const Skeleton = ({ className = "h-full w-full rounded-xl" }) => (
+  <div className={`bg-white/[0.04] border border-white/[0.02] animate-pulse ${className}`} />
+);
+
 const DashboardOverview = () => {
   const navigate = useNavigate();
   const { user, isLoaded } = useUser();
@@ -123,7 +128,6 @@ const DashboardOverview = () => {
   }, [leads, range]);
 
   /* ================= DERIVED DATA (KPIs) ================= */
-  // Use filteredLeads instead of leads for all metric calculations
   const totalLeads = filteredLeads.length;
   
   const highIntent = filteredLeads.filter((l) => l.intent >= 80).length;
@@ -174,17 +178,6 @@ const DashboardOverview = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-[80vh] w-full items-center justify-center bg-black/10">
-        <div className="text-center space-y-4">
-          <Loader/>
-          <p className="text-[#fbbf24] font-medium tracking-widest uppercase text-xs animate-pulse">Synchronizing live stream data...</p>
-        </div>
-      </div>
-    );
-  }
-
   const glassCardStyle = "bg-[#050505]/20 backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
 
   return (
@@ -202,8 +195,8 @@ const DashboardOverview = () => {
         </div>
 
         <div className="flex flex-wrap gap-4 items-center">
-          <Select value={range} onValueChange={(v: any) => setRange(v)}>
-            <SelectTrigger className="w-[140px] bg-white/[0.03] border-white/[0.08] text-white rounded-xl h-11 focus:ring-[#fbbf24]/30 focus:border-[#fbbf24]/50">
+          <Select value={range} onValueChange={(v: any) => setRange(v)} disabled={loading}>
+            <SelectTrigger className="w-[140px] bg-white/[0.03] border-white/[0.08] text-white rounded-xl h-11 focus:ring-[#fbbf24]/30 focus:border-[#fbbf24]/50 transition-all">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-zinc-950/70 border-white/[0.1] text-white rounded-xl">
@@ -214,8 +207,9 @@ const DashboardOverview = () => {
           </Select>
 
           <Button 
-            className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 px-6 shadow-[0_0_15px_rgba(251,191,36,0.15)] hover:shadow-[0_0_25px_rgba(251,191,36,0.3)] transition-all"
+            className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 px-6 shadow-[0_0_15px_rgba(251,191,36,0.15)] hover:shadow-[0_0_25px_rgba(251,191,36,0.3)] transition-all disabled:opacity-50"
             onClick={exportPDF}
+            disabled={loading}
           >
             <Download className="mr-2 h-4 w-4" />
             Export PDF
@@ -225,55 +219,85 @@ const DashboardOverview = () => {
 
       {/* KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-        {kpiData.map((kpi, index) => (
-          <KPICard key={index} {...kpi} />
-        ))}
+        {loading ? (
+          Array(6).fill(0).map((_, i) => (
+            <div key={i} className="h-[120px]">
+              <Skeleton />
+            </div>
+          ))
+        ) : (
+          kpiData.map((kpi, index) => (
+            <KPICard key={index} {...kpi} />
+          ))
+        )}
       </div>
 
       {/* CHARTS ROW 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
         <Card className={glassCardStyle}>
           <h3 className="text-xl font-bold mb-6 text-white tracking-wide">Sentiment Analysis</h3>
-          <div className="h-[300px] w-full ">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={sentimentData} 
-                  dataKey="value" 
-                  innerRadius={80} 
-                  outerRadius={100} 
-                  paddingAngle={5}
-                  stroke="none"
-                >
-                  {sentimentData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#09090b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
-                  itemStyle={{ color: '#fff' }}
-                />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            {loading ? (
+              /* Custom Circular Skeleton for Pie Chart */
+              <div className="h-full w-full flex items-center justify-center pb-6">
+                <div className="relative flex items-center justify-center w-48 h-48 rounded-full bg-white/[0.01] border-[16px] border-white/[0.03]">
+                  <div className="absolute inset-0 rounded-full border-[16px] border-transparent border-t-[#fbbf24]/20 border-r-[#fbbf24]/10 animate-spin" style={{ animationDuration: '2s' }} />
+                  <div className="h-20 w-20 bg-white/[0.02] rounded-full animate-pulse" />
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={sentimentData} 
+                    dataKey="value" 
+                    innerRadius={80} 
+                    outerRadius={100} 
+                    paddingAngle={5}
+                    stroke="none"
+                  >
+                    {sentimentData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#09090b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </Card>
 
         <Card className={glassCardStyle}>
           <h3 className="text-xl font-bold mb-6 text-white tracking-wide">Platform Performance</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={platformStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="platform" fontSize={12} tick={{fill: '#a1a1aa'}} axisLine={false} tickLine={false} dy={10} />
-                <YAxis fontSize={12} tick={{fill: '#a1a1aa'}} axisLine={false} tickLine={false} />
-                <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.02)'}}
-                  contentStyle={{ backgroundColor: '#09090b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff' }}
-                />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar dataKey="threads" name="Total Posts" fill="#3f3f46" radius={[6, 6, 0, 0]} barSize={30} />
-                <Bar dataKey="leads" name="High Intent" fill="#fbbf24" radius={[6, 6, 0, 0]} barSize={30} />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading ? (
+              /* Custom Vertical Bars Skeleton for Bar Chart */
+              <div className="h-full w-full flex items-end justify-around pb-12 pt-8 px-4 gap-2 sm:gap-4">
+                {[60, 40, 80, 50, 90].map((h, i) => (
+                  <div key={i} className="w-full flex justify-center gap-1 sm:gap-2 items-end h-full">
+                    <div className="w-full max-w-[24px] bg-white/[0.03] animate-pulse rounded-t-md" style={{ height: `${h}%` }} />
+                    <div className="w-full max-w-[24px] bg-[#fbbf24]/10 animate-pulse rounded-t-md" style={{ height: `${h * 0.6}%`, animationDelay: '150ms' }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={platformStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="platform" fontSize={12} tick={{fill: '#a1a1aa'}} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis fontSize={12} tick={{fill: '#a1a1aa'}} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    cursor={{fill: 'rgba(255,255,255,0.02)'}}
+                    contentStyle={{ backgroundColor: '#09090b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  <Bar dataKey="threads" name="Total Posts" fill="#3f3f46" radius={[6, 6, 0, 0]} barSize={30} />
+                  <Bar dataKey="leads" name="High Intent" fill="#fbbf24" radius={[6, 6, 0, 0]} barSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </Card>
       </div>
@@ -286,48 +310,49 @@ const DashboardOverview = () => {
             variant="ghost" 
             size="sm" 
             onClick={() => navigate("/monitor-stream")} 
-            className="text-[#fbbf24] hover:text-[#fbbf24]/80 hover:bg-[#fbbf24]/10 rounded-xl px-4"
+            disabled={loading}
+            className="text-[#fbbf24] hover:text-[#fbbf24]/80 hover:bg-[#fbbf24]/10 rounded-xl px-4 disabled:opacity-50"
           >
             View All
           </Button>
         </div>
 
         <div className="space-y-4">
-          {filteredLeads
-            .filter((l) => l.intent >= 60)
-            .sort((a, b) => b.intent - a.intent)
-            .slice(0, 5)
-            .map((lead) => (
-              <div 
-                key={lead._id} 
-                className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-[1.25rem] border border-white/[0.05] bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#fbbf24]/30 transition-all duration-300 group"
-              >
-                <div className="flex items-center gap-5 flex-1">
-                  {/* Intent Score Badge */}
-                  <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/20 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)] text-[#fbbf24] font-black px-3 py-2 rounded-xl text-base min-w-[45px] text-center group-hover:scale-105 transition-transform">
-                    {lead.intent}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-bold truncate text-zinc-100 text-lg group-hover:text-white transition-colors">{lead.name}</div>
-                    <div className="text-sm text-zinc-500 font-medium mt-1">
-                      via <span className="text-zinc-300">{lead.platform}</span> • {new Date(lead.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  className="w-full sm:w-auto bg-white/[0.05] text-white hover:bg-[#fbbf24] hover:text-black border border-white/[0.1] hover:border-[#fbbf24] font-bold rounded-xl h-11 px-6 shadow-sm transition-all"
-                  onClick={() => navigate("/monitor-stream")}
-                >
-                  Engage
-                </Button>
-              </div>
-            ))}
-
-          {filteredLeads.filter(l => l.intent >= 60).length === 0 && (
+          {loading ? <Loader/> : filteredLeads.filter((l) => l.intent >= 60).length === 0 ? (
             <div className="text-center py-12 text-zinc-500 border border-dashed border-white/[0.1] rounded-[1.5rem] bg-white/[0.01] font-medium">
               No high-intent leads detected in this timeframe. Adjust your filter or run the scraper in Monitor Stream.
             </div>
+          ) : (
+            filteredLeads
+              .filter((l) => l.intent >= 60)
+              .sort((a, b) => b.intent - a.intent)
+              .slice(0, 5)
+              .map((lead) => (
+                <div 
+                  key={lead._id} 
+                  className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-[1.25rem] border border-white/[0.05] bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#fbbf24]/30 transition-all duration-300 group"
+                >
+                  <div className="flex items-center gap-5 flex-1">
+                    {/* Intent Score Badge */}
+                    <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/20 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)] text-[#fbbf24] font-black px-3 py-2 rounded-xl text-base min-w-[45px] text-center group-hover:scale-105 transition-transform">
+                      {lead.intent}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold truncate text-zinc-100 text-lg group-hover:text-white transition-colors">{lead.name}</div>
+                      <div className="text-sm text-zinc-500 font-medium mt-1">
+                        via <span className="text-zinc-300">{lead.platform}</span> • {new Date(lead.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="w-full sm:w-auto bg-white/[0.05] text-white hover:bg-[#fbbf24] hover:text-black border border-white/[0.1] hover:border-[#fbbf24] font-bold rounded-xl h-11 px-6 shadow-sm transition-all"
+                    onClick={() => navigate("/monitor-stream")}
+                  >
+                    Engage
+                  </Button>
+                </div>
+              ))
           )}
         </div>
       </Card>
