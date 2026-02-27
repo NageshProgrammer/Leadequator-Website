@@ -53,7 +53,7 @@ const StepIndustry: React.FC<StepIndustryProps> = ({ data, onChange, onNext, onB
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-7 bg-background/20 backdrop-blur-xl border border-white/[0.05] p-6 sm:p-8 rounded-[2rem] shadow-2xl">
         <div>
           <label className="block text-sm font-medium text-foreground mb-3">
             Industry

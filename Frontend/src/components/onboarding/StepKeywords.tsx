@@ -5,9 +5,7 @@ import { Input } from '@/components/ui/input';
 import { MessageSquare, X, Plus, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 
 interface StepKeywordsProps {
-  data: {
-    keywords: string[];
-  };
+  data: { keywords: string[] };
   onChange: (field: string, value: string[]) => void;
   onNext: () => void;
   onBack: () => void;
@@ -50,9 +48,7 @@ const StepKeywords: React.FC<StepKeywordsProps> = ({ data, onChange, onNext, onB
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (data.keywords.length >= 3) {
-      onNext();
-    }
+    if (data.keywords.length >= 3) onNext();
   };
 
   return (
@@ -61,31 +57,32 @@ const StepKeywords: React.FC<StepKeywordsProps> = ({ data, onChange, onNext, onB
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.4 }}
-      className="max-w-lg mx-auto"
+      className="max-w-lg mx-auto w-full px-4"
     >
       <div className="text-center mb-8">
-        <div className="w-16 h-16 mx-auto mb-4 bg-primary/20 rounded-2xl flex items-center justify-center">
-          <MessageSquare className="w-8 h-8 text-primary" />
+        <div className="w-16 h-16 mx-auto mb-4 bg-[#fbbf24]/10 border border-[#fbbf24]/20 rounded-2xl flex items-center justify-center shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
+          <MessageSquare className="w-8 h-8 text-[#fbbf24]" />
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+        <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
           How do your buyers talk?
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-zinc-400 font-medium">
           These keywords help Leadequator detect real buying conversations.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Added Keywords */}
+      <form onSubmit={handleSubmit} className="space-y-6 bg-background/20 backdrop-blur-xl border border-white/[0.05] p-6 sm:p-8 rounded-[2rem] shadow-2xl">
+        
         <div>
-          <label className="block text-sm font-medium text-foreground mb-3">
-            Keywords / Phrases buyers use <span className="text-primary">({data.keywords.length}/3 minimum)</span>
+          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 ml-1">
+            Keywords / Phrases <span className={data.keywords.length >= 3 ? "text-green-400" : "text-[#fbbf24]"}>({data.keywords.length}/3 minimum)</span>
           </label>
           
-          <div className="min-h-[100px] p-4 bg-card border border-border rounded-xl mb-4">
+          {/* Tag Container */}
+          <div className="min-h-[120px] p-4 bg-black/40 border border-white/[0.05] rounded-xl mb-4 shadow-inner">
             <AnimatePresence mode="popLayout">
               {data.keywords.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Add at least 3 keywords...</p>
+                <p className="text-zinc-600 text-sm italic font-medium pt-2">Type a phrase below and press enter, or click a suggestion.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {data.keywords.map((keyword, index) => (
@@ -95,15 +92,15 @@ const StepKeywords: React.FC<StepKeywordsProps> = ({ data, onChange, onNext, onB
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       layout
-                      className="flex items-center gap-2 px-3 py-1.5 bg-primary/20 border border-primary/30 rounded-full"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-[#fbbf24]/10 border border-[#fbbf24]/20 rounded-lg text-[#fbbf24] shadow-sm"
                     >
-                      <span className="text-sm text-foreground">{keyword}</span>
+                      <span className="text-sm font-bold">{keyword}</span>
                       <button
                         type="button"
                         onClick={() => removeKeyword(index)}
-                        className="w-4 h-4 rounded-full bg-primary/30 hover:bg-primary/50 flex items-center justify-center transition-colors"
+                        className="w-5 h-5 rounded-md hover:bg-red-500/20 text-[#fbbf24] hover:text-red-400 flex items-center justify-center transition-colors"
                       >
-                        <X className="w-3 h-3 text-foreground" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </motion.div>
                   ))}
@@ -119,14 +116,15 @@ const StepKeywords: React.FC<StepKeywordsProps> = ({ data, onChange, onNext, onB
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type a keyword and press Enter..."
-              className="flex-1 bg-card border-border focus:border-primary"
+              placeholder="e.g. 'Looking for a marketing tool...'"
+              className="flex-1 bg-white/[0.02] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 focus-visible:border-[#fbbf24]/50 rounded-xl h-12"
             />
             <Button
               type="button"
               variant="outline"
               onClick={() => addKeyword(inputValue)}
               disabled={!inputValue.trim()}
+              className="h-12 px-4 rounded-xl bg-white/[0.05] border-white/[0.1] text-white hover:bg-white/[0.1] hover:text-[#fbbf24]"
             >
               <Plus className="w-5 h-5" />
             </Button>
@@ -134,48 +132,45 @@ const StepKeywords: React.FC<StepKeywordsProps> = ({ data, onChange, onNext, onB
         </div>
 
         {/* Suggested Keywords */}
-        <div>
+        <div className="pt-2 border-t border-white/[0.05]">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-muted-foreground">Suggested for your industry</span>
+            <Sparkles className="w-4 h-4 text-[#fbbf24]" />
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Suggested for you</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {suggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => addKeyword(suggestion)}
-                disabled={data.keywords.includes(suggestion)}
-                className={`px-3 py-1.5 text-sm rounded-full border transition-all duration-200 ${
-                  data.keywords.includes(suggestion)
-                    ? 'border-primary/30 bg-primary/10 text-muted-foreground cursor-not-allowed'
-                    : 'border-border bg-card hover:border-primary hover:bg-primary/10 text-foreground'
-                }`}
-              >
-                + {suggestion}
-              </button>
-            ))}
+            {suggestions.map((suggestion) => {
+              const isSelected = data.keywords.includes(suggestion);
+              return (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => addKeyword(suggestion)}
+                  disabled={isSelected}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 ${
+                    isSelected
+                      ? 'border-white/[0.02] bg-white/[0.01] text-zinc-600 cursor-not-allowed'
+                      : 'border-white/[0.08] bg-white/[0.02] hover:border-[#fbbf24]/50 hover:bg-[#fbbf24]/10 hover:text-[#fbbf24] text-zinc-400'
+                  }`}
+                >
+                  + {suggestion}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground text-center">
-          These answers help us find buyers faster.
-        </p>
-
-        <div className="flex gap-4 mt-8">
-          <Button type="button" variant="outline" size="lg" className="flex-1" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
+        <div className="flex gap-4 pt-4 mt-8">
+          <Button type="button" variant="outline" size="lg" className="flex-1 h-12 rounded-xl border-white/[0.1] bg-transparent text-white hover:bg-[#fbbf24]" onClick={onBack}>
+            <ArrowLeft className="w-5 h-5 mr-2" /> Back
           </Button>
           <Button
             type="submit"
             variant="default"
             size="lg"
-            className="flex-1"
+            className="flex-1 h-12 rounded-xl bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold shadow-[0_0_15px_rgba(251,191,36,0.2)] disabled:opacity-50"
             disabled={data.keywords.length < 3}
           >
-            Next
-            <ArrowRight className="w-5 h-5 ml-2" />
+            Next <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
       </form>

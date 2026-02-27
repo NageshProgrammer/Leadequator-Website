@@ -209,18 +209,21 @@ const Onboarding = () => {
   // ======================
   // THE STRICT LOADING SCREEN
   // ======================
-  // Blocks UI rendering until Clerk is ready AND Neon DB has returned the user's status
   if (!isClerkLoaded || isCheckingDB) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#050505]">
-        {/* Spinner matching your branding */}
-        <Loader/>
-        <h2 className="text-white text-xl font-bold tracking-tight animate-pulse">
-          Syncing your workspace...
-        </h2>
-        <p className="text-gray-500 text-sm mt-2">
-          Preparing your Leadequator environment
-        </p>
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#09090b] relative overflow-hidden text-white">
+        {/* Ambient Loader Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#fbbf24]/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col items-center">
+          <Loader />
+          <h2 className="text-white text-xl font-bold tracking-tight animate-pulse mt-6 drop-shadow-md">
+            Syncing your workspace...
+          </h2>
+          <p className="text-zinc-500 text-sm mt-2 font-medium tracking-wide">
+            Preparing your Leadequator environment
+          </p>
+        </div>
       </div>
     );
   }
@@ -228,74 +231,91 @@ const Onboarding = () => {
   // ======================
   // UI - ONBOARDING FORM
   // ======================
-  // This is only reached if isCheckingDB === false (meaning they definitely need to onboard)
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center mb-8">
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/leadequator_logo.png" className="h-10" alt="Logo" />
-            <span className="text-xl font-bold">Leadequator</span>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[#09090b] text-white selection:bg-[#fbbf24]/30 relative overflow-hidden flex flex-col">
+      
+      {/* =========================================
+          ENHANCED AMBIENT GLOW BACKGROUNDS 
+          ========================================= */}
+      <div className="fixed top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#fbbf24]/[0.08] rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-amber-600/[0.04] rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="fixed top-[20%] left-[-10%] w-[500px] h-[500px] bg-[#fbbf24]/[0.03] rounded-full blur-[100px] pointer-events-none -z-10" />
 
+      {/* Header Area */}
+      <div className="flex justify-center pt-10 pb-8 relative z-10">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="relative">
+            {/* Logo Glow */}
+            <div className="absolute inset-0 bg-[#fbbf24] blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
+            <img src="/leadequator_logo.png" className="h-10 relative z-10 drop-shadow-2xl transition-transform duration-500 group-hover:scale-105" alt="Logo" />
+          </div>
+          <span className="text-2xl font-extrabold tracking-tight text-white">
+            Lead<span className="text-[#fbbf24]">equator</span>
+          </span>
+        </Link>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 w-full max-w-5xl mx-auto px-4 pb-20 relative z-10 flex flex-col">
         {!isComplete && (
           <OnboardingProgress currentStep={currentStep} totalSteps={5} />
         )}
 
-        <AnimatePresence mode="wait">
-          {isComplete ? (
-            <OnboardingComplete />
-          ) : (
-            <>
-              {currentStep === 1 && (
-                <StepCompanyBasics
-                  data={companyData}
-                  onChange={handleCompanyChange}
-                  onNext={handleNext}
-                />
-              )}
+        <div className="mt-4 flex-1">
+          <AnimatePresence mode="wait">
+            {isComplete ? (
+              <OnboardingComplete key="complete" />
+            ) : (
+              <div key="form-steps">
+                {currentStep === 1 && (
+                  <StepCompanyBasics
+                    data={companyData}
+                    onChange={handleCompanyChange}
+                    onNext={handleNext}
+                  />
+                )}
 
-              {currentStep === 2 && (
-                <StepIndustry
-                  data={industryData}
-                  onChange={handleIndustryChange}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              )}
+                {currentStep === 2 && (
+                  <StepIndustry
+                    data={industryData}
+                    onChange={handleIndustryChange}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                )}
 
-              {currentStep === 3 && (
-                <StepTargetMarket
-                  data={targetData}
-                  onChange={handleTargetChange}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              )}
+                {currentStep === 3 && (
+                  <StepTargetMarket
+                    data={targetData}
+                    onChange={handleTargetChange}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                )}
 
-              {currentStep === 4 && (
-                <StepKeywords
-                  data={keywordsData}
-                  onChange={handleKeywordsChange}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                  industry={industryData.industry}
-                />
-              )}
+                {currentStep === 4 && (
+                  <StepKeywords
+                    data={keywordsData}
+                    onChange={handleKeywordsChange}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                    industry={industryData.industry}
+                  />
+                )}
 
-              {currentStep === 5 && (
-                <StepPlatforms
-                  data={platformsData}
-                  onChange={handlePlatformsChange}
-                  onNext={handleFinish}
-                  onBack={handleBack}
-                  loading={saving}
-                />
-              )}
-            </>
-          )}
-        </AnimatePresence>
+                {currentStep === 5 && (
+                  <StepPlatforms
+                    data={platformsData}
+                    onChange={handlePlatformsChange}
+                    onNext={handleFinish}
+                    onBack={handleBack}
+                    loading={saving}
+                  />
+                )}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

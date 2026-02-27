@@ -466,37 +466,61 @@ const SettingsIntegrations = () => {
 
                 {/* Right Column: Active Platforms & Save */}
                 <div className="space-y-6 md:space-y-8">
-                    <Card className={`${glassCardStyle} flex flex-col`}>
+                    <Card className={`${glassCardStyle} flex flex-col relative overflow-hidden`}>
                         <h3 className="text-xl font-bold mb-2 text-white tracking-wide">Monitor Sources</h3>
                         <p className="text-sm text-zinc-400 mb-8 font-medium">Select which platforms to scrape for leads.</p>
                         
-                        <div className="space-y-3 flex-grow">
+                        <div className="space-y-4 flex-grow">
                             {[
-                                { id: "quora", label: "Quora" },
-                                { id: "reddit", label: "Reddit" },
-                                { id: "linkedin", label: "LinkedIn", badge: "Pro" },
-                                { id: "twitter", label: "Twitter / X", badge: "Pro" },
+                                { id: "quora", label: "Quora", available: true },
+                                { id: "reddit", label: "Reddit", available: true },
+                                { id: "linkedin", label: "LinkedIn", badge: "Pro", available: false },
+                                { id: "twitter", label: "Twitter / X", badge: "Pro", available: false },
+                                { id: "facebook", label: "Facebook", badge: "Pro", available: false },
+                                { id: "youtube", label: "YouTube", badge: "Pro", available: false },
                             ].map((platform) => (
-                                <div key={platform.id} className="flex items-center justify-between p-4 rounded-xl border border-white/[0.05] bg-white/[0.01] hover:bg-white/[0.03] transition-colors">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-base font-bold text-zinc-200">{platform.label}</span>
+                                <div 
+                                    key={platform.id} 
+                                    className={`relative overflow-hidden flex items-center justify-between p-4 rounded-xl border transition-colors ${
+                                        platform.available 
+                                            ? 'border-white/[0.05] bg-white/[0.01] hover:bg-white/[0.03]' 
+                                            : 'border-white/[0.02] bg-black/40 opacity-75'
+                                    }`}
+                                >
+                                    {/* Golden Coming Soon Ribbon */}
+                                    {!platform.available && (
+                                        <div className="absolute -right-7 top-4 bg-[#fbbf24] text-black text-[9px] font-black uppercase tracking-widest px-8 py-0.5 rotate-45 shadow-[0_0_15px_rgba(251,191,36,0.4)] z-10 pointer-events-none">
+                                            Soon
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2 relative z-10">
+                                      <span className={`text-base font-bold ${platform.available ? 'text-zinc-200' : 'text-zinc-500'}`}>
+                                          {platform.label}
+                                      </span>
                                       {platform.badge && (
-                                        <Badge className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 text-[9px] px-1.5 py-0 uppercase tracking-widest">{platform.badge}</Badge>
+                                        <Badge className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 text-[9px] px-1.5 py-0 uppercase tracking-widest">
+                                            {platform.badge}
+                                        </Badge>
                                       )}
                                     </div>
-                                    {isLoading ? (
-                                      <Skeleton className="h-6 w-11 rounded-full" />
-                                    ) : (
-                                      <Switch 
-                                          className="data-[state=checked]:bg-[#fbbf24]"
-                                          checked={profileData.platforms[platform.id as keyof typeof profileData.platforms]}
-                                          onCheckedChange={(checked) => 
-                                              setProfileData({
-                                                  ...profileData, 
-                                                  platforms: { ...profileData.platforms, [platform.id]: checked }
-                                              })
-                                          }
-                                      />
+
+                                    {/* ✅ FIX: Only render Skeleton OR Switch if the platform is available */}
+                                    {platform.available && (
+                                      isLoading ? (
+                                        <Skeleton className="h-6 w-11 rounded-full relative z-10" />
+                                      ) : (
+                                        <Switch 
+                                            className="data-[state=checked]:bg-[#fbbf24] relative z-10"
+                                            checked={profileData.platforms[platform.id as keyof typeof profileData.platforms]}
+                                            onCheckedChange={(checked) => 
+                                                setProfileData({
+                                                    ...profileData, 
+                                                    platforms: { ...profileData.platforms, [platform.id]: checked }
+                                                })
+                                            }
+                                        />
+                                      )
                                     )}
                                 </div>
                             ))}
