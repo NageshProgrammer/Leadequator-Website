@@ -36,7 +36,7 @@ import {
   CheckCircle2,
   X,
   Target,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -52,7 +52,7 @@ type Lead = {
   status: string;
   url: string;
   createdAt: string;
-  postTitle: string; 
+  postTitle: string;
 };
 
 const STATUSES = [
@@ -68,12 +68,18 @@ const STATUSES = [
 // Helper to color-code status badges
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "New": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-    case "Contacted": return "bg-purple-500/10 text-purple-400 border-purple-500/20";
-    case "Qualified": return "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20";
-    case "Closed Won": return "bg-green-500/10 text-green-400 border-green-500/20";
-    case "Closed Lost": return "bg-red-500/10 text-red-400 border-red-500/20";
-    default: return "bg-white/[0.03] text-zinc-300 border-white/[0.1]";
+    case "New":
+      return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    case "Contacted":
+      return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+    case "Qualified":
+      return "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20";
+    case "Closed Won":
+      return "bg-green-500/10 text-green-400 border-green-500/20";
+    case "Closed Lost":
+      return "bg-red-500/10 text-red-400 border-red-500/20";
+    default:
+      return "bg-white/[0.03] text-zinc-300 border-white/[0.1]";
   }
 };
 
@@ -103,16 +109,22 @@ const LeadsPipeline = () => {
       // ✅ Added Cache-Control headers to ensure we fetch fresh data from the DB
       const headers = {
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0"
+        Pragma: "no-cache",
+        Expires: "0",
       };
 
       const [redditRes, quoraRes] = await Promise.all([
-        fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`, { headers }),
-        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`, { headers }),
+        fetch(
+          `${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`,
+          { headers },
+        ),
+        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`, {
+          headers,
+        }),
       ]);
 
-      if (!redditRes.ok || !quoraRes.ok) throw new Error("Failed to fetch leads");
+      if (!redditRes.ok || !quoraRes.ok)
+        throw new Error("Failed to fetch leads");
 
       const redditData = await redditRes.json();
       const quoraData = await quoraRes.json();
@@ -124,7 +136,9 @@ const LeadsPipeline = () => {
 
       const mapped: Lead[] = combined.map((p: any, idx: number) => {
         const rawPlatform = p.platform || (p.question ? "Quora" : "Reddit");
-        const formattedPlatform = rawPlatform.charAt(0).toUpperCase() + rawPlatform.slice(1).toLowerCase();
+        const formattedPlatform =
+          rawPlatform.charAt(0).toUpperCase() +
+          rawPlatform.slice(1).toLowerCase();
 
         return {
           _id: String(p.id),
@@ -136,14 +150,23 @@ const LeadsPipeline = () => {
           status: p.pipelineStage || "New",
           url: p.url || "#",
           createdAt: p.createdAt || new Date().toISOString(),
-          postTitle: p.text || p.question || p.body || p.content || "Content unavailable",
+          postTitle:
+            p.text ||
+            p.question ||
+            p.body ||
+            p.content ||
+            "Content unavailable",
         };
       });
 
       setLeads(mapped);
     } catch (err) {
       console.error("Pipeline Sync Error:", err);
-      toast({ title: "Sync Failed", description: "Could not fetch latest pipeline data.", variant: "destructive" });
+      toast({
+        title: "Sync Failed",
+        description: "Could not fetch latest pipeline data.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -157,14 +180,18 @@ const LeadsPipeline = () => {
   const updateStatus = async (id: string, platform: string, status: string) => {
     // ✅ Store previous state for rollback
     const previousLeads = [...leads];
-    
+
     // 1. Optimistic UI update
     setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, status } : l)));
 
     // 2. Background DB Update
+    // 2. Background DB Update
     try {
-      const UPDATE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/pipeline/update-stage`;
-      
+      // Strip any accidental trailing slashes from the env variable
+      const baseUrl =
+        import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
+      const UPDATE_URL = `${baseUrl}/api/pipeline/update-stage`;
+
       const res = await fetch(UPDATE_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -173,12 +200,18 @@ const LeadsPipeline = () => {
 
       if (!res.ok) throw new Error("Failed to save to DB");
 
-      toast({ title: "Pipeline Updated", description: `Lead moved to ${status}` });
+      toast({
+        title: "Pipeline Updated",
+        description: `Lead moved to ${status}`,
+      });
     } catch (error) {
       console.error("Failed to update status:", error);
-      // ✅ Rollback UI if the API call fails
       setLeads(previousLeads);
-      toast({ title: "Update Failed", description: "Could not save to database. Reverting change.", variant: "destructive" });
+      toast({
+        title: "Update Failed",
+        description: "Could not save to database. Reverting change.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -192,10 +225,17 @@ const LeadsPipeline = () => {
 
   const exportCSV = () => {
     if (!leads.length) return;
-    const headers = ["Lead ID", "Username", "Platform", "Status", "Link", "Content"];
+    const headers = [
+      "Lead ID",
+      "Username",
+      "Platform",
+      "Status",
+      "Link",
+      "Content",
+    ];
     const rows = leads.map((l) =>
       [l.leadId, l.name, l.platform, l.status, l.url, l.postTitle]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`) 
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(","),
     );
     const csv = [headers.join(","), ...rows].join("\n");
@@ -216,8 +256,11 @@ const LeadsPipeline = () => {
         lead.leadId.toLowerCase().includes(searchLower) ||
         lead.postTitle.toLowerCase().includes(searchLower);
 
-      const matchesStatus = statusFilter === "All" || lead.status === statusFilter;
-      const matchesPlatform = platformFilter === "All" || lead.platform.toLowerCase() === platformFilter.toLowerCase();
+      const matchesStatus =
+        statusFilter === "All" || lead.status === statusFilter;
+      const matchesPlatform =
+        platformFilter === "All" ||
+        lead.platform.toLowerCase() === platformFilter.toLowerCase();
       const matchesIntent = lead.intent >= parseInt(minIntent);
 
       return matchesSearch && matchesStatus && matchesPlatform && matchesIntent;
@@ -231,22 +274,25 @@ const LeadsPipeline = () => {
     setMinIntent("0");
   };
 
-  const glassPanelStyle = "bg-[#050505]/30 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
-  const filterLabelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
+  const glassPanelStyle =
+    "bg-[#050505]/30 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
+  const filterLabelStyle =
+    "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
 
   return (
     <div className="min-h-[90vh] rounded-3xl pt-4 pb-12 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
-      
       {/* Subtle Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
       <div className="container mx-auto px-4 max-w-[1400px] space-y-6 md:space-y-8 relative z-10">
-        
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-1">
-              Leads <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.2)]">Pipeline</span>
+              Leads{" "}
+              <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+                Pipeline
+              </span>
             </h1>
             <p className="text-zinc-400 font-medium text-sm md:text-base">
               Track, manage, and convert high-intent leads.
@@ -257,12 +303,12 @@ const LeadsPipeline = () => {
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-             className={`flex-1 md:flex-none border-white/[0.1] text-white  h-11 rounded-xl transition-all ${showFilters ? 'bg-white/[0.1] border-[#fbbf24]/50 ' : 'bg-white/[0.03] hover:bg-[#fbbf24]'}`}
+              className={`flex-1 md:flex-none border-white/[0.1] text-white  h-11 rounded-xl transition-all ${showFilters ? "bg-white/[0.1] border-[#fbbf24]/50 " : "bg-white/[0.03] hover:bg-[#fbbf24]"}`}
             >
               <FilterIcon className="mr-2 h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
             </Button>
-            
+
             <Button
               onClick={exportCSV}
               className="flex-1 md:flex-none bg-white/[0.03] border border-white/[0.1] text-white hover:bg-white/[0.08] hover:text-[#fbbf24] font-bold rounded-xl h-11 transition-all"
@@ -276,7 +322,9 @@ const LeadsPipeline = () => {
               disabled={loading}
               className="flex-1 md:flex-none bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl h-11 shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all"
             >
-              <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCcw
+                className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
               {loading ? "Syncing..." : "Sync Pipeline"}
             </Button>
           </div>
@@ -284,15 +332,22 @@ const LeadsPipeline = () => {
 
         {/* MAIN LAYOUT: SIDEBAR + RESULTS */}
         <div className="flex flex-col lg:flex-row-reverse gap-6 lg:gap-8 items-start">
-          
           {/* ================= FILTER SIDEBAR ================= */}
           {showFilters && (
-            <div className={`w-full lg:w-[320px] flex-shrink-0 ${glassPanelStyle} p-6 animate-in slide-in-from-right-8 duration-500 lg:sticky lg:top-24`}>
+            <div
+              className={`w-full lg:w-[320px] flex-shrink-0 ${glassPanelStyle} p-6 animate-in slide-in-from-right-8 duration-500 lg:sticky lg:top-24`}
+            >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold flex items-center gap-2">
-                  <FilterIcon className="h-4 w-4 text-[#fbbf24]" /> Pipeline Filters
+                  <FilterIcon className="h-4 w-4 text-[#fbbf24]" /> Pipeline
+                  Filters
                 </h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden text-zinc-400 hover:text-white" onClick={() => setShowFilters(false)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 lg:hidden text-zinc-400 hover:text-white"
+                  onClick={() => setShowFilters(false)}
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -302,17 +357,19 @@ const LeadsPipeline = () => {
                   <label className={filterLabelStyle}>Search Lead</label>
                   <div className="relative">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                    <Input 
-                      placeholder="Name, ID, post content..." 
+                    <Input
+                      placeholder="Name, ID, post content..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-white/[0.02] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 rounded-xl h-11 transition-all" 
+                      className="pl-10 bg-white/[0.02] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 rounded-xl h-11 transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className={filterLabelStyle}>Minimum Intent Score</label>
+                  <label className={filterLabelStyle}>
+                    Minimum Intent Score
+                  </label>
                   <Select value={minIntent} onValueChange={setMinIntent}>
                     <SelectTrigger className="w-full bg-white/[0.02] border-white/[0.08] text-white rounded-xl h-11">
                       <div className="flex items-center gap-2">
@@ -321,10 +378,30 @@ const LeadsPipeline = () => {
                       </div>
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
-                      <SelectItem value="0" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Any Intent (0%+)</SelectItem>
-                      <SelectItem value="50" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Warm Leads (50%+)</SelectItem>
-                      <SelectItem value="70" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Hot Leads (70%+)</SelectItem>
-                      <SelectItem value="90" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Urgent Buyers (90%+)</SelectItem>
+                      <SelectItem
+                        value="0"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Any Intent (0%+)
+                      </SelectItem>
+                      <SelectItem
+                        value="50"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Warm Leads (50%+)
+                      </SelectItem>
+                      <SelectItem
+                        value="70"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Hot Leads (70%+)
+                      </SelectItem>
+                      <SelectItem
+                        value="90"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Urgent Buyers (90%+)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -339,14 +416,54 @@ const LeadsPipeline = () => {
                       </div>
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
-                      <SelectItem value="All" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">All Stages</SelectItem>
-                      <SelectItem value="New" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">New</SelectItem>
-                      <SelectItem value="Contacted" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Contacted</SelectItem>
-                      <SelectItem value="Qualified" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Qualified</SelectItem>
-                      <SelectItem value="Demo Scheduled" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Demo Scheduled</SelectItem>
-                      <SelectItem value="Negotiating" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Negotiating</SelectItem>
-                      <SelectItem value="Closed Won" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Closed Won</SelectItem>
-                      <SelectItem value="Closed Lost" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Closed Lost</SelectItem>
+                      <SelectItem
+                        value="All"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        All Stages
+                      </SelectItem>
+                      <SelectItem
+                        value="New"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        New
+                      </SelectItem>
+                      <SelectItem
+                        value="Contacted"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Contacted
+                      </SelectItem>
+                      <SelectItem
+                        value="Qualified"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Qualified
+                      </SelectItem>
+                      <SelectItem
+                        value="Demo Scheduled"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Demo Scheduled
+                      </SelectItem>
+                      <SelectItem
+                        value="Negotiating"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Negotiating
+                      </SelectItem>
+                      <SelectItem
+                        value="Closed Won"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Closed Won
+                      </SelectItem>
+                      <SelectItem
+                        value="Closed Lost"
+                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                      >
+                        Closed Lost
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -358,7 +475,7 @@ const LeadsPipeline = () => {
                       <button
                         key={p}
                         onClick={() => setPlatformFilter(p)}
-                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${platformFilter === p ? 'bg-[#fbbf24] text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'bg-white/[0.03] text-zinc-400 border border-white/[0.08] hover:bg-white/[0.1] hover:text-white'}`}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${platformFilter === p ? "bg-[#fbbf24] text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "bg-white/[0.03] text-zinc-400 border border-white/[0.08] hover:bg-white/[0.1] hover:text-white"}`}
                       >
                         {p}
                       </button>
@@ -367,8 +484,8 @@ const LeadsPipeline = () => {
                 </div>
 
                 <div className="pt-4 border-t border-white/[0.08]">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl h-11"
                     onClick={clearFilters}
                   >
@@ -381,16 +498,19 @@ const LeadsPipeline = () => {
 
           {/* ================= MAIN RESULTS AREA ================= */}
           <div className="flex-1 min-w-0 w-full animate-in fade-in duration-700">
-            
             <div className="flex items-center justify-between mb-4 px-2">
               <span className="text-zinc-400 font-medium">
-                Found <strong className="text-white">{filteredLeads.length}</strong> leads in pipeline
+                Found{" "}
+                <strong className="text-white">{filteredLeads.length}</strong>{" "}
+                leads in pipeline
               </span>
             </div>
 
             {loading ? (
-              <div className={`flex flex-col items-center justify-center h-[400px] ${glassPanelStyle}`}>
-                <Loader/>
+              <div
+                className={`flex flex-col items-center justify-center h-[400px] ${glassPanelStyle}`}
+              >
+                <Loader />
                 <p className="text-[#fbbf24] font-medium tracking-widest uppercase text-xs mt-4 animate-pulse">
                   Synchronizing pipeline...
                 </p>
@@ -398,16 +518,30 @@ const LeadsPipeline = () => {
             ) : (
               <>
                 {/* --- DESKTOP VIEW: TABLE --- */}
-                <div className={`hidden md:block overflow-hidden ${glassPanelStyle} !p-0`}>
+                <div
+                  className={`hidden md:block overflow-hidden ${glassPanelStyle} !p-0`}
+                >
                   <Table>
                     <TableHeader className="bg-white/[0.02] border-b border-white/[0.05]">
                       <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="w-[100px] text-zinc-400 font-bold py-5 pl-6">ID</TableHead>
-                        <TableHead className="w-[280px] text-zinc-400 font-bold py-5">Lead Target</TableHead>
-                        <TableHead className="text-zinc-400 font-bold py-5">Platform</TableHead>
-                        <TableHead className="text-zinc-400 font-bold py-5">Link</TableHead>
-                        <TableHead className="text-zinc-400 font-bold py-5">Pipeline Stage</TableHead>
-                        <TableHead className="text-right text-zinc-400 font-bold py-5 pr-6">Actions</TableHead>
+                        <TableHead className="w-[100px] text-zinc-400 font-bold py-5 pl-6">
+                          ID
+                        </TableHead>
+                        <TableHead className="w-[280px] text-zinc-400 font-bold py-5">
+                          Lead Target
+                        </TableHead>
+                        <TableHead className="text-zinc-400 font-bold py-5">
+                          Platform
+                        </TableHead>
+                        <TableHead className="text-zinc-400 font-bold py-5">
+                          Link
+                        </TableHead>
+                        <TableHead className="text-zinc-400 font-bold py-5">
+                          Pipeline Stage
+                        </TableHead>
+                        <TableHead className="text-right text-zinc-400 font-bold py-5 pr-6">
+                          Actions
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -416,8 +550,12 @@ const LeadsPipeline = () => {
                           <TableCell colSpan={6} className="text-center py-20">
                             <div className="flex flex-col items-center justify-center">
                               <Search className="h-10 w-10 text-zinc-600 mb-4" />
-                              <p className="text-zinc-400 text-lg font-medium">No leads found.</p>
-                              <p className="text-zinc-500 text-sm mt-1">Try adjusting your filters.</p>
+                              <p className="text-zinc-400 text-lg font-medium">
+                                No leads found.
+                              </p>
+                              <p className="text-zinc-500 text-sm mt-1">
+                                Try adjusting your filters.
+                              </p>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -437,11 +575,20 @@ const LeadsPipeline = () => {
                                   <User2 className="h-5 w-5 text-[#fbbf24]" />
                                 </div>
                                 <div className="min-w-0">
-                                  <div className="font-bold text-sm text-zinc-100 truncate max-w-[180px]" title={lead.name}>
+                                  <div
+                                    className="font-bold text-sm text-zinc-100 truncate max-w-[180px]"
+                                    title={lead.name}
+                                  >
                                     {lead.name}
                                   </div>
                                   <div className="text-xs font-medium mt-0.5">
-                                    <span className={lead.intent >= 70 ? "text-green-400 font-bold" : "text-[#fbbf24]"}>
+                                    <span
+                                      className={
+                                        lead.intent >= 70
+                                          ? "text-green-400 font-bold"
+                                          : "text-[#fbbf24]"
+                                      }
+                                    >
                                       {lead.intent}% Intent Score
                                     </span>
                                   </div>
@@ -450,7 +597,10 @@ const LeadsPipeline = () => {
                             </TableCell>
 
                             <TableCell>
-                              <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm">
+                              <Badge
+                                variant="outline"
+                                className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold capitalize tracking-wide shadow-sm"
+                              >
                                 {lead.platform}
                               </Badge>
                             </TableCell>
@@ -470,14 +620,22 @@ const LeadsPipeline = () => {
                             <TableCell>
                               <Select
                                 value={lead.status}
-                                onValueChange={(v) => updateStatus(lead._id, lead.platform, v)}
+                                onValueChange={(v) =>
+                                  updateStatus(lead._id, lead.platform, v)
+                                }
                               >
-                                <SelectTrigger className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}>
+                                <SelectTrigger
+                                  className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}
+                                >
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl">
                                   {STATUSES.map((s) => (
-                                    <SelectItem key={s} value={s} className="text-xs focus:bg-white/[0.05] focus:text-white cursor-pointer font-medium">
+                                    <SelectItem
+                                      key={s}
+                                      value={s}
+                                      className="text-xs focus:bg-white/[0.05] focus:text-white cursor-pointer font-medium"
+                                    >
                                       {s}
                                     </SelectItem>
                                   ))}
@@ -504,9 +662,13 @@ const LeadsPipeline = () => {
                 {/* --- MOBILE VIEW: CARDS --- */}
                 <div className="grid grid-cols-1 gap-4 md:hidden">
                   {filteredLeads.length === 0 ? (
-                    <div className={`p-10 text-center flex flex-col items-center justify-center ${glassPanelStyle}`}>
+                    <div
+                      className={`p-10 text-center flex flex-col items-center justify-center ${glassPanelStyle}`}
+                    >
                       <Search className="h-8 w-8 text-zinc-600 mb-3" />
-                      <p className="text-zinc-400 font-medium">No leads found.</p>
+                      <p className="text-zinc-400 font-medium">
+                        No leads found.
+                      </p>
                     </div>
                   ) : (
                     filteredLeads.map((lead) => (
@@ -514,8 +676,10 @@ const LeadsPipeline = () => {
                         key={lead._id}
                         className="p-5 space-y-5 bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-lg rounded-[1.5rem] relative overflow-hidden"
                       >
-                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${lead.intent >= 70 ? 'bg-green-500' : 'bg-[#fbbf24]'}`} />
-                        
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 w-1.5 ${lead.intent >= 70 ? "bg-green-500" : "bg-[#fbbf24]"}`}
+                        />
+
                         <div className="flex justify-between items-start pl-2">
                           <div className="space-y-1.5">
                             <div className="text-[10px] font-mono font-bold tracking-widest text-zinc-500">
@@ -525,7 +689,10 @@ const LeadsPipeline = () => {
                               {lead.name}
                             </div>
                           </div>
-                          <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 font-black px-2 py-1 shadow-sm">
+                          <Badge
+                            variant="outline"
+                            className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 font-black px-2 py-1 shadow-sm"
+                          >
                             {lead.intent}%
                           </Badge>
                         </div>
@@ -540,14 +707,22 @@ const LeadsPipeline = () => {
                           </Button>
                           <Select
                             value={lead.status}
-                            onValueChange={(v) => updateStatus(lead._id, lead.platform, v)}
+                            onValueChange={(v) =>
+                              updateStatus(lead._id, lead.platform, v)
+                            }
                           >
-                            <SelectTrigger className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}>
+                            <SelectTrigger
+                              className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
                               {STATUSES.map((s) => (
-                                <SelectItem key={s} value={s} className="text-xs font-medium focus:bg-white/[0.05] focus:text-white">
+                                <SelectItem
+                                  key={s}
+                                  value={s}
+                                  className="text-xs font-medium focus:bg-white/[0.05] focus:text-white"
+                                >
                                   {s}
                                 </SelectItem>
                               ))}
@@ -571,8 +746,13 @@ const LeadsPipeline = () => {
           <DialogContent className="max-w-md bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] p-6 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]">
             <DialogHeader className="mb-6">
               <DialogTitle className="flex items-center justify-between text-white">
-                <span className="text-2xl font-extrabold tracking-tight">Lead Overview</span>
-                <Badge variant="outline" className="font-mono text-xs font-bold tracking-widest text-zinc-500 border-white/[0.1] bg-black/50 px-3 py-1">
+                <span className="text-2xl font-extrabold tracking-tight">
+                  Lead Overview
+                </span>
+                <Badge
+                  variant="outline"
+                  className="font-mono text-xs font-bold tracking-widest text-zinc-500 border-white/[0.1] bg-black/50 px-3 py-1"
+                >
                   {selectedLead?.leadId}
                 </Badge>
               </DialogTitle>
@@ -585,7 +765,9 @@ const LeadsPipeline = () => {
                     <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
                       Intent Score
                     </span>
-                    <span className={`text-4xl font-black ${selectedLead.intent >= 70 ? 'text-green-400' : 'text-[#fbbf24]'}`}>
+                    <span
+                      className={`text-4xl font-black ${selectedLead.intent >= 70 ? "text-green-400" : "text-[#fbbf24]"}`}
+                    >
                       {selectedLead.intent}%
                     </span>
                   </div>
