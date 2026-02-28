@@ -96,6 +96,7 @@ export const redditPosts = pgTable("reddit_posts", {
   text: text("text").notNull(),
   url: text("url").notNull().unique(),
   author: text("author"),
+  pipelineStage: varchar("pipeline_stage", { length: 50 }).default("New"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -143,6 +144,7 @@ export const quoraPosts = pgTable("quora_posts", {
   question: text("question").notNull(),
   url: text("url").notNull().unique(),
   author: text("author"),
+  pipelineStage: varchar("pipeline_stage", { length: 50 }).default("New"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -158,7 +160,7 @@ export const quoraAiReplies = pgTable("quora_ai_replies", {
 });
 
 /* =========================
-   USER SUBSCRIPTIONS (UPDATED FOR CASHFREE)
+   USER SUBSCRIPTIONS (PAYPAL + CASHFREE)
 ========================= */
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -171,10 +173,17 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date").notNull(),
   
+  // Generic Payment Columns
+  paymentGateway: varchar("payment_gateway", { length: 50 }), // 'PAYPAL' or 'CASHFREE'
+  rawResponse: jsonb("raw_response"), // Stores the full JSON response from either provider
+
+  // PayPal Tracking Columns
+  paypalOrderId: varchar("paypal_order_id", { length: 255 }),
+  paypalCaptureId: varchar("paypal_capture_id", { length: 255 }),
+  
   // Cashfree Tracking Columns
-  cashfreeOrderId: varchar("cashfree_order_id", { length: 255 }).notNull(),
+  cashfreeOrderId: varchar("cashfree_order_id", { length: 255 }),
   cashfreeSessionId: varchar("cashfree_session_id", { length: 255 }),
-  cashfreeRawResponse: jsonb("cashfree_raw_response"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

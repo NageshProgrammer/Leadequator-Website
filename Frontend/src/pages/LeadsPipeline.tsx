@@ -86,7 +86,7 @@ const LeadsPipeline = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  // ✅ ENHANCED FILTER STATES
+  // FILTERS
   const [showFilters, setShowFilters] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState("All");
@@ -124,7 +124,8 @@ const LeadsPipeline = () => {
           name: p.author ?? p.userId ?? "Unknown User",
           platform: formattedPlatform,
           intent: 50 + (idx % 40),
-          status: p.replyStatus === "Sent" ? "Contacted" : "New",
+          // 👇 Read from the new DB column. Fallback to "New"
+          status: p.pipelineStage || "New",
           url: p.url || "#",
           createdAt: p.createdAt || new Date().toISOString(),
           postTitle: p.text || p.question || p.body || p.content || "Content unavailable",
@@ -143,11 +144,31 @@ const LeadsPipeline = () => {
     fetchLiveLeads();
   }, [fetchLiveLeads]);
 
-  /* ================= HELPERS & FILTERS ================= */
-  const updateStatus = (id: string, status: string) => {
+  /* ================= DB UPDATE FUNCTION ================= */
+  const updateStatus = async (id: string, platform: string, status: string) => {
+    // 1. Optimistic UI update (update frontend immediately so it feels fast)
     setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, status } : l)));
+
+    // 2. Background DB Update
+    try {
+      const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery/update-stage`;
+      
+      const res = await fetch(API_BASE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: id, platform, stage: status }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save to DB");
+
+      toast({ title: "Pipeline Updated", description: `Lead moved to ${status}` });
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      toast({ title: "Update Failed", description: "Could not save to database.", variant: "destructive" });
+    }
   };
 
+  /* ================= HELPERS & FILTERS ================= */
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(true);
@@ -172,7 +193,6 @@ const LeadsPipeline = () => {
     a.click();
   };
 
-  // ✅ ENHANCED FILTER LOGIC
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
       const searchLower = searchQuery.toLowerCase();
@@ -440,7 +460,8 @@ const LeadsPipeline = () => {
                             <TableCell>
                               <Select
                                 value={lead.status}
-                                onValueChange={(v) => updateStatus(lead._id, v)}
+                                // 👇 Call updateStatus with DB ID and Platform
+                                onValueChange={(v) => updateStatus(lead._id, lead.platform, v)}
                               >
                                 <SelectTrigger className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}>
                                   <SelectValue />
@@ -510,7 +531,8 @@ const LeadsPipeline = () => {
                           </Button>
                           <Select
                             value={lead.status}
-                            onValueChange={(v) => updateStatus(lead._id, v)}
+                            // 👇 Call updateStatus with DB ID and Platform
+                            onValueChange={(v) => updateStatus(lead._id, lead.platform, v)}
                           >
                             <SelectTrigger className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}>
                               <SelectValue />
