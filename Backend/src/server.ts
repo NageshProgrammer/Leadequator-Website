@@ -37,7 +37,8 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
+    // 👇 Added explicit types to origin and callback
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error("CORS blocked by policy"));
