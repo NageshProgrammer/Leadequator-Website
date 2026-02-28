@@ -86,7 +86,6 @@ const LeadsPipeline = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  // ✅ ENHANCED FILTER STATES
   const [showFilters, setShowFilters] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState("All");
@@ -101,10 +100,19 @@ const LeadsPipeline = () => {
     try {
       const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
 
+      // ✅ Added Cache-Control headers to ensure we fetch fresh data from the DB
+      const headers = {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      };
+
       const [redditRes, quoraRes] = await Promise.all([
-        fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`),
-        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`),
+        fetch(`${API_BASE}/reddit/posts?userId=${encodeURIComponent(user.id)}`, { headers }),
+        fetch(`${API_BASE}/quora/posts?userId=${encodeURIComponent(user.id)}`, { headers }),
       ]);
+
+      if (!redditRes.ok || !quoraRes.ok) throw new Error("Failed to fetch leads");
 
       const redditData = await redditRes.json();
       const quoraData = await quoraRes.json();
@@ -124,7 +132,7 @@ const LeadsPipeline = () => {
           name: p.author ?? p.userId ?? "Unknown User",
           platform: formattedPlatform,
           intent: 50 + (idx % 40),
-          // 👇 Read from the new DB column. Fallback to "New"
+          // ✅ Ensures we use the DB's pipelineStage, fallback to "New"
           status: p.pipelineStage || "New",
           url: p.url || "#",
           createdAt: p.createdAt || new Date().toISOString(),
@@ -135,10 +143,11 @@ const LeadsPipeline = () => {
       setLeads(mapped);
     } catch (err) {
       console.error("Pipeline Sync Error:", err);
+      toast({ title: "Sync Failed", description: "Could not fetch latest pipeline data.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [isLoaded, user?.id]);
+  }, [isLoaded, user?.id, toast]);
 
   useEffect(() => {
     fetchLiveLeads();
@@ -146,12 +155,14 @@ const LeadsPipeline = () => {
 
   /* ================= DB UPDATE FUNCTION ================= */
   const updateStatus = async (id: string, platform: string, status: string) => {
-    // 1. Optimistic UI update (update frontend immediately so it feels fast)
+    // ✅ Store previous state for rollback
+    const previousLeads = [...leads];
+    
+    // 1. Optimistic UI update
     setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, status } : l)));
 
     // 2. Background DB Update
     try {
-      // 👇 Uses the new, non-colliding URL
       const UPDATE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/pipeline/update-stage`;
       
       const res = await fetch(UPDATE_URL, {
@@ -165,7 +176,9 @@ const LeadsPipeline = () => {
       toast({ title: "Pipeline Updated", description: `Lead moved to ${status}` });
     } catch (error) {
       console.error("Failed to update status:", error);
-      toast({ title: "Update Failed", description: "Could not save to database.", variant: "destructive" });
+      // ✅ Rollback UI if the API call fails
+      setLeads(previousLeads);
+      toast({ title: "Update Failed", description: "Could not save to database. Reverting change.", variant: "destructive" });
     }
   };
 
@@ -194,7 +207,6 @@ const LeadsPipeline = () => {
     a.click();
   };
 
-  // ✅ ENHANCED FILTER LOGIC
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
       const searchLower = searchQuery.toLowerCase();
@@ -286,7 +298,6 @@ const LeadsPipeline = () => {
               </div>
 
               <div className="space-y-8">
-                {/* Search */}
                 <div>
                   <label className={filterLabelStyle}>Search Lead</label>
                   <div className="relative">
@@ -300,7 +311,6 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* Intent Slider/Select */}
                 <div>
                   <label className={filterLabelStyle}>Minimum Intent Score</label>
                   <Select value={minIntent} onValueChange={setMinIntent}>
@@ -319,7 +329,6 @@ const LeadsPipeline = () => {
                   </Select>
                 </div>
 
-                {/* Pipeline Status */}
                 <div>
                   <label className={filterLabelStyle}>Pipeline Stage</label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -331,16 +340,17 @@ const LeadsPipeline = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl">
                       <SelectItem value="All" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">All Stages</SelectItem>
-                      {STATUSES.map((s) => (
-                        <SelectItem key={s} value={s} className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">
-                          {s}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="New" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">New</SelectItem>
+                      <SelectItem value="Contacted" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Contacted</SelectItem>
+                      <SelectItem value="Qualified" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Qualified</SelectItem>
+                      <SelectItem value="Demo Scheduled" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Demo Scheduled</SelectItem>
+                      <SelectItem value="Negotiating" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Negotiating</SelectItem>
+                      <SelectItem value="Closed Won" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Closed Won</SelectItem>
+                      <SelectItem value="Closed Lost" className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer">Closed Lost</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Platform Pills */}
                 <div>
                   <label className={filterLabelStyle}>Lead Source</label>
                   <div className="flex flex-wrap gap-2">
@@ -356,7 +366,6 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* Clear Button */}
                 <div className="pt-4 border-t border-white/[0.08]">
                   <Button 
                     variant="ghost" 
@@ -373,7 +382,6 @@ const LeadsPipeline = () => {
           {/* ================= MAIN RESULTS AREA ================= */}
           <div className="flex-1 min-w-0 w-full animate-in fade-in duration-700">
             
-            {/* Results Header */}
             <div className="flex items-center justify-between mb-4 px-2">
               <span className="text-zinc-400 font-medium">
                 Found <strong className="text-white">{filteredLeads.length}</strong> leads in pipeline
@@ -462,7 +470,6 @@ const LeadsPipeline = () => {
                             <TableCell>
                               <Select
                                 value={lead.status}
-                                // 👇 Call updateStatus with DB ID and Platform
                                 onValueChange={(v) => updateStatus(lead._id, lead.platform, v)}
                               >
                                 <SelectTrigger className={`w-[150px] h-9 text-xs font-semibold rounded-xl transition-all ${getStatusColor(lead.status)}`}>
@@ -533,7 +540,6 @@ const LeadsPipeline = () => {
                           </Button>
                           <Select
                             value={lead.status}
-                            // 👇 Call updateStatus with DB ID and Platform
                             onValueChange={(v) => updateStatus(lead._id, lead.platform, v)}
                           >
                             <SelectTrigger className={`flex-1 h-10 text-xs font-bold rounded-xl ${getStatusColor(lead.status)}`}>
@@ -574,7 +580,6 @@ const LeadsPipeline = () => {
 
             {selectedLead && (
               <div className="space-y-6">
-                {/* 1. Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col items-start justify-center p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] min-h-[100px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
                     <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
@@ -594,7 +599,6 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* 2. Post Context */}
                 <div className="space-y-3">
                   <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
                     Post Context
@@ -607,7 +611,6 @@ const LeadsPipeline = () => {
                 </div>
 
                 <div className="grid grid-cols-1 gap-5">
-                  {/* 3. Username Field */}
                   <div className="space-y-3">
                     <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
                       Username / Target
@@ -632,7 +635,6 @@ const LeadsPipeline = () => {
                     </div>
                   </div>
 
-                  {/* 4. Source URL Field */}
                   <div className="space-y-3">
                     <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
                       Source Link
@@ -652,7 +654,6 @@ const LeadsPipeline = () => {
                   </div>
                 </div>
 
-                {/* 5. Action Button */}
                 <div className="pt-4">
                   <Button className="w-full h-14 text-lg font-bold bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]">
                     Engage Target on {selectedLead.platform}

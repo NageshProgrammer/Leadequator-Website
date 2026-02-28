@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-// ✅ sql imported for incrementing credits securely
 import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
@@ -37,7 +36,6 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    // 👇 Added explicit types to origin and callback
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -68,14 +66,19 @@ app.put("/api/pipeline/update-stage", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields." });
     }
 
-    if (platform.toLowerCase() === "reddit") {
+    const platformLower = platform.toLowerCase();
+
+    // ✅ Added strict platform checks
+    if (platformLower === "reddit") {
       await db.update(redditPosts)
         .set({ pipelineStage: stage })
         .where(eq(redditPosts.id, postId));
-    } else if (platform.toLowerCase() === "quora") {
+    } else if (platformLower === "quora") {
       await db.update(quoraPosts)
         .set({ pipelineStage: stage })
         .where(eq(quoraPosts.id, postId));
+    } else {
+      return res.status(400).json({ error: "Invalid platform specified." });
     }
 
     res.json({ success: true, message: "Pipeline stage updated." });
@@ -94,13 +97,11 @@ app.use("/api/lead-discovery", leadDiscoveryRoutes);
 /* ===============================
    CRON JOBS (DAILY EXPIRATION CHECK)
 ================================ */
-// Runs every day at midnight (00:00) server time
 cron.schedule("0 0 * * *", async () => {
   console.log("⏳ Running daily subscription expiration check...");
   try {
     const now = new Date();
     
-    // Find active subscriptions where the endDate has passed
     await db.update(userSubscriptions)
       .set({ status: "EXPIRED" })
       .where(
@@ -185,7 +186,7 @@ app.post("/api/verify-paypal", async (req, res) => {
         })
         .where(eq(usersTable.id, userId));
 
-      console.log(`✅ User ${userId} upgraded to ${planName} via PayPal. Added ${creditBoost} credits.`);
+      console.log(`✅ User ${userId} upgraded to ${planName} via PayPal.`);
       return res.status(200).json({ success: true, message: "Payment verified." });
     } else {
       return res.status(400).json({ success: false, message: "Payment not completed on PayPal's end." });
@@ -205,7 +206,6 @@ const getCashfreeBaseUrl = () => {
     : "https://sandbox.cashfree.com/pg";
 };
 
-// 1. Create Order Session
 app.post("/api/create-cashfree-order", async (req, res) => {
   try {
     const { userId, userEmail, userPhone, planName, amount, currency } = req.body;
@@ -246,7 +246,6 @@ app.post("/api/create-cashfree-order", async (req, res) => {
   }
 });
 
-// 2. Verify Payment
 app.post("/api/verify-cashfree", async (req, res) => {
   const { order_id, userId, planName, billingCycle, currency } = req.body;
 
@@ -303,7 +302,7 @@ app.post("/api/verify-cashfree", async (req, res) => {
         })
         .where(eq(usersTable.id, userId));
 
-      console.log(`✅ User ${userId} successfully upgraded to ${planName} via Cashfree. Added ${creditBoost} credits.`);
+      console.log(`✅ User ${userId} successfully upgraded to ${planName} via Cashfree.`);
       return res.status(200).json({ success: true, message: "Payment verified and subscription saved." });
     } else {
       return res.status(400).json({ success: false, message: "Payment not completed." });

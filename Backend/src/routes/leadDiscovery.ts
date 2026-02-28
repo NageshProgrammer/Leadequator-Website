@@ -288,6 +288,7 @@ router.get("/reddit/posts", async (req: Request, res: Response) => {
         text: redditPosts.text,
         url: redditPosts.url,
         author: redditPosts.author,
+        pipelineStage: redditPosts.pipelineStage, // ✅ ADDED THIS LINE
         createdAt: redditPosts.createdAt,
         generatedReply: redditAiReplies.generatedReply,
       })
@@ -328,6 +329,7 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
         author: quoraPosts.author,
         question: quoraPosts.question,
         url: quoraPosts.url,
+        pipelineStage: quoraPosts.pipelineStage, // ✅ ADDED THIS LINE
         createdAt: quoraPosts.createdAt,
         replyOption1: quoraAiReplies.replyOption1,
         replyOption2: quoraAiReplies.replyOption2,
