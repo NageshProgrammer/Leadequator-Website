@@ -3,7 +3,7 @@ import { Outlet, Link } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react"; 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, Radio, Users, FileText, Menu, Home, ArrowUpCircle, X, UserCog2 } from "lucide-react";
+import { LayoutDashboard, Radio, Users, FileText, Menu, Home, ArrowUpCircle, X, UserCog2, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 
@@ -20,6 +20,7 @@ const DashboardLayoutContent = () => {
     { icon: Home, label: "Home", path: "/" },
     { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
     { icon: Radio, label: "Monitor Stream", path: "/monitor-stream" },
+    { icon: Search, label: "Buyers Discovery", path: "/discovery" },
     { icon: Users, label: "Leads & Tracking", path: "/leads-pipeline" },
     { icon: FileText, label: "Reports", path: "/reports" },
     { icon: UserCog2, label: "User Profile", path: "/user-profile" },

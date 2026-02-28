@@ -189,7 +189,7 @@ const Reports = () => {
   };
 
   /* ================= UI REUSABLES ================= */
-  const glassPanelStyle = "bg-[#050505]/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
+  const glassPanelStyle = "bg-[#050505]/30 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
   const filterLabelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-3 block";
   const selectTriggerStyle = "w-full bg-white/[0.02] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-12";
   const selectContentStyle = "bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl";
