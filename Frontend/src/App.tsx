@@ -37,6 +37,7 @@ import RefundPolicy from "./pages/Refund";
 import ShippingPolicy from "./pages/Shipping";
 import CongestedPricing from "./[components]/plansection";
 import ComingSoon from "./pages/comingsoon";
+import LeadGeneration from "./pages/LeadGeneration";
 
 const queryClient = new QueryClient();
 
@@ -126,7 +127,8 @@ export default function App() {
                   <Route path="/automations-builder" element={<AutomationsBuilder />} />
                   <Route path="/competitor-watch" element={<CompetitorWatch />} />
                   <Route path="/reports" element={<Reports />} />
-                  <Route path="/user-profile" element={<SettingsIntegrations />} />
+                  <Route path="/user-profile" element={<SettingsIntegrations />} />                  
+                <Route path="/discovery" element={<LeadGeneration />} />
                   <Route path="/pricings" element={<CongestedPricing />} />
                 </Route>
 
