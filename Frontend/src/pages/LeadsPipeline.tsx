@@ -86,7 +86,7 @@ const LeadsPipeline = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  // FILTERS
+  // ✅ ENHANCED FILTER STATES
   const [showFilters, setShowFilters] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState("All");
@@ -151,9 +151,10 @@ const LeadsPipeline = () => {
 
     // 2. Background DB Update
     try {
-      const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery/update-stage`;
+      // 👇 Uses the new, non-colliding URL
+      const UPDATE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/pipeline/update-stage`;
       
-      const res = await fetch(API_BASE, {
+      const res = await fetch(UPDATE_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId: id, platform, stage: status }),
@@ -193,6 +194,7 @@ const LeadsPipeline = () => {
     a.click();
   };
 
+  // ✅ ENHANCED FILTER LOGIC
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
       const searchLower = searchQuery.toLowerCase();

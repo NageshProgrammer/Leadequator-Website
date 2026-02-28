@@ -18,7 +18,9 @@ import {
   buyerKeywords,
   platformsToMonitor,
   usersTable,
-  userSubscriptions, 
+  userSubscriptions,
+  redditPosts, 
+  quoraPosts,  
 } from "./config/schema.js";
 
 const app = express();
@@ -51,6 +53,35 @@ app.use(express.json());
 ================================ */
 app.get("/", (_req, res) => {
   res.json({ status: "Backend running safely 🚀" });
+});
+
+/* ===============================
+   UPDATE LEAD PIPELINE STAGE 
+   (Must be BEFORE the lead-discovery router to prevent 404s)
+================================ */
+app.put("/api/pipeline/update-stage", async (req, res) => {
+  try {
+    const { postId, platform, stage } = req.body;
+
+    if (!postId || !platform || !stage) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    if (platform.toLowerCase() === "reddit") {
+      await db.update(redditPosts)
+        .set({ pipelineStage: stage })
+        .where(eq(redditPosts.id, postId));
+    } else if (platform.toLowerCase() === "quora") {
+      await db.update(quoraPosts)
+        .set({ pipelineStage: stage })
+        .where(eq(quoraPosts.id, postId));
+    }
+
+    res.json({ success: true, message: "Pipeline stage updated." });
+  } catch (err: any) {
+    console.error("Update Stage Error:", err.message || err);
+    res.status(500).json({ error: "Failed to update pipeline stage" });
+  }
 });
 
 /* ===============================
@@ -148,7 +179,6 @@ app.post("/api/verify-paypal", async (req, res) => {
         .set({ 
           plan: planName, 
           planCycle: billingCycle, 
-          // ✅ SECURE ADDITION: Adds purchased credits to their existing balance
           credits: sql`${usersTable.credits} + ${creditBoost}`, 
           updatedAt: new Date() 
         })
@@ -267,7 +297,6 @@ app.post("/api/verify-cashfree", async (req, res) => {
         .set({
           plan: planName,
           planCycle: billingCycle,
-          // ✅ SECURE ADDITION: Adds purchased credits to their existing balance
           credits: sql`${usersTable.credits} + ${creditBoost}`, 
           updatedAt: new Date(),
         })
