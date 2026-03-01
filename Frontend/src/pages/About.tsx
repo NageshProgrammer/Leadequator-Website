@@ -85,27 +85,37 @@ const About = () => {
           <h2 className="text-4xl md:text-5xl font-extrabold text-center mb-16 tracking-tight">
             Leadership <span className="text-[#fbbf24]">Team</span>
           </h2>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                name: "Alex Chen",
-                role: "CEO & Co-Founder",
-                bio: "Former VP of Growth at Series C SaaS. Built demand gen engine that scaled to $50M ARR.",
+                name: "Jatan Wani",
+                role: "CEO & Founder",
+                bio: "2+ years in Sales & 3 years in Digital Marketing. Proven lead generation & deal-closing ability Top 4 Global Startup Pitch Finalist (Biz Quotient × TiE Pune)",
               },
               {
-                name: "Sarah Martinez",
+                name: "Nasur ul Zain Azran",
                 role: "CTO & Co-Founder",
-                bio: "Ex-Google ML Engineer. Led NLP and sentiment analysis for social products at scale.",
+                bio: "6+ years building scalable backend, AI & automation  systems Hands-on with LLMs, RAG pipelines & AI agents,Proven zero-to-one technical founder",
               },
               {
-                name: "Mike Johnson",
-                role: "VP of Product",
-                bio: "15 years building enterprise B2B tools. Previously PM at Salesforce and HubSpot.",
+                name: "Nagesh Yalparatte",
+                role: "AI & Backend Engineer",
+                bio: "3+ years in AI and backend development. Architect of our scalable, secure infrastructure and AI pipelines. Ensures our platform runs smoothly and reliably for enterprise customers.",
               },
               {
-                name: "Emma Lee",
-                role: "VP of Customer Success",
-                bio: "Former agency leader. Scaled customer success org from 5 to 50 people at last startup.",
+                name: "Narayan Malvankar",
+                role: "Full Stack Developer(React)",
+                bio: "5+ years in full stack development. Built our responsive dashboard and user experience from the ground up, and seamless integrations with CRM and social platforms.",
+              },
+              {
+                name: "Rudra Swant",
+                role: "AI Full Stack Engineer",
+                bio: "AI Engineer with 2+ years of experience in developing and fine-tuning machine learning models. Contributed to the development of our AI algorithms that generate human-like replies, ensuring they are contextually relevant and effective in engaging prospects.",
+              },
+              {
+                name: "Jacob",
+                role: "Buisness & Marketing Strategist",
+                bio: "Marketing and growth strategist with 5+ years of experience in scaling SaaS products. Specializes in go-to-market strategies, customer acquisition, and driving revenue growth for AI-powered platforms.",
               },
             ].map((member, index) => (
               <div
