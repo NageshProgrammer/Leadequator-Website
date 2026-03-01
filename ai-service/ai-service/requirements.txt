@@ -13,3 +13,8 @@ requests
 mistralai
 playwright
 psycopg2-binary
+supabase
+openai
+pandas
+asyncpg
+beautifulsoup4
