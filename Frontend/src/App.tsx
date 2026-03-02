@@ -38,6 +38,8 @@ import ShippingPolicy from "./pages/Shipping";
 import CongestedPricing from "./[components]/plansection";
 import ComingSoon from "./pages/comingsoon";
 import LeadGeneration from "./pages/LeadGeneration";
+import EventsPage from "./pages/Event";
+import ScrollToTop from "./[components]/scrollTop";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,7 @@ export default function App() {
             <Toaster />
             <Sonner />
             <BrowserRouter>
+            <ScrollToTop />
               <Routes>
                 {/* ================= PUBLIC ROUTES ================= */}
                 <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
@@ -76,6 +79,7 @@ export default function App() {
                 <Route path="/coming-soon" element={<ComingSoon />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/lead-discovery" element={<LeadDiscovery />} />
+                <Route path="/events" element={<PublicLayout><EventsPage /></PublicLayout>} />
 
                 {/* ================= AUTH ROUTES ================= */}
                 <Route
@@ -128,7 +132,7 @@ export default function App() {
                   <Route path="/competitor-watch" element={<CompetitorWatch />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/user-profile" element={<SettingsIntegrations />} />                  
-                <Route path="/discovery" element={<LeadGeneration />} />
+                  <Route path="/discovery" element={<LeadGeneration />} />
                   <Route path="/pricings" element={<CongestedPricing />} />
                 </Route>
 

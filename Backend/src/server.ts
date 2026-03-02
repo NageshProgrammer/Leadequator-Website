@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+// ✅ sql imported for incrementing credits securely
 import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
@@ -19,7 +20,8 @@ import {
   usersTable,
   userSubscriptions,
   redditPosts, 
-  quoraPosts,  
+  quoraPosts,
+  eventWaitlist, // ✅ Added new table import here
 } from "./config/schema.js";
 
 const app = express();
@@ -55,8 +57,37 @@ app.get("/", (_req, res) => {
 });
 
 /* ===============================
+   EVENTS WAITLIST REGISTRATION
+================================ */
+app.post("/api/events/waitlist", async (req, res) => {
+  try {
+    const { eventId, name, email, company, role } = req.body;
+    
+    // Basic validation
+    if (!eventId || !name || !email) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Insert into DB
+    await db.insert(eventWaitlist).values({
+      eventId,
+      name,
+      email,
+      company: company || "",
+      jobTitle: role || ""
+    });
+
+    console.log(`✅ New waitlist entry for event ${eventId}: ${email}`);
+    res.json({ success: true, message: "Added to waitlist successfully" });
+
+  } catch (error: any) {
+    console.error("Waitlist Error:", error.message || error);
+    res.status(500).json({ error: "Failed to join waitlist" });
+  }
+});
+
+/* ===============================
    UPDATE LEAD PIPELINE STAGE 
-   (Must be BEFORE the lead-discovery router to prevent 404s)
 ================================ */
 app.put("/api/pipeline/update-stage", async (req, res) => {
   try {
@@ -68,7 +99,6 @@ app.put("/api/pipeline/update-stage", async (req, res) => {
 
     const platformLower = platform.toLowerCase();
 
-    // ✅ Added strict platform checks
     if (platformLower === "reddit") {
       await db.update(redditPosts)
         .set({ pipelineStage: stage })

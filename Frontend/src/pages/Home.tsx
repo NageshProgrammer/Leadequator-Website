@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { PointerHighlightDemo } from "@/[components]/pointer";
 import { CardHoverEffectDemo } from "@/[components]/revenuecard";
 import { TextGenerateEffectDemo } from "@/[components]/text-generate";
@@ -11,7 +12,7 @@ import { MorphingText } from "@/components/ui/morphing-text";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { ShineBorder } from "@/components/ui/shine-border";
 import { SparklesText } from "@/components/ui/sparkles-text";
-import { motion } from "motion/react"; 
+import { motion, AnimatePresence } from "framer-motion"; 
 import {
   CheckCircle,
   MousePointerClick,
@@ -21,10 +22,25 @@ import {
   Ban,
   Infinity,
   Shield,
+  Calendar,
+  X,
+  ArrowRight
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Home = () => {
+  // State for the Events Popup
+  const [showEventPopup, setShowEventPopup] = useState(false);
+
+  // Trigger the popup slightly after the page loads for a better UX
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowEventPopup(true);
+    }, 2500); // 2.5 seconds delay
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Data for Value Section
   const valueItems = [
     {
@@ -54,9 +70,57 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black overflow-x-hidden">
+    <div className="min-h-screen bg-black overflow-x-hidden relative">
       <ScrollProgress className="top-[65px]" />
       
+      {/* =========================================================
+          EVENTS PROMO POPUP (Floating Bottom Right)
+      ========================================================= */}
+      <AnimatePresence>
+        {showEventPopup && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9, filter: "blur(4px)" }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed bottom-6 right-6 z-50 w-[calc(100%-3rem)] md:w-full max-w-sm"
+          >
+            <div className="relative p-6 bg-[#050505]/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl overflow-hidden group">
+              {/* Subtle animated glow inside the popup */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-colors duration-500" />
+              
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowEventPopup(false)}
+                className="absolute top-3 right-3 h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/[0.1] rounded-full z-10"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+
+              <div className="flex items-start gap-4 relative z-10">
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)] shrink-0">
+                  <Calendar className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-base mb-1 tracking-tight">
+                    Upcoming Live Events
+                  </h3>
+                  <p className="text-zinc-400 text-xs leading-relaxed mb-4">
+                    Join our upcoming events to learn how top teams use AI to scale organic outbound.
+                  </p>
+                  <Link to="/events" onClick={() => setShowEventPopup(false)}>
+                    <Button size="sm" className="w-full bg-amber-500 text-black hover:bg-amber-400 font-bold rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.2)] transition-all">
+                      View Schedule <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* =========================================================
           HERO SECTION
       ========================================================= */}
@@ -76,7 +140,6 @@ const Home = () => {
             times: [0, 0.2, 0.8, 1], 
             ease: "easeInOut" 
           }}
-          // CHANGED: Made gradient significantly lighter (White -> Zinc-300 -> Zinc-400)
           className="absolute top-1/2 left-1/2 text-[12vw] font-black bg-gradient-to-br from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
         >
           LEADEQUATOR

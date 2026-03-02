@@ -187,3 +187,16 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+/* =========================
+   EVENT WAITLIST
+========================= */
+export const eventWaitlist = pgTable("event_waitlist", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  eventId: varchar("event_id", { length: 255 }).notNull(), // Stores the event ID (e.g., 'evt_1')
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  company: varchar("company", { length: 255 }).notNull(),
+  jobTitle: varchar("job_title", { length: 255 }).notNull(), // Maps to formData.role
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
