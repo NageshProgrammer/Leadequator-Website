@@ -14,7 +14,8 @@ import {
   Building2,
   Mail,
   User,
-  BellRing
+  BellRing,
+  Phone // 👇 Added Phone Icon
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,12 +121,11 @@ const modalVariants = {
 export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   
-  // Form State
-  const [formData, setFormData] = useState({ name: "", email: "", company: "", role: "" });
+  // 👇 Added phone to form state
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", role: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     if (selectedEvent) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
@@ -135,7 +135,7 @@ export default function EventsPage() {
   const handleOpenModal = (event: Event) => {
     setSelectedEvent(event);
     setIsSuccess(false);
-    setFormData({ name: "", email: "", company: "", role: "" });
+    setFormData({ name: "", email: "", phone: "", company: "", role: "" });
   };
 
   const handleCloseModal = () => {
@@ -160,6 +160,7 @@ export default function EventsPage() {
           eventId: selectedEvent.id,
           name: formData.name,
           email: formData.email,
+          phone: formData.phone, // 👇 Added phone to payload
           company: formData.company,
           role: formData.role
         }),
@@ -172,13 +173,11 @@ export default function EventsPage() {
       setIsSuccess(true);
     } catch (error) {
       console.error("Waitlist submission error:", error);
-      // Optional: Add a toast notification here to inform the user it failed
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Reusable Styles
   const glassCardStyle = "bg-[#050505]/40 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]";
   const inputStyle = "pl-10 bg-white/[0.02] border-white/[0.08] text-white focus-visible:ring-[#fbbf24]/30 focus-visible:border-[#fbbf24]/50 rounded-xl h-12 transition-all placeholder:text-zinc-600";
   const labelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-2 block ml-1";
@@ -186,13 +185,11 @@ export default function EventsPage() {
   return (
     <div className="min-h-[90vh] pt-14 pb-24 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
       
-      {/* --- AMBIENT BACKGROUND GLOWS --- */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/[0.04] rounded-full blur-[120px] pointer-events-none -z-10" />
       <div className="absolute top-[20%] -left-[10%] w-[400px] h-[400px] bg-amber-600/[0.03] rounded-full blur-[100px] pointer-events-none -z-10" />
 
       <div className="container mx-auto px-4 max-w-[1200px] relative z-10 pt-8 md:pt-12">
         
-        {/* --- HEADER SECTION --- */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -211,7 +208,6 @@ export default function EventsPage() {
           </p>
         </motion.div>
 
-        {/* --- EVENTS GRID --- */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -224,16 +220,13 @@ export default function EventsPage() {
               variants={itemVariants}
               className={`group flex flex-col sm:flex-row gap-6 p-6 sm:p-8 ${glassCardStyle} hover:bg-white/[0.02] hover:border-white/[0.15] hover:shadow-[0_15px_40px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:-translate-y-1 transition-all duration-500 overflow-hidden relative`}
             >
-              {/* Glow Effect on Hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#fbbf24]/0 to-[#fbbf24]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-              {/* Left Date Box - TBA Variant */}
               <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-center sm:justify-center gap-4 sm:gap-0 bg-black/40 border border-white/[0.05] rounded-2xl p-4 sm:w-24 sm:h-24 shadow-inner group-hover:border-[#fbbf24]/30 transition-colors duration-500">
                 <span className="text-[#fbbf24] font-black tracking-widest text-[10px] uppercase mb-0.5">Date</span>
                 <span className="text-white font-extrabold text-2xl sm:text-3xl leading-none">TBA</span>
               </div>
 
-              {/* Right Content */}
               <div className="flex-1 flex flex-col">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold text-[10px] uppercase tracking-widest">
@@ -276,9 +269,6 @@ export default function EventsPage() {
         </motion.div>
       </div>
 
-      {/* ==========================================
-          REGISTRATION MODAL OVERLAY
-      ========================================== */}
       <AnimatePresence>
         {selectedEvent && (
           <motion.div 
@@ -287,7 +277,6 @@ export default function EventsPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Backdrop */}
             <motion.div 
               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
               initial={{ opacity: 0 }}
@@ -296,17 +285,16 @@ export default function EventsPage() {
               onClick={handleCloseModal}
             />
 
-            {/* Modal Box */}
             <motion.div 
               variants={modalVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="relative w-full max-w-lg bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2.5rem] overflow-hidden"
-              onClick={(e) => e.stopPropagation()} // Prevent clicks inside modal from closing it
+              // 👇 Increased max-width to accommodate extra field nicely
+              className="relative w-full max-w-xl bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2.5rem] overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
+              onClick={(e) => e.stopPropagation()} 
             >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 md:px-8 pb-4 border-b border-white/[0.08] bg-black/20">
+              <div className="flex items-center justify-between p-6 md:px-8 pb-4 border-b border-white/[0.08] bg-black/20 sticky top-0 z-10 backdrop-blur-md">
                 <div>
                   <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 text-[10px] uppercase tracking-widest mb-2">
                     {selectedEvent.category} Waitlist
@@ -325,10 +313,8 @@ export default function EventsPage() {
                 </Button>
               </div>
 
-              {/* Modal Body */}
               <div className="p-6 md:p-8">
                 {isSuccess ? (
-                  /* Success State */
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -349,17 +335,16 @@ export default function EventsPage() {
                     </Button>
                   </motion.div>
                 ) : (
-                  /* Registration Form */
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     
-                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-[#fbbf24]/20 mb-10">
+                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-[#fbbf24]/20 mb-8">
                       <BellRing className="w-5 h-5 text-[#fbbf24] mt-0.5 shrink-0 animate-pulse" />
                       <div className="text-sm font-medium text-zinc-300 leading-relaxed">
                         Dates are currently being finalized. Join the priority waitlist to guarantee your spot before public registration opens.
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1.5">
                         <Label className={labelStyle}>Full Name</Label>
                         <div className="relative">
@@ -390,7 +375,22 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* 👇 Phone Number Field Added Here */}
+                    <div className="space-y-1.5">
+                        <Label className={labelStyle}>Phone Number <span className="text-zinc-600 normal-case tracking-normal ml-1">(Optional)</span></Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <Input 
+                            type="tel"
+                            placeholder="+1 (555) 000-0000" 
+                            className={inputStyle}
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1.5">
                         <Label className={labelStyle}>Company</Label>
                         <div className="relative">
@@ -421,7 +421,7 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    <div className="pt-6 mt-2 border-t border-white/[0.08]">
+                    <div className="pt-6 mt-4 border-t border-white/[0.08]">
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}

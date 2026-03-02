@@ -61,9 +61,9 @@ app.get("/", (_req, res) => {
 ================================ */
 app.post("/api/events/waitlist", async (req, res) => {
   try {
-    const { eventId, name, email, company, role } = req.body;
+    // 👇 Destructure 'phone' from req.body
+    const { eventId, name, email, phone, company, role } = req.body;
     
-    // Basic validation
     if (!eventId || !name || !email) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -73,6 +73,7 @@ app.post("/api/events/waitlist", async (req, res) => {
       eventId,
       name,
       email,
+      phoneNumber: phone || "", 
       company: company || "",
       jobTitle: role || ""
     });
