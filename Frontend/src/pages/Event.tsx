@@ -15,7 +15,8 @@ import {
   Mail,
   User,
   BellRing,
-  Phone // 👇 Added Phone Icon
+  Phone,
+  ShieldCheck // 👇 Added this new icon
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,7 @@ const modalVariants = {
 export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   
-  // 👇 Added phone to form state
+  // Form State
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", role: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -160,7 +161,7 @@ export default function EventsPage() {
           eventId: selectedEvent.id,
           name: formData.name,
           email: formData.email,
-          phone: formData.phone, // 👇 Added phone to payload
+          phone: formData.phone,
           company: formData.company,
           role: formData.role
         }),
@@ -190,6 +191,7 @@ export default function EventsPage() {
 
       <div className="container mx-auto px-4 max-w-[1200px] relative z-10 pt-8 md:pt-12">
         
+        {/* --- HEADER SECTION --- */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -203,11 +205,19 @@ export default function EventsPage() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             Upcoming <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.2)]">Events</span>
           </h1>
-          <p className="text-zinc-400 text-lg md:text-xl font-medium leading-relaxed">
+          <p className="text-zinc-400 text-lg md:text-xl font-medium leading-relaxed mb-6">
             Join the waitlist for our exclusive masterclasses, webinars, and networking events to master AI-driven growth.
           </p>
+
+          {/* 👇 ADDED: Informative Disclaimer Badge */}
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/[0.05] text-sm text-zinc-500 font-bold shadow-sm">
+            <ShieldCheck className="w-4 h-4 text-[#fbbf24]" />
+            100% Informative Sessions — No promotions or sales pitches.
+          </div>
+
         </motion.div>
 
+        {/* --- EVENTS GRID --- */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -290,7 +300,6 @@ export default function EventsPage() {
               initial="hidden"
               animate="visible"
               exit="exit"
-              // 👇 Increased max-width to accommodate extra field nicely
               className="relative w-full max-w-xl bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2.5rem] overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
               onClick={(e) => e.stopPropagation()} 
             >
@@ -375,12 +384,12 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    {/* 👇 Phone Number Field Added Here */}
                     <div className="space-y-1.5">
-                        <Label className={labelStyle}>Phone Number <span className="text-zinc-600 normal-case tracking-normal ml-1">(Optional)</span></Label>
+                        <Label className={labelStyle}>Phone Number</Label>
                         <div className="relative">
                           <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                           <Input 
+                            required
                             type="tel"
                             placeholder="+1 (555) 000-0000" 
                             className={inputStyle}

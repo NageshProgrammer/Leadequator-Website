@@ -64,7 +64,7 @@ app.post("/api/events/waitlist", async (req, res) => {
     // 👇 Destructure 'phone' from req.body
     const { eventId, name, email, phone, company, role } = req.body;
     
-    if (!eventId || !name || !email) {
+    if (!eventId || !name || !email || !phone) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
