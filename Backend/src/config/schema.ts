@@ -196,8 +196,8 @@ export const eventWaitlist = pgTable("event_waitlist", {
   eventId: varchar("event_id", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
-  phoneNumber: varchar("phone_number", { length: 50 }), 
+  phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
   company: varchar("company", { length: 255 }).notNull(),
-  jobTitle: varchar("job_title", { length: 255 }).notNull(),
+  industry: varchar("industry", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

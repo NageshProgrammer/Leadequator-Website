@@ -61,10 +61,10 @@ app.get("/", (_req, res) => {
 ================================ */
 app.post("/api/events/waitlist", async (req, res) => {
   try {
-    // 👇 Destructure 'phone' from req.body
-    const { eventId, name, email, phone, company, role } = req.body;
+    // 👇 Swapped 'role' for 'industry'
+    const { eventId, name, email, phone, company, industry } = req.body;
     
-    if (!eventId || !name || !email || !phone) {
+    if (!eventId || !name || !email || !phone || !company || !industry) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -73,12 +73,12 @@ app.post("/api/events/waitlist", async (req, res) => {
       eventId,
       name,
       email,
-      phoneNumber: phone || "", 
-      company: company || "",
-      jobTitle: role || ""
+      phoneNumber: phone, 
+      company,
+      industry
     });
 
-    console.log(`✅ New waitlist entry for event ${eventId}: ${email}`);
+    console.log(`✅ New waitlist entry for event ${eventId}: ${email} (${industry})`);
     res.json({ success: true, message: "Added to waitlist successfully" });
 
   } catch (error: any) {

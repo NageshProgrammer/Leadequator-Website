@@ -1,83 +1,182 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Users, 
   ArrowRight, 
   X, 
   CheckCircle2, 
   Sparkles, 
-  Video, 
   Loader2,
   Building2,
   Mail,
   User,
   BellRing,
   Phone,
-  ShieldCheck // 👇 Added this new icon
+  ShieldCheck,
+  Briefcase,
+  AlertTriangle,
+  XOctagon,
+  Zap,
+  Wrench,
+  Settings,
+  TrendingUp,
+  Target,
+  GraduationCap,
+  DollarSign,
+  MessageCircle,
+  Gift
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /* ==========================================
-   TYPES & DUMMY DATA
+   MASTERCLASS DATA
 ========================================== */
-interface Event {
-  id: string;
-  title: string;
-  location: string;
-  type: "Virtual" | "In-Person";
-  category: string;
-  description: string;
-  speaker: string;
-  spotsLeft: number;
-}
+const MASTERCLASS_EVENT = {
+  id: "ai_masterclass_2026",
+  title: "2-Day Intensive AI Business Masterclass",
+  category: "Intensive Masterclass",
+  spotsLeft: 50,
+};
 
-const UPCOMING_EVENTS: Event[] = [
+const MANUAL_PAINS = [
+  "Creating content from scratch",
+  "Managing repetitive operations",
+  "Handling leads without automation",
+  "Guessing instead of using data",
+  "Wasting team hours on basic tasks"
+];
+
+const AGENDA_MODULES = [
   {
-    id: "evt_1",
-    title: "Mastering AI-Driven Outbound",
-    location: "Zoom / Virtual",
-    type: "Virtual",
-    category: "Masterclass",
-    description: "Learn how to configure Leadequator's intent engine to automatically discover and engage 10x more qualified leads. Live Q&A included.",
-    speaker: "Jatan Wani, CEO",
-    spotsLeft: 45,
+    id: 1,
+    title: "The AI Shift: Why 2026 Will Redefine Business",
+    icon: <Zap className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "How AI is changing industries faster than the internet did",
+      "Jobs that will evolve vs roles that will disappear",
+      "Where the biggest opportunities are emerging"
+    ]
   },
   {
-    id: "evt_2",
-    title: "The Future of B2B Lead Gen",
-    location: "Google Meet",
-    type: "Virtual",
-    category: "Webinar",
-    description: "A deep dive into how large language models are replacing traditional scraping tools. We'll show real case studies of 300% ROI increases.",
-    speaker: "Nasur ul Zain Azran, CTO",
-    spotsLeft: 120,
+    id: 2,
+    title: "25+ AI Tools You Can Start Using Immediately",
+    icon: <Wrench className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Free AI tools for content, images & videos",
+      "AI for presentations, resumes & research",
+      "AI tools for marketing & sales",
+      "How to choose the right tool for your need"
+    ]
   },
   {
-    id: "evt_3",
-    title: "Leadequator Founders Meetup",
-    location: "London, UK",
-    type: "In-Person",
-    category: "Networking",
-    description: "An exclusive, invite-only dinner for Leadequator Pro and Enterprise users. Network with top growth marketers and our founding team.",
-    speaker: "Jacob, Head of Growth",
-    spotsLeft: 12,
+    id: 3,
+    title: "Automating Your Work: Build Systems, Not Stress",
+    icon: <Settings className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Creating AI-powered workflows",
+      "Automating repetitive tasks",
+      "Reducing manual dependency",
+      "Increasing output without increasing effort"
+    ]
   },
   {
-    id: "evt_4",
-    title: "Building Custom AI Workflows",
-    location: "Virtual",
-    type: "Virtual",
-    category: "Workshop",
-    description: "Technical workshop for developers and ops teams. Learn how to connect Leadequator via webhooks to your custom CRM infrastructure.",
-    speaker: "Nagesh Yalparatte",
-    spotsLeft: 200,
+    id: 4,
+    title: "AI for Business Growth & Revenue",
+    icon: <TrendingUp className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Using AI to generate leads",
+      "AI-driven sales support",
+      "AI in customer communication",
+      "Turning AI into a revenue multiplier"
+    ]
+  },
+  {
+    id: 5,
+    title: "Solve Real Business Problems with AI",
+    icon: <Target className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Cost reduction strategies",
+      "Process inefficiencies",
+      "Scaling without increasing team size",
+      "Real case-based discussions"
+    ]
+  },
+  {
+    id: 6,
+    title: "AI for Working Professionals",
+    icon: <Briefcase className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "How to 10x productivity at work",
+      "Using AI to stand out in your job",
+      "AI for reports, analysis & presentations",
+      "Becoming irreplaceable in an AI-driven workplace"
+    ]
+  },
+  {
+    id: 7,
+    title: "AI for Students & Career Builders",
+    icon: <GraduationCap className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Using AI for research & learning",
+      "Building AI-assisted portfolios",
+      "Skills that will dominate the next 5 years",
+      "How to stay ahead of automation"
+    ]
+  },
+  {
+    id: 8,
+    title: "Creating AI-Powered Income Streams",
+    icon: <DollarSign className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Freelancing with AI",
+      "AI service models",
+      "Consulting opportunities",
+      "New-age digital income models"
+    ]
+  },
+  {
+    id: 9,
+    title: "Live Q&A + Business Consultation",
+    icon: <MessageCircle className="w-6 h-6 text-[#fbbf24]" />,
+    points: [
+      "Bring your business bottleneck",
+      "Solve your career confusion",
+      "Fix an automation problem or growth challenge",
+      "Get practical, tailored guidance"
+    ]
   }
+];
+
+const INDUSTRIES = [
+  "Manufacturing",
+  "Trading & Distribution",
+  "Retail",
+  "Construction & Real Estate",
+  "Information Technology (IT)",
+  "SaaS (Software as a Service)",
+  "Digital Marketing & Advertising",
+  "Professional Services (Consulting, Legal, CA, etc.)",
+  "Logistics & Transportation",
+  "E-commerce",
+  "Healthcare",
+  "Hospitality & Food Services",
+  "Education & EdTech",
+  "Agriculture & Agro Processing",
+  "Import–Export",
+  "Financial Services",
+  "Media & Entertainment",
+  "Telecom",
+  "Infrastructure",
+  "Other"
 ];
 
 /* ==========================================
@@ -87,7 +186,7 @@ const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.15 }
+    transition: { staggerChildren: 0.1 }
   }
 };
 
@@ -120,32 +219,34 @@ const modalVariants = {
    MAIN COMPONENT
 ========================================== */
 export default function EventsPage() {
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Form State
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", role: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", industry: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    if (selectedEvent) document.body.style.overflow = 'hidden';
+    if (isModalOpen) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
     return () => { document.body.style.overflow = 'unset'; }
-  }, [selectedEvent]);
+  }, [isModalOpen]);
 
-  const handleOpenModal = (event: Event) => {
-    setSelectedEvent(event);
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
     setIsSuccess(false);
-    setFormData({ name: "", email: "", phone: "", company: "", role: "" });
+    setFormData({ name: "", email: "", phone: "", company: "", industry: "" });
   };
 
   const handleCloseModal = () => {
-    setSelectedEvent(null);
+    setIsModalOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEvent) return;
+    if (!formData.industry) {
+      alert("Please select an industry");
+      return;
+    }
     
     setIsSubmitting(true);
 
@@ -154,23 +255,18 @@ export default function EventsPage() {
       
       const response = await fetch(`${API_BASE}/api/events/waitlist`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          eventId: selectedEvent.id,
+          eventId: MASTERCLASS_EVENT.id,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           company: formData.company,
-          role: formData.role
+          industry: formData.industry 
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to submit waitlist data");
-      }
-
+      if (!response.ok) throw new Error("Failed to submit waitlist data");
       setIsSuccess(true);
     } catch (error) {
       console.error("Waitlist submission error:", error);
@@ -186,101 +282,155 @@ export default function EventsPage() {
   return (
     <div className="min-h-[90vh] pt-14 pb-24 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
       
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/[0.04] rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="absolute top-[20%] -left-[10%] w-[400px] h-[400px] bg-amber-600/[0.03] rounded-full blur-[100px] pointer-events-none -z-10" />
+      {/* Background Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/[0.05] rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute top-[40%] -left-[10%] w-[500px] h-[500px] bg-red-600/[0.03] rounded-full blur-[120px] pointer-events-none -z-10" />
 
       <div className="container mx-auto px-4 max-w-[1200px] relative z-10 pt-8 md:pt-12">
         
-        {/* --- HEADER SECTION --- */}
+        {/* ==========================================
+            HERO SECTION
+        ========================================== */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto mb-16 md:mb-20"
+          className="text-center max-w-4xl mx-auto mb-16 md:mb-20"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#fbbf24]/10 border border-[#fbbf24]/20 text-[#fbbf24] text-xs font-bold uppercase tracking-widest mb-6 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)]">
-            <Sparkles className="w-3.5 h-3.5" />
-            Leadequator Live
+          {/* Disclaimer Badge */}
+          <div className="inline-flex items-center justify-center gap-2 md:gap-3 px-4 py-2 md:px-5 md:py-3 mb-8 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/5 border border-green-500/30 shadow-[0_0_25px_rgba(34,197,94,0.15)] backdrop-blur-md">
+            <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-green-400 shrink-0 drop-shadow-md" />
+            <span className="text-xs md:text-sm text-green-100 font-medium">
+              <strong className="text-white tracking-wide">100% Informative Session</strong> — No selling. No hidden agenda. No product pitch.
+            </span>
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
-            Upcoming <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.2)]">Events</span>
+
+          <h2 className="text-[#fbbf24] font-black tracking-widest text-sm md:text-base uppercase mb-4 flex items-center justify-center gap-2">
+            <AlertTriangle className="w-5 h-5 animate-pulse" />
+            AI Is Replacing Inefficient Businesses
+          </h2>
+
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
+            Will Yours Be <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">Next?</span>
           </h1>
-          <p className="text-zinc-400 text-lg md:text-xl font-medium leading-relaxed mb-6">
-            Join the waitlist for our exclusive masterclasses, webinars, and networking events to master AI-driven growth.
+
+          <p className="text-zinc-300 text-lg md:text-2xl font-medium leading-relaxed mb-10 max-w-3xl mx-auto">
+            Join the 2-Day Intensive AI Business Masterclass by Leadequator. A pure, implementation-focused session for serious business owners and professionals.
           </p>
 
-          {/* 👇 ADDED: Informative Disclaimer Badge */}
-          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/[0.05] text-sm text-zinc-500 font-bold shadow-sm">
-            <ShieldCheck className="w-4 h-4 text-[#fbbf24]" />
-            100% Informative Sessions — No promotions or sales pitches.
-          </div>
-
+          <Button 
+            onClick={handleOpenModal}
+            className="h-16 px-10 text-lg bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-black rounded-2xl shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:shadow-[0_0_40px_rgba(251,191,36,0.5)] transition-all hover:-translate-y-1"
+          >
+            Join the Priority Waitlist <ArrowRight className="ml-2 h-6 w-6" />
+          </Button>
+          <p className="text-zinc-500 font-bold text-xs uppercase tracking-widest mt-4">Dates TBA • Limited Spots</p>
         </motion.div>
 
-        {/* --- EVENTS GRID --- */}
+        {/* ==========================================
+            THE PROBLEM SECTION
+        ========================================== */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto mb-24 p-8 md:p-10 rounded-[2.5rem] bg-red-950/10 border border-red-500/20 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(239,68,68,0.1)]"
+        >
+          <h3 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
+            If You’re Still Doing This Manually…
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            {MANUAL_PAINS.map((pain, i) => (
+              <div key={i} className="flex items-center gap-3 text-zinc-300 font-medium">
+                <XOctagon className="w-5 h-5 text-red-400 shrink-0" />
+                {pain}
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-10 text-xl font-bold text-red-400">
+            …You’re already behind.
+          </div>
+        </motion.div>
+
+        {/* ==========================================
+            AGENDA / MODULES GRID
+        ========================================== */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Inside The Masterclass</h2>
+          <p className="text-zinc-400">Everything you will learn and implement over the 2 days.</p>
+        </div>
+
         <motion.div 
           variants={containerVariants}
           initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24"
         >
-          {UPCOMING_EVENTS.map((event) => (
+          {AGENDA_MODULES.map((module) => (
             <motion.div 
-              key={event.id}
+              key={module.id}
               variants={itemVariants}
-              className={`group flex flex-col sm:flex-row gap-6 p-6 sm:p-8 ${glassCardStyle} hover:bg-white/[0.02] hover:border-white/[0.15] hover:shadow-[0_15px_40px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:-translate-y-1 transition-all duration-500 overflow-hidden relative`}
+              className={`flex flex-col p-8 ${glassCardStyle} hover:bg-white/[0.02] hover:border-white/[0.15] hover:shadow-[0_15px_40px_rgba(0,0,0,0.4)] transition-all duration-500 group relative overflow-hidden`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#fbbf24]/0 to-[#fbbf24]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-              <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-center sm:justify-center gap-4 sm:gap-0 bg-black/40 border border-white/[0.05] rounded-2xl p-4 sm:w-24 sm:h-24 shadow-inner group-hover:border-[#fbbf24]/30 transition-colors duration-500">
-                <span className="text-[#fbbf24] font-black tracking-widest text-[10px] uppercase mb-0.5">Date</span>
-                <span className="text-white font-extrabold text-2xl sm:text-3xl leading-none">TBA</span>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#fbbf24]/5 rounded-full blur-3xl group-hover:bg-[#fbbf24]/10 transition-colors" />
+              
+              <div className="w-14 h-14 rounded-2xl bg-[#fbbf24]/10 border border-[#fbbf24]/20 flex items-center justify-center mb-6 shadow-inner">
+                {module.icon}
               </div>
-
-              <div className="flex-1 flex flex-col">
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <Badge variant="outline" className="bg-white/[0.03] text-zinc-300 border-white/[0.1] font-semibold text-[10px] uppercase tracking-widest">
-                    {event.category}
-                  </Badge>
-                  <Badge variant="outline" className={`${event.type === 'Virtual' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'} font-semibold text-[10px] uppercase tracking-widest`}>
-                    {event.type === 'Virtual' ? <Video className="w-3 h-3 mr-1" /> : <MapPin className="w-3 h-3 mr-1" />}
-                    {event.type}
-                  </Badge>
-                </div>
-
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-2 group-hover:text-[#fbbf24] transition-colors duration-300">
-                  {event.title}
-                </h3>
-                
-                <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-2">
-                  {event.description}
-                </p>
-
-                <div className="mt-auto flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center text-xs text-zinc-500 font-medium">
-                      <Clock className="w-3.5 h-3.5 mr-1.5 text-zinc-600" /> Time: <span className="ml-1 text-zinc-400">To Be Announced</span>
-                    </div>
-                    <div className="flex items-center text-xs text-zinc-500 font-medium">
-                      <User className="w-3.5 h-3.5 mr-1.5 text-zinc-600" /> {event.speaker}
-                    </div>
-                  </div>
-
-                  <Button 
-                    onClick={() => handleOpenModal(event)}
-                    className="bg-white/[0.05] text-white hover:bg-[#fbbf24] hover:text-black border border-white/[0.1] hover:border-[#fbbf24] font-bold rounded-xl shadow-sm transition-all"
-                  >
-                    Join Waitlist
-                  </Button>
-                </div>
-              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-4 leading-tight">
+                <span className="text-[#fbbf24] mr-2">{module.id}.</span>
+                {module.title}
+              </h3>
+              
+              <ul className="space-y-3 mt-auto">
+                {module.points.map((point, idx) => (
+                  <li key={idx} className="flex items-start text-sm text-zinc-400 leading-relaxed">
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-600 mt-1.5 mr-3 shrink-0" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
             </motion.div>
           ))}
         </motion.div>
+
+        {/* ==========================================
+            BONUS SECTION
+        ========================================== */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto rounded-[2.5rem] bg-gradient-to-br from-[#fbbf24]/10 to-transparent border border-[#fbbf24]/30 p-8 md:p-12 text-center backdrop-blur-xl relative overflow-hidden"
+        >
+          <Sparkles className="absolute top-6 right-8 w-12 h-12 text-[#fbbf24]/20" />
+          <Gift className="w-12 h-12 text-[#fbbf24] mx-auto mb-6" />
+          <h3 className="text-3xl font-extrabold text-white mb-6">🎁 Exclusive Bonuses for Attendees</h3>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            {["AI Workflow Templates", "Ready-to-Use Prompt Library", "Automation Frameworks", "Tool Stack Cheat Sheet"].map((bonus, i) => (
+              <div key={i} className="px-5 py-2.5 rounded-xl bg-black/40 border border-white/[0.08] text-zinc-200 font-semibold text-sm shadow-inner">
+                {bonus}
+              </div>
+            ))}
+          </div>
+          
+          <Button 
+            onClick={handleOpenModal}
+            className="mt-10 h-14 px-8 text-base bg-white text-black hover:bg-zinc-200 font-bold rounded-xl shadow-lg transition-all"
+          >
+            Join Waitlist to Secure Bonuses
+          </Button>
+        </motion.div>
+
       </div>
 
+      {/* ==========================================
+          REGISTRATION MODAL OVERLAY
+      ========================================== */}
       <AnimatePresence>
-        {selectedEvent && (
+        {isModalOpen && (
           <motion.div 
             className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
             initial={{ opacity: 0 }}
@@ -288,7 +438,7 @@ export default function EventsPage() {
             exit={{ opacity: 0 }}
           >
             <motion.div 
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -306,10 +456,10 @@ export default function EventsPage() {
               <div className="flex items-center justify-between p-6 md:px-8 pb-4 border-b border-white/[0.08] bg-black/20 sticky top-0 z-10 backdrop-blur-md">
                 <div>
                   <Badge variant="outline" className="bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20 text-[10px] uppercase tracking-widest mb-2">
-                    {selectedEvent.category} Waitlist
+                    Priority Waitlist
                   </Badge>
                   <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight leading-tight">
-                    {selectedEvent.title}
+                    AI Business Masterclass
                   </h2>
                 </div>
                 <Button 
@@ -334,7 +484,7 @@ export default function EventsPage() {
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-2">You're on the list!</h3>
                     <p className="text-zinc-400 font-medium mb-8 max-w-sm leading-relaxed">
-                      We'll notify <span className="text-white">{formData.email}</span> the moment the official date and time are announced for this event.
+                      We'll notify <span className="text-white">{formData.email}</span> the moment the official dates are announced.
                     </p>
                     <Button 
                       onClick={handleCloseModal}
@@ -384,24 +534,23 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                        <Label className={labelStyle}>Phone Number</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                          <Input 
-                            required
-                            type="tel"
-                            placeholder="+1 (555) 000-0000" 
-                            className={inputStyle}
-                            value={formData.phone}
-                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                          />
-                        </div>
-                    </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1.5">
-                        <Label className={labelStyle}>Company</Label>
+                          <Label className={labelStyle}>Phone Number</Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Input 
+                              required
+                              type="tel"
+                              placeholder="+1 (555) 000-0000" 
+                              className={inputStyle}
+                              value={formData.phone}
+                              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            />
+                          </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className={labelStyle}>Company Name</Label>
                         <div className="relative">
                           <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                           <Input 
@@ -414,19 +563,32 @@ export default function EventsPage() {
                           />
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className={labelStyle}>Job Title</Label>
-                        <div className="relative">
-                          <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                          <Input 
-                            required 
-                            type="text"
-                            placeholder="Founder / Marketer" 
-                            className={inputStyle}
-                            value={formData.role}
-                            onChange={(e) => setFormData({...formData, role: e.target.value})}
-                          />
-                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className={labelStyle}>Industry</Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 z-10 pointer-events-none" />
+                        <Select 
+                          required
+                          value={formData.industry} 
+                          onValueChange={(val) => setFormData({...formData, industry: val})}
+                        >
+                          <SelectTrigger className={`${inputStyle} pl-10 text-left`}>
+                            <SelectValue placeholder="Select your industry" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl max-h-[280px]">
+                            {INDUSTRIES.map((ind) => (
+                              <SelectItem 
+                                key={ind} 
+                                value={ind} 
+                                className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                              >
+                                {ind}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -443,7 +605,7 @@ export default function EventsPage() {
                         )}
                       </Button>
                       <p className="text-center text-[10px] text-zinc-500 mt-4 uppercase tracking-widest font-bold">
-                        Waitlist is capped at {selectedEvent.spotsLeft} entries
+                        Waitlist is strictly capped at {MASTERCLASS_EVENT.spotsLeft} entries
                       </p>
                     </div>
                   </form>
