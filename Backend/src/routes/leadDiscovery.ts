@@ -6,8 +6,7 @@ import {
   quoraPosts, 
   usersTable, 
   quoraAiReplies, 
-  redditAiReplies, 
-  eventWaitlist
+  redditAiReplies 
 } from "../config/schema.js";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
@@ -202,37 +201,6 @@ router.post("/quora/run", async (req: Request, res: Response) => {
   }
 });
 
-
-  /* ===============================
-    EVENTS WAITLIST REGISTRATION
-  ================================ */
-  router.post("/events/waitlist", async (req: Request, res: Response) => {
-    try {
-      const { eventId, name, email, phone, company, industry } = req.body;
-      
-      if (!eventId || !name || !email || !phone || !company || !industry) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Insert into DB - Explicitly generating UUID to bypass Postgres default issues
-      await db.insert(eventWaitlist).values({
-        id: crypto.randomUUID(), 
-        eventId,
-        name,
-        email,
-        phoneNumber: phone, 
-        company,
-        industry
-      });
-
-      console.log(`✅ New waitlist entry for event ${eventId}: ${email} (${industry})`);
-      res.json({ success: true, message: "Added to waitlist successfully" });
-
-    } catch (error: any) {
-      console.error("Waitlist Error:", error.message || error);
-      res.status(500).json({ error: "Failed to join waitlist" });
-    }
-  });
 
 /* ===============================
    RUN BOTH SCRAPERS (Combined)
