@@ -179,6 +179,62 @@ const INDUSTRIES = [
   "Other"
 ];
 
+// 👇 UPDATED: Structure separated into code, flag, and name
+const COUNTRY_CODES = [
+  { code: "+91", flag: "🇮🇳", name: "India" },
+  { code: "+1", flag: "🇺🇸", name: "USA" },
+  { code: "+1", flag: "🇨🇦", name: "Canada" },
+  { code: "+44", flag: "🇬🇧", name: "UK" },
+  { code: "+61", flag: "🇦🇺", name: "Australia" },
+  { code: "+971", flag: "🇦🇪", name: "UAE" },
+  { code: "+966", flag: "🇸🇦", name: "Saudi Arabia" },
+  { code: "+65", flag: "🇸🇬", name: "Singapore" },
+  { code: "+49", flag: "🇩🇪", name: "Germany" },
+  { code: "+33", flag: "🇫🇷", name: "France" },
+  { code: "+81", flag: "🇯🇵", name: "Japan" },
+  { code: "+86", flag: "🇨🇳", name: "China" },
+  { code: "+55", flag: "🇧🇷", name: "Brazil" },
+  { code: "+7", flag: "🇷🇺", name: "Russia" },
+  { code: "+27", flag: "🇿🇦", name: "South Africa" },
+  { code: "+34", flag: "🇪🇸", name: "Spain" },
+  { code: "+39", flag: "🇮🇹", name: "Italy" },
+  { code: "+31", flag: "🇳🇱", name: "Netherlands" },
+  { code: "+41", flag: "🇨🇭", name: "Switzerland" },
+  { code: "+46", flag: "🇸🇪", name: "Sweden" },
+  { code: "+47", flag: "🇳🇴", name: "Norway" },
+  { code: "+45", flag: "🇩🇰", name: "Denmark" },
+  { code: "+358", flag: "🇫🇮", name: "Finland" },
+  { code: "+32", flag: "🇧🇪", name: "Belgium" },
+  { code: "+43", flag: "🇦🇹", name: "Austria" },
+  { code: "+353", flag: "🇮🇪", name: "Ireland" },
+  { code: "+48", flag: "🇵🇱", name: "Poland" },
+  { code: "+351", flag: "🇵🇹", name: "Portugal" },
+  { code: "+30", flag: "🇬🇷", name: "Greece" },
+  { code: "+90", flag: "🇹🇷", name: "Turkey" },
+  { code: "+20", flag: "🇪🇬", name: "Egypt" },
+  { code: "+92", flag: "🇵🇰", name: "Pakistan" },
+  { code: "+880", flag: "🇧🇩", name: "Bangladesh" },
+  { code: "+60", flag: "🇲🇾", name: "Malaysia" },
+  { code: "+62", flag: "🇮🇩", name: "Indonesia" },
+  { code: "+63", flag: "🇵🇭", name: "Philippines" },
+  { code: "+66", flag: "🇹🇭", name: "Thailand" },
+  { code: "+84", flag: "🇻🇳", name: "Vietnam" },
+  { code: "+82", flag: "🇰🇷", name: "South Korea" },
+  { code: "+64", flag: "🇳🇿", name: "New Zealand" },
+  { code: "+52", flag: "🇲🇽", name: "Mexico" },
+  { code: "+54", flag: "🇦🇷", name: "Argentina" },
+  { code: "+57", flag: "🇨🇴", name: "Colombia" },
+  { code: "+56", flag: "🇨🇱", name: "Chile" },
+  { code: "+51", flag: "🇵🇪", name: "Peru" },
+  { code: "+234", flag: "🇳🇬", name: "Nigeria" },
+  { code: "+254", flag: "🇰🇪", name: "Kenya" },
+  { code: "+972", flag: "🇮🇱", name: "Israel" },
+  { code: "+974", flag: "🇶🇦", name: "Qatar" },
+  { code: "+965", flag: "🇰🇼", name: "Kuwait" },
+  { code: "+968", flag: "🇴🇲", name: "Oman" },
+  { code: "+973", flag: "🇧🇭", name: "Bahrain" }
+];
+
 /* ==========================================
    ANIMATION VARIANTS
 ========================================== */
@@ -222,8 +278,12 @@ export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", industry: "" });
+  const [countryCode, setCountryCode] = useState("+91"); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Helper to get current flag based on code
+  const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode);
 
   useEffect(() => {
     if (isModalOpen) document.body.style.overflow = 'hidden';
@@ -235,6 +295,7 @@ export default function EventsPage() {
     setIsModalOpen(true);
     setIsSuccess(false);
     setFormData({ name: "", email: "", phone: "", company: "", industry: "" });
+    setCountryCode("+91"); 
   };
 
   const handleCloseModal = () => {
@@ -253,6 +314,8 @@ export default function EventsPage() {
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
       
+      const fullPhoneNumber = `${countryCode} ${formData.phone}`;
+
       const response = await fetch(`${API_BASE}/api/events/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -260,7 +323,7 @@ export default function EventsPage() {
           eventId: MASTERCLASS_EVENT.id,
           name: formData.name,
           email: formData.email,
-          phone: formData.phone,
+          phone: fullPhoneNumber, 
           company: formData.company,
           industry: formData.industry 
         }),
@@ -288,9 +351,7 @@ export default function EventsPage() {
 
       <div className="container mx-auto px-4 max-w-[1200px] relative z-10 pt-8 md:pt-12">
         
-        {/* ==========================================
-            HERO SECTION
-        ========================================== */}
+        {/* HERO SECTION */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -327,9 +388,7 @@ export default function EventsPage() {
           <p className="text-zinc-500 font-bold text-xs uppercase tracking-widest mt-4">Dates TBA • Limited Spots</p>
         </motion.div>
 
-        {/* ==========================================
-            THE PROBLEM SECTION
-        ========================================== */}
+        {/* THE PROBLEM SECTION */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -352,9 +411,7 @@ export default function EventsPage() {
           </div>
         </motion.div>
 
-        {/* ==========================================
-            AGENDA / MODULES GRID
-        ========================================== */}
+        {/* AGENDA / MODULES GRID */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Inside The Masterclass</h2>
           <p className="text-zinc-400">Everything you will learn and implement over the 2 days.</p>
@@ -396,9 +453,7 @@ export default function EventsPage() {
           ))}
         </motion.div>
 
-        {/* ==========================================
-            BONUS SECTION
-        ========================================== */}
+        {/* BONUS SECTION */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -426,9 +481,7 @@ export default function EventsPage() {
 
       </div>
 
-      {/* ==========================================
-          REGISTRATION MODAL OVERLAY
-      ========================================== */}
+      {/* REGISTRATION MODAL OVERLAY */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div 
@@ -534,19 +587,46 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-1 gap-6">
                       <div className="space-y-1.5">
                           <Label className={labelStyle}>Phone Number</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                            <Input 
-                              required
-                              type="tel"
-                              placeholder="+1 (555) 000-0000" 
-                              className={inputStyle}
-                              value={formData.phone}
-                              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                            />
+                          <div className="flex gap-2">
+                            {/* Country Code Select */}
+                            <Select value={countryCode} onValueChange={setCountryCode}>
+                              <SelectTrigger className="w-[110px] bg-white/[0.02] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-12 px-3">
+                                {/* 👇 CUSTOM TRIGGER DISPLAY: Flag + Code */}
+                                <div className="flex items-center gap-2">
+                                  <span>{selectedCountry?.flag}</span>
+                                  <span className="text-xs text-zinc-300">{selectedCountry?.code}</span>
+                                </div>
+                              </SelectTrigger>
+                              <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl max-h-[280px]">
+                                {COUNTRY_CODES.map((item, idx) => (
+                                  <SelectItem 
+                                    key={`${item.code}-${idx}`} // Unique key fix
+                                    value={item.code}
+                                    className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                                  >
+                                    <span className="mr-2 text-lg">{item.flag}</span>
+                                    <span className="font-medium text-zinc-300">{item.name}</span>
+                                    <span className="ml-1 text-zinc-500">({item.code})</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            {/* Phone Input */}
+                            <div className="relative flex-1">
+                              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                              <Input 
+                                required
+                                type="tel"
+                                placeholder="98765 00000" 
+                                className={inputStyle}
+                                value={formData.phone}
+                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                              />
+                            </div>
                           </div>
                       </div>
                       <div className="space-y-1.5">

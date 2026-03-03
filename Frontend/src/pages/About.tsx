@@ -1,7 +1,7 @@
 import DeviceMockup from "@/[components]/devicemockup";
 import { Card } from "@/components/ui/card";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
-import { Target, Users, Lightbulb, Award } from "lucide-react";
+import { Target, Users, Lightbulb, Award, MapPin, Mail, Phone } from "lucide-react";
 
 const About = () => {
   return (
@@ -134,7 +134,7 @@ const About = () => {
         </div>
 
         {/* Stats */}
-        <div className="p-16 bg-[#050505]/20 backdrop-blur-2xl border border-white/[0.1] shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-[3rem] relative overflow-hidden">
+        <div className="p-16 bg-[#050505]/20 backdrop-blur-2xl border border-white/[0.1] shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-[3rem] relative overflow-hidden mb-24">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-[#fbbf24]/10 to-transparent opacity-50 pointer-events-none" />
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-16 text-white relative z-10">
             By The Numbers
@@ -158,8 +158,44 @@ const About = () => {
           </div>
         </div>
 
+        {/* Contact Info */}
+        <div className="mb-24">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-center mb-16 tracking-tight">
+            Get in <span className="text-[#fbbf24]">Touch</span>
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 bg-[#050505]/20 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] text-center hover:border-[#fbbf24]/30 transition-all duration-300">
+              <div className="w-14 h-14 rounded-full bg-[#fbbf24]/10 flex items-center justify-center mx-auto mb-6 text-[#fbbf24]">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Operating Address</h3>
+              <p className="text-zinc-400">Pune, India</p>
+            </div>
+
+            <div className="p-8 bg-[#050505]/20 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] text-center hover:border-[#fbbf24]/30 transition-all duration-300">
+              <div className="w-14 h-14 rounded-full bg-[#fbbf24]/10 flex items-center justify-center mx-auto mb-6 text-[#fbbf24]">
+                <Mail className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Email Us</h3>
+              <a href="mailto:Leadequatorofficial@gmail.com" className="text-zinc-400 hover:text-[#fbbf24] transition-colors">
+                Leadequatorofficial@gmail.com
+              </a>
+            </div>
+
+            <div className="p-8 bg-[#050505]/20 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] text-center hover:border-[#fbbf24]/30 transition-all duration-300">
+              <div className="w-14 h-14 rounded-full bg-[#fbbf24]/10 flex items-center justify-center mx-auto mb-6 text-[#fbbf24]">
+                <Phone className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Call Us</h3>
+              <a href="tel:+917976978561" className="text-zinc-400 hover:text-[#fbbf24] transition-colors">
+                +91 7976978561
+              </a>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <DeviceMockup/>
+      {/* <DeviceMockup/> */}
     </div>
   );
 };
