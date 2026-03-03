@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+// ✅ sql imported for incrementing credits securely
 import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
@@ -8,7 +9,8 @@ import { db } from "./db.js";
 // ✅ Routes
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
 // ✅ Schema Imports
-import { onboardingProgress, companyDetails, targetMarket, buyerKeywords, platformsToMonitor, usersTable, userSubscriptions, redditPosts, quoraPosts, } from "./config/schema.js";
+import { onboardingProgress, companyDetails, targetMarket, buyerKeywords, platformsToMonitor, usersTable, userSubscriptions, redditPosts, quoraPosts, eventWaitlist, // ✅ Added new table import here
+ } from "./config/schema.js";
 const app = express();
 /* ===============================
    CORS (CLERK + PROD SAFE)
@@ -36,9 +38,9 @@ app.use(express.json());
 app.get("/", (_req, res) => {
     res.json({ status: "Backend running safely 🚀" });
 });
+
 /* ===============================
    UPDATE LEAD PIPELINE STAGE
-   (Must be BEFORE the lead-discovery router to prevent 404s)
 ================================ */
 app.put("/api/pipeline/update-stage", async (req, res) => {
     try {
@@ -47,7 +49,6 @@ app.put("/api/pipeline/update-stage", async (req, res) => {
             return res.status(400).json({ error: "Missing required fields." });
         }
         const platformLower = platform.toLowerCase();
-        // ✅ Added strict platform checks
         if (platformLower === "reddit") {
             await db.update(redditPosts)
                 .set({ pipelineStage: stage })

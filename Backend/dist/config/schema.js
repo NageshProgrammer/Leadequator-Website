@@ -158,3 +158,16 @@ export const userSubscriptions = pgTable("user_subscriptions", {
     cashfreeSessionId: varchar("cashfree_session_id", { length: 255 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+/* =========================
+   EVENT WAITLIST
+========================= */
+export const eventWaitlist = pgTable("event_waitlist", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eventId: varchar("event_id", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull(),
+    phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+    company: varchar("company", { length: 255 }).notNull(),
+    industry: varchar("industry", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
