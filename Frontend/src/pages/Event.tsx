@@ -1,44 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowRight, 
-  X, 
-  CheckCircle2, 
-  Sparkles, 
-  Loader2,
-  Building2,
-  Mail,
-  User,
-  BellRing,
-  Phone,
-  ShieldCheck,
-  Briefcase,
-  AlertTriangle,
-  XOctagon,
-  Zap,
-  Wrench,
-  Settings,
-  TrendingUp,
-  Target,
-  GraduationCap,
-  DollarSign,
-  MessageCircle,
-  Gift
+  ArrowRight, X, CheckCircle2, Sparkles, Loader2, Building2, Mail, User, 
+  BellRing, Phone, ShieldCheck, Briefcase, AlertTriangle, XOctagon, Zap, 
+  Wrench, Settings, TrendingUp, Target, GraduationCap, DollarSign, MessageCircle, Gift 
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { load } from "@cashfreepayments/cashfree-js"; // ✅ Import Cashfree SDK
 
 /* ==========================================
-   MASTERCLASS DATA
+   MASTERCLASS DATA & CONSTANTS
 ========================================== */
 const MASTERCLASS_EVENT = {
   id: "ai_masterclass_2026",
@@ -60,227 +35,83 @@ const AGENDA_MODULES = [
     id: 1,
     title: "The AI Shift: Why 2026 Will Redefine Business",
     icon: <Zap className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "How AI is changing industries faster than the internet did",
-      "Jobs that will evolve vs roles that will disappear",
-      "Where the biggest opportunities are emerging"
-    ]
+    points: [ "How AI is changing industries faster than the internet did", "Jobs that will evolve vs roles that will disappear", "Where the biggest opportunities are emerging" ]
   },
   {
     id: 2,
     title: "25+ AI Tools You Can Start Using Immediately",
     icon: <Wrench className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Free AI tools for content, images & videos",
-      "AI for presentations, resumes & research",
-      "AI tools for marketing & sales",
-      "How to choose the right tool for your need"
-    ]
+    points: [ "Free AI tools for content, images & videos", "AI for presentations, resumes & research", "AI tools for marketing & sales", "How to choose the right tool for your need" ]
   },
   {
     id: 3,
     title: "Automating Your Work: Build Systems, Not Stress",
     icon: <Settings className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Creating AI-powered workflows",
-      "Automating repetitive tasks",
-      "Reducing manual dependency",
-      "Increasing output without increasing effort"
-    ]
+    points: [ "Creating AI-powered workflows", "Automating repetitive tasks", "Reducing manual dependency", "Increasing output without increasing effort" ]
   },
   {
     id: 4,
     title: "AI for Business Growth & Revenue",
     icon: <TrendingUp className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Using AI to generate leads",
-      "AI-driven sales support",
-      "AI in customer communication",
-      "Turning AI into a revenue multiplier"
-    ]
+    points: [ "Using AI to generate leads", "AI-driven sales support", "AI in customer communication", "Turning AI into a revenue multiplier" ]
   },
   {
     id: 5,
     title: "Solve Real Business Problems with AI",
     icon: <Target className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Cost reduction strategies",
-      "Process inefficiencies",
-      "Scaling without increasing team size",
-      "Real case-based discussions"
-    ]
+    points: [ "Cost reduction strategies", "Process inefficiencies", "Scaling without increasing team size", "Real case-based discussions" ]
   },
   {
     id: 6,
     title: "AI for Working Professionals",
     icon: <Briefcase className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "How to 10x productivity at work",
-      "Using AI to stand out in your job",
-      "AI for reports, analysis & presentations",
-      "Becoming irreplaceable in an AI-driven workplace"
-    ]
+    points: [ "How to 10x productivity at work", "Using AI to stand out in your job", "AI for reports, analysis & presentations", "Becoming irreplaceable in an AI-driven workplace" ]
   },
   {
     id: 7,
     title: "AI for Students & Career Builders",
     icon: <GraduationCap className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Using AI for research & learning",
-      "Building AI-assisted portfolios",
-      "Skills that will dominate the next 5 years",
-      "How to stay ahead of automation"
-    ]
+    points: [ "Using AI for research & learning", "Building AI-assisted portfolios", "Skills that will dominate the next 5 years", "How to stay ahead of automation" ]
   },
   {
     id: 8,
     title: "Creating AI-Powered Income Streams",
     icon: <DollarSign className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Freelancing with AI",
-      "AI service models",
-      "Consulting opportunities",
-      "New-age digital income models"
-    ]
+    points: [ "Freelancing with AI", "AI service models", "Consulting opportunities", "New-age digital income models" ]
   },
   {
     id: 9,
     title: "Live Q&A + Business Consultation",
     icon: <MessageCircle className="w-6 h-6 text-[#fbbf24]" />,
-    points: [
-      "Bring your business bottleneck",
-      "Solve your career confusion",
-      "Fix an automation problem or growth challenge",
-      "Get practical, tailored guidance"
-    ]
+    points: [ "Bring your business bottleneck", "Solve your career confusion", "Fix an automation problem or growth challenge", "Get practical, tailored guidance" ]
   }
 ];
 
-const INDUSTRIES = [
-  "Manufacturing",
-  "Trading & Distribution",
-  "Retail",
-  "Construction & Real Estate",
-  "Information Technology (IT)",
-  "SaaS (Software as a Service)",
-  "Digital Marketing & Advertising",
-  "Professional Services (Consulting, Legal, CA, etc.)",
-  "Logistics & Transportation",
-  "E-commerce",
-  "Healthcare",
-  "Hospitality & Food Services",
-  "Education & EdTech",
-  "Agriculture & Agro Processing",
-  "Import–Export",
-  "Financial Services",
-  "Media & Entertainment",
-  "Telecom",
-  "Infrastructure",
-  "Other"
-];
+const INDUSTRIES = [ "Manufacturing", "Trading & Distribution", "Retail", "Construction & Real Estate", "Information Technology (IT)", "SaaS (Software as a Service)", "Digital Marketing & Advertising", "Professional Services (Consulting, Legal, CA, etc.)", "Logistics & Transportation", "E-commerce", "Healthcare", "Hospitality & Food Services", "Education & EdTech", "Agriculture & Agro Processing", "Import–Export", "Financial Services", "Media & Entertainment", "Telecom", "Infrastructure", "Other" ];
 
-// 👇 UPDATED: Structure separated into code, flag, and name
 const COUNTRY_CODES = [
-  { code: "+91", flag: "🇮🇳", name: "India" },
-  { code: "+1", flag: "🇺🇸", name: "USA" },
-  { code: "+1", flag: "🇨🇦", name: "Canada" },
-  { code: "+44", flag: "🇬🇧", name: "UK" },
-  { code: "+61", flag: "🇦🇺", name: "Australia" },
-  { code: "+971", flag: "🇦🇪", name: "UAE" },
-  { code: "+966", flag: "🇸🇦", name: "Saudi Arabia" },
-  { code: "+65", flag: "🇸🇬", name: "Singapore" },
-  { code: "+49", flag: "🇩🇪", name: "Germany" },
-  { code: "+33", flag: "🇫🇷", name: "France" },
-  { code: "+81", flag: "🇯🇵", name: "Japan" },
-  { code: "+86", flag: "🇨🇳", name: "China" },
-  { code: "+55", flag: "🇧🇷", name: "Brazil" },
-  { code: "+7", flag: "🇷🇺", name: "Russia" },
-  { code: "+27", flag: "🇿🇦", name: "South Africa" },
-  { code: "+34", flag: "🇪🇸", name: "Spain" },
-  { code: "+39", flag: "🇮🇹", name: "Italy" },
-  { code: "+31", flag: "🇳🇱", name: "Netherlands" },
-  { code: "+41", flag: "🇨🇭", name: "Switzerland" },
-  { code: "+46", flag: "🇸🇪", name: "Sweden" },
-  { code: "+47", flag: "🇳🇴", name: "Norway" },
-  { code: "+45", flag: "🇩🇰", name: "Denmark" },
-  { code: "+358", flag: "🇫🇮", name: "Finland" },
-  { code: "+32", flag: "🇧🇪", name: "Belgium" },
-  { code: "+43", flag: "🇦🇹", name: "Austria" },
-  { code: "+353", flag: "🇮🇪", name: "Ireland" },
-  { code: "+48", flag: "🇵🇱", name: "Poland" },
-  { code: "+351", flag: "🇵🇹", name: "Portugal" },
-  { code: "+30", flag: "🇬🇷", name: "Greece" },
-  { code: "+90", flag: "🇹🇷", name: "Turkey" },
-  { code: "+20", flag: "🇪🇬", name: "Egypt" },
-  { code: "+92", flag: "🇵🇰", name: "Pakistan" },
-  { code: "+880", flag: "🇧🇩", name: "Bangladesh" },
-  { code: "+60", flag: "🇲🇾", name: "Malaysia" },
-  { code: "+62", flag: "🇮🇩", name: "Indonesia" },
-  { code: "+63", flag: "🇵🇭", name: "Philippines" },
-  { code: "+66", flag: "🇹🇭", name: "Thailand" },
-  { code: "+84", flag: "🇻🇳", name: "Vietnam" },
-  { code: "+82", flag: "🇰🇷", name: "South Korea" },
-  { code: "+64", flag: "🇳🇿", name: "New Zealand" },
-  { code: "+52", flag: "🇲🇽", name: "Mexico" },
-  { code: "+54", flag: "🇦🇷", name: "Argentina" },
-  { code: "+57", flag: "🇨🇴", name: "Colombia" },
-  { code: "+56", flag: "🇨🇱", name: "Chile" },
-  { code: "+51", flag: "🇵🇪", name: "Peru" },
-  { code: "+234", flag: "🇳🇬", name: "Nigeria" },
-  { code: "+254", flag: "🇰🇪", name: "Kenya" },
-  { code: "+972", flag: "🇮🇱", name: "Israel" },
-  { code: "+974", flag: "🇶🇦", name: "Qatar" },
-  { code: "+965", flag: "🇰🇼", name: "Kuwait" },
-  { code: "+968", flag: "🇴🇲", name: "Oman" },
-  { code: "+973", flag: "🇧🇭", name: "Bahrain" }
+  { code: "+91", flag: "🇮🇳", name: "India" }, { code: "+1", flag: "🇺🇸", name: "USA" }, { code: "+1", flag: "🇨🇦", name: "Canada" }, { code: "+44", flag: "🇬🇧", name: "UK" }, { code: "+61", flag: "🇦🇺", name: "Australia" }, { code: "+971", flag: "🇦🇪", name: "UAE" }, { code: "+966", flag: "🇸🇦", name: "Saudi Arabia" }, { code: "+65", flag: "🇸🇬", name: "Singapore" }, { code: "+49", flag: "🇩🇪", name: "Germany" }, { code: "+33", flag: "🇫🇷", name: "France" }, { code: "+81", flag: "🇯🇵", name: "Japan" }, { code: "+86", flag: "🇨🇳", name: "China" }, { code: "+55", flag: "🇧🇷", name: "Brazil" }, { code: "+7", flag: "🇷🇺", name: "Russia" }, { code: "+27", flag: "🇿🇦", name: "South Africa" }, { code: "+34", flag: "🇪🇸", name: "Spain" }, { code: "+39", flag: "🇮🇹", name: "Italy" }, { code: "+31", flag: "🇳🇱", name: "Netherlands" }, { code: "+41", flag: "🇨🇭", name: "Switzerland" }, { code: "+46", flag: "🇸🇪", name: "Sweden" }, { code: "+47", flag: "🇳🇴", name: "Norway" }, { code: "+45", flag: "🇩🇰", name: "Denmark" }, { code: "+358", flag: "🇫🇮", name: "Finland" }, { code: "+32", flag: "🇧🇪", name: "Belgium" }, { code: "+43", flag: "🇦🇹", name: "Austria" }, { code: "+353", flag: "🇮🇪", name: "Ireland" }, { code: "+48", flag: "🇵🇱", name: "Poland" }, { code: "+351", flag: "🇵🇹", name: "Portugal" }, { code: "+30", flag: "🇬🇷", name: "Greece" }, { code: "+90", flag: "🇹🇷", name: "Turkey" }, { code: "+20", flag: "🇪🇬", name: "Egypt" }, { code: "+92", flag: "🇵🇰", name: "Pakistan" }, { code: "+880", flag: "🇧🇩", name: "Bangladesh" }, { code: "+60", flag: "🇲🇾", name: "Malaysia" }, { code: "+62", flag: "🇮🇩", name: "Indonesia" }, { code: "+63", flag: "🇵🇭", name: "Philippines" }, { code: "+66", flag: "🇹🇭", name: "Thailand" }, { code: "+84", flag: "🇻🇳", name: "Vietnam" }, { code: "+82", flag: "🇰🇷", name: "South Korea" }, { code: "+64", flag: "🇳🇿", name: "New Zealand" }, { code: "+52", flag: "🇲🇽", name: "Mexico" }, { code: "+54", flag: "🇦🇷", name: "Argentina" }, { code: "+57", flag: "🇨🇴", name: "Colombia" }, { code: "+56", flag: "🇨🇱", name: "Chile" }, { code: "+51", flag: "🇵🇪", name: "Peru" }, { code: "+234", flag: "🇳🇬", name: "Nigeria" }, { code: "+254", flag: "🇰🇪", name: "Kenya" }, { code: "+972", flag: "🇮🇱", name: "Israel" }, { code: "+974", flag: "🇶🇦", name: "Qatar" }, { code: "+965", flag: "🇰🇼", name: "Kuwait" }, { code: "+968", flag: "🇴🇲", name: "Oman" }, { code: "+973", flag: "🇧🇭", name: "Bahrain" }
 ];
 
 /* ==========================================
    ANIMATION VARIANTS
 ========================================== */
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { type: "spring", stiffness: 300, damping: 24 }
-  }
-};
-
-const modalVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: 20 },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
-    y: 0,
-    transition: { type: "spring", stiffness: 300, damping: 30 }
-  },
-  exit: { 
-    opacity: 0, 
-    scale: 0.95, 
-    y: 20,
-    transition: { duration: 0.2 }
-  }
-};
+const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } };
+const modalVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }, exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } } };
 
 /* ==========================================
    MAIN COMPONENT
 ========================================== */
 export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", industry: "" });
   const [countryCode, setCountryCode] = useState("+91"); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // ✅ Cashfree Ref
+  const cashfreeRef = useRef<any>(null);
 
   // Helper to get current flag based on code
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode);
@@ -290,6 +121,16 @@ export default function EventsPage() {
     else document.body.style.overflow = 'unset';
     return () => { document.body.style.overflow = 'unset'; }
   }, [isModalOpen]);
+
+  // ✅ Initialize Cashfree
+  useEffect(() => {
+    const initializeCashfree = async () => {
+      cashfreeRef.current = await load({
+        mode: "production", // Change to "sandbox" if testing with dev keys
+      });
+    };
+    initializeCashfree();
+  }, []);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -313,28 +154,63 @@ export default function EventsPage() {
 
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-      
       const fullPhoneNumber = `${countryCode} ${formData.phone}`;
-
-      const response = await fetch(`${API_BASE}/api/events/waitlist`, {
+      
+      // 1. Create Payment Order for ₹10
+      const paymentRes = await fetch(`${API_BASE}/api/events/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          eventId: MASTERCLASS_EVENT.id,
           name: formData.name,
           email: formData.email,
-          phone: fullPhoneNumber, 
-          company: formData.company,
-          industry: formData.industry 
+          phone: formData.phone // Send raw number for Cashfree processing
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to submit waitlist data");
-      setIsSuccess(true);
+      if (!paymentRes.ok) throw new Error("Failed to initiate payment");
+      const { payment_session_id, order_id } = await paymentRes.json();
+
+      // 2. Open Cashfree Popup
+      const checkoutOptions = {
+        paymentSessionId: payment_session_id,
+        redirectTarget: "_modal",
+      };
+
+      if (!cashfreeRef.current) return;
+
+      cashfreeRef.current.checkout(checkoutOptions).then(async (result: any) => {
+        if (result.error) {
+          console.error("Payment Failed", result.error);
+          setIsSubmitting(false);
+          alert("Payment failed. Please try again.");
+        } 
+        else if (result.paymentDetails) {
+          // 3. Verify Payment & Save to DB
+          const verifyRes = await fetch(`${API_BASE}/api/events/verify-registration`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_id: order_id,
+              eventId: MASTERCLASS_EVENT.id,
+              formData: { ...formData, phone: fullPhoneNumber } // Pass full data to save
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+
+          if (verifyData.success) {
+            setIsSuccess(true);
+          } else {
+            alert("Payment verification failed. Contact support.");
+          }
+          setIsSubmitting(false);
+        }
+      });
+
     } catch (error) {
-      console.error("Waitlist submission error:", error);
-    } finally {
+      console.error("Submission error:", error);
       setIsSubmitting(false);
+      alert("Something went wrong. Please try again.");
     }
   };
 
@@ -672,6 +548,7 @@ export default function EventsPage() {
                       </div>
                     </div>
 
+                    {/* Submit Button Section */}
                     <div className="pt-6 mt-4 border-t border-white/[0.08]">
                       <Button 
                         type="submit" 
@@ -679,13 +556,13 @@ export default function EventsPage() {
                         className="w-full h-14 text-base bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]"
                       >
                         {isSubmitting ? (
-                          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Securing Spot...</>
+                          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing Payment...</>
                         ) : (
-                          <>Join Priority Waitlist <ArrowRight className="ml-2 h-5 w-5" /></>
+                          <>Pay ₹10 & Join Priority Waitlist <ArrowRight className="ml-2 h-5 w-5" /></>
                         )}
                       </Button>
                       <p className="text-center text-[10px] text-zinc-500 mt-4 uppercase tracking-widest font-bold">
-                        Waitlist is strictly capped at {MASTERCLASS_EVENT.spotsLeft} entries
+                        Secure your spot via Cashfree Payments
                       </p>
                     </div>
                   </form>

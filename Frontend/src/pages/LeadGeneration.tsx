@@ -293,7 +293,7 @@ export default function LeadGeneration() {
               </div>
 
               {/* Terminal Window */}
-              <div className="flex-grow bg-[#050505] rounded-xl p-5 border border-white/[0.05] shadow-inner relative overflow-hidden min-h-[250px]">
+              <div className="flex-1 min-h-0 bg-[#050505] rounded-xl p-5 border border-white/[0.05] shadow-inner relative overflow-hidden">
                 {/* Scanline effect */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none opacity-20"></div>
                 
