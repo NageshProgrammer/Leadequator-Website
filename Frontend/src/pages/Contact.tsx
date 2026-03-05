@@ -87,7 +87,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-20 text-white selection:bg-[#fbbf24]/30 relative z-10 overflow-hidden">
-      <ScrollProgress className="top-[65px]" />
+      <ScrollProgress className="top-[69px]" />
       
       {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/10 rounded-full blur-[120px] -z-10 pointer-events-none" />

@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
-import { Zap } from "lucide-react";
+import { Zap, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useCredits } from "@/context/CreditContext";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CreditDisplayProps {
   sidebarOpen: boolean;
@@ -47,15 +53,37 @@ export const CreditDisplay = ({ sidebarOpen }: CreditDisplayProps) => {
             <span className="text-zinc-400 font-medium flex items-center gap-1.5">
               <Zap className={`h-3.5 w-3.5 fill-current ${getStatusColor()}`} /> Credits
             </span>
-            <span
-              className={`font-bold transition-all duration-300 ${
-                isAnimating 
-                  ? "scale-125 text-white drop-shadow-[0_0_12px_#fbbf24]" 
-                  : `${getStatusColor()} drop-shadow-md`
-              }`}
-            >
-              {loading ? "..." : Math.round(remainingPercentage)}%
-            </span>
+            
+            {/* Added Tooltip around the percentage and info icon */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`font-bold transition-all duration-300 ${
+                  isAnimating 
+                    ? "scale-125 text-white drop-shadow-[0_0_12px_#fbbf24]" 
+                    : `${getStatusColor()} drop-shadow-md`
+                }`}
+              >
+                {loading ? "..." : Math.round(remainingPercentage)}%
+              </span>
+              
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-zinc-500 hover:text-zinc-300 transition-colors cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="top" 
+                    className="bg-zinc-900/40 border border-zinc-800 text-zinc-200 text-xs p-3 shadow-xl max-w-[200px]"
+                  >
+                    <div className="space-y-1.5">
+                      <p><strong className="text-[#fbbf24]">2 Credits:</strong> 1 Post Scraped</p>
+                      <p><strong className="text-emerald-400">5 Credits:</strong> 1 Lead Scraped</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
           </div>
           <Progress
             value={loading ? 0 : usedPercentage}

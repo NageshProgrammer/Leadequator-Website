@@ -10,7 +10,7 @@ const Resources = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-12">
-      <ScrollProgress className="top-[65px]" />
+      <ScrollProgress className="top-[69px]" />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16 animate-fade-in">

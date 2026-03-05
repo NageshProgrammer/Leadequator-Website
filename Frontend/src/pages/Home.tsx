@@ -71,7 +71,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-black overflow-x-hidden relative">
-      <ScrollProgress className="top-[65px]" />
+      <ScrollProgress className="top-[69px]" />
       
       {/* =========================================================
           EVENTS PROMO POPUP (Floating Bottom Right)

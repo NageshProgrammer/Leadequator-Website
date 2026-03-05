@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, TrendingUp, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Solutions = () => {
   const navigate = useNavigate();
@@ -61,7 +62,8 @@ const Solutions = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-12 text-white bg-black selection:bg-[#fbbf24]/30 relative z-10 overflow-hidden">
+    <div className="min-h-screen  text-white font-sans selection:bg-[#fbbf24]/30 pt-20 relative z-10 overflow-x-hidden">
+      <ScrollProgress className="top-[70px]" />
       {/* Background Glow - Made slightly brighter so you can definitely see it */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
@@ -75,8 +77,7 @@ const Solutions = () => {
             Built for Teams That Need <span className="text-[#fbbf24] drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]">Measurable Results</span>
           </h1>
           <p className="text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
-            Whether you're protecting brand reputation, generating pipeline, or
-            serving clients, Leadequator delivers ROI that can be tracked to the
+            Whether you're protecting braequator delivers ROI that can be tracked to the
             dollar.
           </p>
         </div>

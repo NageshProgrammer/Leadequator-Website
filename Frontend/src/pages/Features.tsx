@@ -16,7 +16,7 @@ const Features = () => {
   return (
     // ADDED: bg-black and overflow-x-hidden here to lock the layout
     <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24]/30 relative z-10 overflow-x-hidden">
-      <ScrollProgress className="top-[65px]" />
+      <ScrollProgress className="top-[69px]" />
       
       {/* Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
