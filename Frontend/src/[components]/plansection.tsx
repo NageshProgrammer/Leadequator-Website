@@ -65,7 +65,7 @@ const plans = [
     pricing: { USD: { monthly: "Custom", yearly: "Custom" }, INR: { monthly: "Custom", yearly: "Custom" } },
     period: "per month",
     features: [
-      "Credits as per requirementfor Scrapping Leads",
+      "Credits as per requirement for Scrapping Leads",
       "Unlimited keywords", 
       "Unlimited conversations", 
       "Unlimited leads",
