@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { load } from "@cashfreepayments/cashfree-js"; // ✅ Import Cashfree SDK
+import { load } from "@cashfreepayments/cashfree-js";
 
 /* ==========================================
    MASTERCLASS DATA & CONSTANTS
@@ -87,6 +87,9 @@ const AGENDA_MODULES = [
   }
 ];
 
+// ✅ Added "Other" to profiles
+const USER_PROFILES = ["Student", "Working Professional", "Business Owner", "Other"];
+
 const INDUSTRIES = [ "Manufacturing", "Trading & Distribution", "Retail", "Construction & Real Estate", "Information Technology (IT)", "SaaS (Software as a Service)", "Digital Marketing & Advertising", "Professional Services (Consulting, Legal, CA, etc.)", "Logistics & Transportation", "E-commerce", "Healthcare", "Hospitality & Food Services", "Education & EdTech", "Agriculture & Agro Processing", "Import–Export", "Financial Services", "Media & Entertainment", "Telecom", "Infrastructure", "Other" ];
 
 const COUNTRY_CODES = [
@@ -105,15 +108,23 @@ const modalVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { o
 ========================================== */
 export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", company: "", industry: "" });
+  
+  // ✅ Added customUserType to capture the "Other" text input
+  const [formData, setFormData] = useState({ 
+    userType: "", 
+    customUserType: "", 
+    name: "", 
+    email: "", 
+    phone: "", 
+    company: "", 
+    industry: "" 
+  });
+  
   const [countryCode, setCountryCode] = useState("+91"); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // ✅ Cashfree Ref
   const cashfreeRef = useRef<any>(null);
-
-  // Helper to get current flag based on code
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode);
 
   useEffect(() => {
@@ -122,11 +133,10 @@ export default function EventsPage() {
     return () => { document.body.style.overflow = 'unset'; }
   }, [isModalOpen]);
 
-  // ✅ Initialize Cashfree
   useEffect(() => {
     const initializeCashfree = async () => {
       cashfreeRef.current = await load({
-        mode: "production", // Change to "sandbox" if testing with dev keys
+        mode: "production", 
       });
     };
     initializeCashfree();
@@ -135,7 +145,7 @@ export default function EventsPage() {
   const handleOpenModal = () => {
     setIsModalOpen(true);
     setIsSuccess(false);
-    setFormData({ name: "", email: "", phone: "", company: "", industry: "" });
+    setFormData({ userType: "", customUserType: "", name: "", email: "", phone: "", company: "", industry: "" });
     setCountryCode("+91"); 
   };
 
@@ -145,7 +155,19 @@ export default function EventsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.industry) {
+    
+    if (!formData.userType) {
+      alert("Please select your profile type.");
+      return;
+    }
+
+    // ✅ Validation for "Other" field
+    if (formData.userType === "Other" && !formData.customUserType.trim()) {
+      alert("Please specify your profile type in the provided field.");
+      return;
+    }
+
+    if (formData.userType !== "Student" && !formData.industry) {
       alert("Please select an industry");
       return;
     }
@@ -156,21 +178,22 @@ export default function EventsPage() {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
       const fullPhoneNumber = `${countryCode} ${formData.phone}`;
       
-      // 1. Create Payment Order for ₹10
+      // Determine the final user type string to send to the backend
+      const finalUserType = formData.userType === "Other" ? formData.customUserType : formData.userType;
+      
       const paymentRes = await fetch(`${API_BASE}/api/events/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          phone: formData.phone // Send raw number for Cashfree processing
+          phone: formData.phone 
         }),
       });
 
       if (!paymentRes.ok) throw new Error("Failed to initiate payment");
       const { payment_session_id, order_id } = await paymentRes.json();
 
-      // 2. Open Cashfree Popup
       const checkoutOptions = {
         paymentSessionId: payment_session_id,
         redirectTarget: "_modal",
@@ -185,14 +208,18 @@ export default function EventsPage() {
           alert("Payment failed. Please try again.");
         } 
         else if (result.paymentDetails) {
-          // 3. Verify Payment & Save to DB
           const verifyRes = await fetch(`${API_BASE}/api/events/verify-registration`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               order_id: order_id,
               eventId: MASTERCLASS_EVENT.id,
-              formData: { ...formData, phone: fullPhoneNumber } // Pass full data to save
+              formData: { 
+                ...formData, 
+                phone: fullPhoneNumber,
+                userType: finalUserType, // Include final user type just in case backend needs it
+                industry: formData.userType === "Student" ? "Student/Education" : formData.industry
+              }
             })
           });
 
@@ -234,7 +261,6 @@ export default function EventsPage() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-4xl mx-auto mb-16 md:mb-20"
         >
-          {/* Disclaimer Badge */}
           <div className="inline-flex items-center justify-center gap-2 md:gap-3 px-4 py-2 md:px-5 md:py-3 mb-8 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/5 border border-green-500/30 shadow-[0_0_25px_rgba(34,197,94,0.15)] backdrop-blur-md">
             <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-green-400 shrink-0 drop-shadow-md" />
             <span className="text-xs md:text-sm text-green-100 font-medium">
@@ -432,139 +458,206 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-1.5">
-                        <Label className={labelStyle}>Full Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                          <Input 
-                            required 
-                            type="text"
-                            placeholder="John Doe" 
-                            className={inputStyle}
-                            value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className={labelStyle}>Work Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                          <Input 
-                            required 
-                            type="email"
-                            placeholder="john@company.com" 
-                            className={inputStyle}
-                            value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-1 gap-6">
-                      <div className="space-y-1.5">
-                          <Label className={labelStyle}>Phone Number</Label>
-                          <div className="flex gap-2">
-                            {/* Country Code Select */}
-                            <Select value={countryCode} onValueChange={setCountryCode}>
-                              <SelectTrigger className="w-[110px] bg-white/[0.02] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-12 px-3">
-                                {/* 👇 CUSTOM TRIGGER DISPLAY: Flag + Code */}
-                                <div className="flex items-center gap-2">
-                                  <span>{selectedCountry?.flag}</span>
-                                  <span className="text-xs text-zinc-300">{selectedCountry?.code}</span>
-                                </div>
-                              </SelectTrigger>
-                              <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl max-h-[280px]">
-                                {COUNTRY_CODES.map((item, idx) => (
-                                  <SelectItem 
-                                    key={`${item.code}-${idx}`} // Unique key fix
-                                    value={item.code}
-                                    className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
-                                  >
-                                    <span className="mr-2 text-lg">{item.flag}</span>
-                                    <span className="font-medium text-zinc-300">{item.name}</span>
-                                    <span className="ml-1 text-zinc-500">({item.code})</span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            {/* Phone Input */}
-                            <div className="relative flex-1">
-                              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                              <Input 
-                                required
-                                type="tel"
-                                placeholder="98765 00000" 
-                                className={inputStyle}
-                                value={formData.phone}
-                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                              />
-                            </div>
-                          </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className={labelStyle}>Company Name</Label>
-                        <div className="relative">
-                          <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                          <Input 
-                            required 
-                            type="text"
-                            placeholder="Acme Corp" 
-                            className={inputStyle}
-                            value={formData.company}
-                            onChange={(e) => setFormData({...formData, company: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
+                    {/* ✅ Profile Type Dropdown */}
                     <div className="space-y-1.5">
-                      <Label className={labelStyle}>Industry</Label>
+                      <Label className={labelStyle}>I am a...</Label>
                       <div className="relative">
-                        <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 z-10 pointer-events-none" />
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 z-10 pointer-events-none" />
                         <Select 
                           required
-                          value={formData.industry} 
-                          onValueChange={(val) => setFormData({...formData, industry: val})}
+                          value={formData.userType} 
+                          onValueChange={(val) => setFormData({
+                            ...formData, 
+                            userType: val, 
+                            industry: val === "Student" ? "Student/Education" : "",
+                            customUserType: val !== "Other" ? "" : formData.customUserType // Clear custom input if they switch away
+                          })}
                         >
                           <SelectTrigger className={`${inputStyle} pl-10 text-left`}>
-                            <SelectValue placeholder="Select your industry" />
+                            <SelectValue placeholder="Select your profile" />
                           </SelectTrigger>
-                          <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl max-h-[280px]">
-                            {INDUSTRIES.map((ind) => (
+                          <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl">
+                            {USER_PROFILES.map((type) => (
                               <SelectItem 
-                                key={ind} 
-                                value={ind} 
+                                key={type} 
+                                value={type} 
                                 className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
                               >
-                                {ind}
+                                {type}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
+
+                      {/* ✅ Custom input appears smoothly when "Other" is selected */}
+                      <AnimatePresence>
+                        {formData.userType === "Other" && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                            animate={{ opacity: 1, height: "auto", marginTop: 12 }}
+                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                            className="relative overflow-hidden"
+                          >
+                            <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Input 
+                              required
+                              type="text"
+                              placeholder="Please specify (e.g. Freelancer, Consultant)" 
+                              className={inputStyle}
+                              value={formData.customUserType}
+                              onChange={(e) => setFormData({...formData, customUserType: e.target.value})}
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
-                    {/* Submit Button Section */}
-                    <div className="pt-6 mt-4 border-t border-white/[0.08]">
-                      <Button 
-                        type="submit" 
-                        disabled={isSubmitting}
-                        className="w-full h-14 text-base bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]"
+                    {/* Show remaining form only if a profile type is selected */}
+                    {formData.userType && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }} 
+                        animate={{ opacity: 1, height: 'auto' }} 
+                        className="space-y-6"
                       >
-                        {isSubmitting ? (
-                          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing Payment...</>
-                        ) : (
-                          <>Pay ₹10 & Join Priority Waitlist <ArrowRight className="ml-2 h-5 w-5" /></>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                            <Label className={labelStyle}>Full Name</Label>
+                            <div className="relative">
+                              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                              <Input 
+                                required 
+                                type="text"
+                                placeholder="John Doe" 
+                                className={inputStyle}
+                                value={formData.name}
+                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className={labelStyle}>Work Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                              <Input 
+                                required 
+                                type="email"
+                                placeholder="john@company.com" 
+                                className={inputStyle}
+                                value={formData.email}
+                                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-1 gap-6">
+                          <div className="space-y-1.5">
+                              <Label className={labelStyle}>Phone Number</Label>
+                              <div className="flex gap-2">
+                                <Select value={countryCode} onValueChange={setCountryCode}>
+                                  <SelectTrigger className="w-[110px] bg-white/[0.02] border-white/[0.08] text-white focus:ring-[#fbbf24]/30 rounded-xl h-12 px-3">
+                                    <div className="flex items-center gap-2">
+                                      <span>{selectedCountry?.flag}</span>
+                                      <span className="text-xs text-zinc-300">{selectedCountry?.code}</span>
+                                    </div>
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl max-h-[280px]">
+                                    {COUNTRY_CODES.map((item, idx) => (
+                                      <SelectItem 
+                                        key={`${item.code}-${idx}`} 
+                                        value={item.code}
+                                        className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                                      >
+                                        <span className="mr-2 text-lg">{item.flag}</span>
+                                        <span className="font-medium text-zinc-300">{item.name}</span>
+                                        <span className="ml-1 text-zinc-500">({item.code})</span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+
+                                <div className="relative flex-1">
+                                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                                  <Input 
+                                    required
+                                    type="tel"
+                                    placeholder="98765 00000" 
+                                    className={inputStyle}
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            {/* ✅ CONDITIONAL LABEL */}
+                            <Label className={labelStyle}>
+                              {formData.userType === "Student" ? "College / University Name" : "Company / Organization Name"}
+                            </Label>
+                            <div className="relative">
+                              <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                              <Input 
+                                required 
+                                type="text"
+                                placeholder={formData.userType === "Student" ? "Stanford University" : "Acme Corp"} 
+                                className={inputStyle}
+                                value={formData.company}
+                                onChange={(e) => setFormData({...formData, company: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ✅ CONDITIONAL INDUSTRY FIELD */}
+                        {formData.userType !== "Student" && (
+                          <div className="space-y-1.5">
+                            <Label className={labelStyle}>Industry</Label>
+                            <div className="relative">
+                              <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 z-10 pointer-events-none" />
+                              <Select 
+                                required
+                                value={formData.industry} 
+                                onValueChange={(val) => setFormData({...formData, industry: val})}
+                              >
+                                <SelectTrigger className={`${inputStyle} pl-10 text-left`}>
+                                  <SelectValue placeholder="Select your industry" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-950 border-white/[0.1] text-white rounded-xl shadow-2xl max-h-[280px]">
+                                  {INDUSTRIES.map((ind) => (
+                                    <SelectItem 
+                                      key={ind} 
+                                      value={ind} 
+                                      className="focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer"
+                                    >
+                                      {ind}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         )}
-                      </Button>
-                      <p className="text-center text-[10px] text-zinc-500 mt-4 uppercase tracking-widest font-bold">
-                        Secure your spot via Cashfree Payments
-                      </p>
-                    </div>
+
+                        <div className="pt-6 mt-4 border-t border-white/[0.08]">
+                          <Button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                            className="w-full h-14 text-base bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all active:scale-[0.98]"
+                          >
+                            {isSubmitting ? (
+                              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing Payment...</>
+                            ) : (
+                              <>Pay ₹10 & Join Priority Waitlist <ArrowRight className="ml-2 h-5 w-5" /></>
+                            )}
+                          </Button>
+                          <p className="text-center text-[10px] text-zinc-500 mt-4 uppercase tracking-widest font-bold">
+                            Secure your spot via Cashfree Payments
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
                   </form>
                 )}
               </div>
