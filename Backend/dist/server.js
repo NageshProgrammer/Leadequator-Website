@@ -5,11 +5,12 @@ import cors from "cors";
 import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
+import nodemailer from "nodemailer"; // ✅ Added for sending emails
 import { db } from "./db.js";
 // ✅ Routes
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
 // ✅ Schema Imports
-import { onboardingProgress, companyDetails, targetMarket, buyerKeywords, platformsToMonitor, usersTable, userSubscriptions, redditPosts, quoraPosts, eventWaitlist, // ✅ Added new table import here
+import { onboardingProgress, companyDetails, targetMarket, buyerKeywords, platformsToMonitor, usersTable, userSubscriptions, eventWaitlist, // ✅ Added this import
  } from "./config/schema.js";
 const app = express();
 /* ===============================
@@ -33,74 +34,53 @@ app.use(cors({
 }));
 app.use(express.json());
 /* ===============================
+   EMAIL CONFIGURATION (NODEMAILER)
+================================ */
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+// Helper function to send event confirmation email
+async function sendEventEmail(userEmail, userName) {
+    try {
+        await transporter.sendMail({
+            from: `"Leadequator Team" <${process.env.SMTP_FROM}>`,
+            to: userEmail,
+            subject: `You're In! AI Business Masterclass Waitlist ✅`,
+            html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #333;">Registration Confirmed! 🎉</h2>
+          <p>Hi ${userName},</p>
+          <p>Thank you for securing your spot on the <strong>Priority Waitlist</strong> for the 2-Day Intensive AI Business Masterclass.</p>
+          <p>Since you've paid the registration fee, your spot is locked. We will email you as soon as the official dates are announced.</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+          <p style="color: #666; font-size: 12px;">Payment Receipt: ₹10.00 (Paid via Cashfree)</p>
+        </div>
+      `,
+        });
+        console.log(`📧 Event email sent to ${userEmail}`);
+    }
+    catch (error) {
+        console.error("❌ Error sending event email:", error);
+    }
+}
+/* ===============================
    HEALTH CHECK
 ================================ */
 app.get("/", (_req, res) => {
     res.json({ status: "Backend running safely 🚀" });
 });
 /* ===============================
-   EVENTS WAITLIST REGISTRATION
-================================ */
-app.post("/api/events/waitlist", async (req, res) => {
-    try {
-        const { eventId, name, email, phone, company, industry } = req.body;
-        if (!eventId || !name || !email || !phone || !company || !industry) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
-        // Insert into DB
-        await db.insert(eventWaitlist).values({
-            eventId,
-            name,
-            email,
-            phoneNumber: phone,
-            company,
-            industry
-        });
-        console.log(`✅ New waitlist entry for event ${eventId}: ${email} (${industry})`);
-        res.json({ success: true, message: "Added to waitlist successfully" });
-    }
-    catch (error) {
-        console.error("Waitlist Error:", error.message || error);
-        res.status(500).json({ error: "Failed to join waitlist" });
-    }
-});
-/* ===============================
-   UPDATE LEAD PIPELINE STAGE
-================================ */
-app.put("/api/pipeline/update-stage", async (req, res) => {
-    try {
-        const { postId, platform, stage } = req.body;
-        if (!postId || !platform || !stage) {
-            return res.status(400).json({ error: "Missing required fields." });
-        }
-        const platformLower = platform.toLowerCase();
-        if (platformLower === "reddit") {
-            await db.update(redditPosts)
-                .set({ pipelineStage: stage })
-                .where(eq(redditPosts.id, postId));
-        }
-        else if (platformLower === "quora") {
-            await db.update(quoraPosts)
-                .set({ pipelineStage: stage })
-                .where(eq(quoraPosts.id, postId));
-        }
-        else {
-            return res.status(400).json({ error: "Invalid platform specified." });
-        }
-        res.json({ success: true, message: "Pipeline stage updated." });
-    }
-    catch (err) {
-        console.error("Update Stage Error:", err.message || err);
-        res.status(500).json({ error: "Failed to update pipeline stage" });
-    }
-});
-/* ===============================
    MOUNT ROUTES
 ================================ */
-// Lead Discovery ( /api/lead-discovery/... )
 app.use("/api/lead-discovery", leadDiscoveryRoutes);
 /* ===============================
-   CRON JOBS (DAILY EXPIRATION CHECK)
+   CRON JOBS
 ================================ */
 cron.schedule("0 0 * * *", async () => {
     console.log("⏳ Running daily subscription expiration check...");
@@ -199,6 +179,7 @@ const getCashfreeBaseUrl = () => {
         ? "https://api.cashfree.com/pg"
         : "https://sandbox.cashfree.com/pg";
 };
+// 1. Create Subscription Order (For Plans)
 app.post("/api/create-cashfree-order", async (req, res) => {
     try {
         const { userId, userEmail, userPhone, planName, amount, currency } = req.body;
@@ -236,6 +217,7 @@ app.post("/api/create-cashfree-order", async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+// 2. Verify Subscription Payment
 app.post("/api/verify-cashfree", async (req, res) => {
     const { order_id, userId, planName, billingCycle, currency } = req.body;
     try {
@@ -299,6 +281,89 @@ app.post("/api/verify-cashfree", async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error." });
     }
 });
+/* ==============================================
+   🚀 NEW: EVENT PAYMENT & REGISTRATION ROUTES
+================================================= */
+// 1. Create Event Payment Order (₹10)
+app.post("/api/events/create-payment", async (req, res) => {
+    try {
+        const { name, email, phone } = req.body;
+        const orderId = `evt_${crypto.randomBytes(4).toString("hex")}`;
+        const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+        const finalPhone = cleanPhone.length === 10 ? cleanPhone : "9999999999";
+        const response = await fetch(`${getCashfreeBaseUrl()}/orders`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-client-id": process.env.CASHFREE_APP_ID,
+                "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+                "x-api-version": "2023-08-01",
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                order_amount: 10, // Fixed ₹10 Fee
+                order_currency: "INR",
+                customer_details: {
+                    customer_id: email.replace(/[^a-zA-Z0-9]/g, '_'),
+                    customer_name: name,
+                    customer_email: email,
+                    customer_phone: finalPhone,
+                },
+            }),
+        });
+        const data = await response.json();
+        if (data.payment_session_id) {
+            res.json({ payment_session_id: data.payment_session_id, order_id: orderId });
+        }
+        else {
+            console.error("Event Order Error:", data);
+            res.status(400).json({ error: "Failed to create payment session" });
+        }
+    }
+    catch (error) {
+        console.error("Server Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+// 2. Verify Event Payment & Save Registration
+app.post("/api/events/verify-registration", async (req, res) => {
+    const { order_id, formData, eventId } = req.body;
+    try {
+        // A. Check Payment Status
+        const response = await fetch(`${getCashfreeBaseUrl()}/orders/${order_id}`, {
+            method: "GET",
+            headers: {
+                "x-client-id": process.env.CASHFREE_APP_ID,
+                "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+                "x-api-version": "2023-08-01",
+            },
+        });
+        const orderDetails = await response.json();
+        // B. If Paid, Save Data
+        if (orderDetails.order_status === "PAID") {
+            await db.insert(eventWaitlist).values({
+                id: crypto.randomUUID(),
+                eventId: eventId,
+                name: formData.name,
+                email: formData.email,
+                phoneNumber: formData.phone,
+                company: formData.company,
+                industry: formData.industry,
+            });
+            // Send Confirmation Email
+            sendEventEmail(formData.email, formData.name);
+            console.log(`✅ Event registration saved for: ${formData.email}`);
+            return res.status(200).json({ success: true, message: "Registration successful!" });
+        }
+        else {
+            return res.status(400).json({ success: false, message: "Payment not verified." });
+        }
+    }
+    catch (error) {
+        console.error("Registration Error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+});
 /* ===============================
    ONBOARDING ENDPOINTS
 ================================ */
@@ -331,7 +396,6 @@ app.post("/api/onboarding", async (req, res) => {
         const { userId, companyData = {}, industryData = {}, targetData = {}, keywordsData = { keywords: [] }, platformsData = {} } = req.body;
         if (!userId)
             return res.status(400).json({ error: "Missing userId in payload" });
-        console.log(`Processing onboarding for User: ${userId}`);
         await db.insert(companyDetails).values({
             userId, companyName: companyData.companyName || "Unknown Company", websiteUrl: companyData.websiteUrl || null,
             businessEmail: companyData.businessEmail || null, phoneNumber: companyData.phoneNumber || null,
@@ -354,11 +418,9 @@ app.post("/api/onboarding", async (req, res) => {
             await db.insert(platformsToMonitor).values({ userId, ...platformsData }).onConflictDoUpdate({ target: platformsToMonitor.userId, set: platformsData });
         }
         await db.insert(onboardingProgress).values({ userId, completed: true, currentStep: 5 }).onConflictDoUpdate({ target: onboardingProgress.userId, set: { completed: true, currentStep: 5 } });
-        console.log(`✅ User ${userId} completed onboarding.`);
         res.json({ success: true });
     }
     catch (err) {
-        console.error("🔥 Onboarding Error Details:", err.message || err);
         res.status(500).json({ error: "Onboarding failed on the server." });
     }
 });
@@ -381,7 +443,6 @@ app.get("/api/settings/profile", async (req, res) => {
         });
     }
     catch (err) {
-        console.error("Error fetching profile:", err.message || err);
         res.status(500).json({ error: "Failed to fetch profile" });
     }
 });
@@ -411,7 +472,6 @@ app.put("/api/settings/profile", async (req, res) => {
         res.json({ success: true });
     }
     catch (err) {
-        console.error("Error updating profile:", err.message || err);
         res.status(500).json({ error: "Failed to update profile" });
     }
 });
@@ -426,12 +486,10 @@ app.post("/api/users/sync", async (req, res) => {
         const existing = await db.select().from(usersTable).where(eq(usersTable.id, clerkId)).limit(1);
         if (!existing.length) {
             await db.insert(usersTable).values({ id: clerkId, email, name: name || "New User", credits: 300 });
-            console.log(`✅ Synced new user: ${email}`);
         }
         res.json({ success: true });
     }
     catch (err) {
-        console.error("User Sync Error:", err.message || err);
         res.status(500).json({ error: "Failed to sync user" });
     }
 });
