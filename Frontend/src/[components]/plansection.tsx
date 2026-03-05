@@ -21,28 +21,43 @@ const API_BASE = import.meta.env.MODE === "development"
   ? "http://localhost:5000" 
   : "https://api.leadequator.live";
 
+// ✅ UPDATED PLANS ARRAY WITH NEW DESCRIPTIONS & FEATURES
 const plans = [
   {
     name: "PILOT",
-    pricing: { USD: { monthly: 49, yearly: 25 }, INR: { monthly: 1, yearly: 1999 } },
-    period: "30-day pilot",
+    pricing: { USD: { monthly: 49, yearly: 25 }, INR: { monthly: 3999, yearly: 1999 } },
+    period: "per month",
     features: [
-      "1 brand/product to monitor", "Up to 1,000 conversations/month", "AI-suggested replies (manual send)",
-      "LinkedIn + Reddit monitoring", "Basic intent scoring", "Email support", "30-day pilot program"
+      "1000 Credits for Scrapping Leads",
+      "Up to 6 intent keywords", 
+      "Up to 100 conversations/month", 
+      "Up to 100 leads/month",
+      "Reddit + Quora monitoring", 
+      "AI-suggested replies (manual send)", 
+      "Basic intent scoring", 
+      "Email support"
     ],
-    description: "Test the platform with limited scope",
+    description: "Best for small businesses testing intent-based lead generation.",
     isPopular: false,
   },
   {
     name: "SCALE",
-    pricing: { USD: { monthly: 149, yearly: 75 }, INR: { monthly: 11999, yearly: 5999 } },
+    // 👇 Updated USD monthly to 199 as requested
+    pricing: { USD: { monthly: 199, yearly: 75 }, INR: { monthly: 11999, yearly: 5999 } },
     period: "per month",
     features: [
-      "Up to 5 brands/products", "Unlimited conversations", "Auto-replies with approval workflows",
-      "All 5 platforms (LinkedIn, Quora, Reddit, X, YouTube)", "Advanced intent scoring + sentiment",
-      "CRM integrations (Salesforce, HubSpot)", "Competitor watch + alerts", "Analytics dashboard + reports"
+      "5000 Credits for Scrapping Leads",
+      "Up to 15 intent keywords", 
+      "Up to 250 conversations/month", 
+      "Up to 150 leads/month",
+      "Multi-platform monitoring (LinkedIn, Reddit, Quora, X, YouTube)", 
+      "AI-suggested replies",
+      "Advanced intent scoring + sentiment analysis", 
+      "CRM integration", 
+      "Intelligent lead reports",
+      "Competitor watch"
     ],
-    description: "Full platform for growing teams",
+    description: "Full platform for growing teams.",
     isPopular: true,
   },
   {
@@ -50,11 +65,20 @@ const plans = [
     pricing: { USD: { monthly: "Custom", yearly: "Custom" }, INR: { monthly: "Custom", yearly: "Custom" } },
     period: "per month",
     features: [
-      "Unlimited brands/workspaces", "White-label option for agencies", "Custom AI training on brand voice",
-      "Multi-tenant workspace management", "SSO (Okta, Azure AD)", "Advanced security & compliance (SOC 2)",
-      "Custom integrations + API access", "24/7 premium support + SLA"
+      "2000 Credits for Scrapping Leads",
+      "Unlimited keywords", 
+      "Unlimited conversations", 
+      "Unlimited leads",
+      "Custom AI models", 
+      "Brand voice training", 
+      "Multi-workspace management",
+      "White-label option", 
+      "API access",
+      "Custom integrations",
+      "Dedicated success manager",
+      "Priority support"
     ],
-    description: "For agencies and large organizations",
+    description: "For companies that want LeadEquator as a full growth intelligence platform. Ideal for agencies, SaaS companies, and large brands.",
     isPopular: false,
   },
 ];
@@ -90,14 +114,13 @@ export default function CongestedPricing() {
     }
   };
 
-  // ✅ NOW ACCEPTS THE FULL BILLED PRICE DIRECTLY
   const handleCashfreePayment = async (planName: string, finalAmount: number | string) => {
     if (!user || !cashfreeRef.current) return;
     setIsCashfreeLoading(true);
     const toastId = toast.loading("Initializing secure payment gateway...");
 
     try {
-      const totalChargeForPeriod = Number(finalAmount); // No longer multiplying by 12 here
+      const totalChargeForPeriod = Number(finalAmount); 
       const currentCycle = isMonthly ? "MONTHLY" : "YEARLY";
 
       const rawPhone = user.primaryPhoneNumber?.phoneNumber || "";
@@ -178,11 +201,9 @@ export default function CongestedPricing() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0">
         {plans.map((plan, index) => {
-          // ✅ NEW PRICING MATH LOGIC
           const currentPrice = isMonthly ? plan.pricing[currency].monthly : plan.pricing[currency].yearly;
           const isCustom = currentPrice === "Custom";
           
-          // If yearly, multiply the base price by 12 to show the total billed amount
           const billedPrice = isCustom ? "Custom" : (isMonthly ? currentPrice : Number(currentPrice) * 12);
 
           return (
@@ -209,16 +230,13 @@ export default function CongestedPricing() {
                     <>
                       <span className="text-5xl font-bold text-white flex items-center justify-center gap-1">
                           <span>{currency === "USD" ? "$" : "₹"}</span>
-                          {/* ✅ DISPLAYS THE TOTAL BILLED AMOUNT */}
                           <NumberFlow value={Number(billedPrice)} format={{ style: "decimal", minimumFractionDigits: 0 }} />
                       </span>
-                      {/* ✅ CHANGES /mo to /yr IF ANNUAL */}
                       <span className="text-zinc-500 text-sm">/{isMonthly ? "mo" : "yr"}</span>
                     </>
                   )}
                 </div>
                 
-                {/* ✅ ADDS CLARITY TEXT BELOW THE PRICE */}
                 <p className="text-zinc-500 text-xs mt-1 mb-8">
                   {isCustom 
                     ? "Tailored for enterprises" 
@@ -255,14 +273,12 @@ export default function CongestedPricing() {
                         Loading Payment...
                       </div>
                     ) : currency === "USD" ? (
-                      // SHOW PAYPAL FOR USD
                       <PayPalScriptProvider options={{ clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", currency: "USD", intent: "capture" }}>
                         <PayPalButtons
                           fundingSource={FUNDING.PAYPAL}
                           style={{ layout: "vertical", label: "buynow", height: 45, tagline: false }}
                           forceReRender={[billedPrice, isMonthly]}
                           createOrder={(data, actions) => {
-                            // ✅ USES THE TOTAL BILLED AMOUNT DIRECTLY
                             const total = Number(billedPrice);
                             return actions.order.create({
                               intent: "CAPTURE",
@@ -303,7 +319,6 @@ export default function CongestedPricing() {
                         />
                       </PayPalScriptProvider>
                     ) : (
-                       // SHOW CASHFREE FOR INR
                        <Button 
                          disabled={isCashfreeLoading}
                          onClick={() => handleCashfreePayment(plan.name, billedPrice)}
