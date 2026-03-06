@@ -28,7 +28,7 @@ const DashboardLayoutContent = () => {
 
   return (
     // Replaced standard bg with deep black, keeping it consistent with the site
-    <div className="min-h-screen text-white flex overflow-x-hidden selection:bg-[#fbbf24]/30 relative">
+    <div className="min-h-screen text-white flex overflow-x-hidden selection:bg-[#fbbf24] relative ">
       
       {/* Very subtle background glow for the dashboard */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-[#fbbf24]/[0.03] rounded-full blur-[120px] pointer-events-none" />

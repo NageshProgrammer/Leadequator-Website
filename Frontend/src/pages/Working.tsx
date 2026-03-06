@@ -7,7 +7,7 @@ import Features from './Features';
 const Working = () => {
   return (
     // ADDED: bg-black and overflow-x-hidden here to lock the layout
-    <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24]/30 pt-20 relative z-10 overflow-x-hidden">
+    <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24] pt-20 relative z-10 overflow-x-hidden">
       <ScrollProgress className="top-[69px]" />
       
       {/* Optional Background Glow */}

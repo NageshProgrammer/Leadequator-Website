@@ -201,3 +201,14 @@ export const eventWaitlist = pgTable("event_waitlist", {
   industry: varchar("industry", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Add this at the bottom of your config/schema.ts file
+
+/* =========================
+   NEWSLETTER SUBSCRIBERS
+========================= */
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(), // Unique prevents double-subscribing
+  subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
+});

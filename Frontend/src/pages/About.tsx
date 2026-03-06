@@ -5,7 +5,7 @@ import { Target, Users, Lightbulb, Award, MapPin, Mail, Phone } from "lucide-rea
 
 const About = () => {
   return (
-    <div className="min-h-screen pt-24 pb-12 text-white bg-background selection:bg-[#fbbf24]/30 relative z-10 overflow-hidden">
+    <div className="min-h-screen pt-24 pb-12 text-white bg-background selection:bg-[#fbbf24] relative z-10 overflow-hidden">
       <ScrollProgress className="top-[69px]" />
       
       {/* Background Glow */}

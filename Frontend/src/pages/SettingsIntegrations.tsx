@@ -220,7 +220,7 @@ const SettingsIntegrations = () => {
   const labelStyle = "text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1 block";
 
   return (
-    <div className="p-4 md:p-8 rounded-3xl space-y-8 bg-black/10 min-h-screen text-white relative z-10 selection:bg-[#fbbf24]/30 overflow-x-hidden">
+    <div className="p-4 md:p-8 rounded-3xl space-y-8 bg-black/10 min-h-screen text-white relative z-10 selection:bg-[#fbbf24] overflow-x-hidden">
       
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />

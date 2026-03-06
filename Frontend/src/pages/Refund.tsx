@@ -3,7 +3,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 const RefundPolicy = () => {
   return (
     // Removed bg-black per your request. Kept overflow-x-hidden to prevent mobile scrolling bugs.
-    <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24]/30 pt-24 pb-12 relative z-10 overflow-x-hidden">
+    <div className="min-h-screen text-white font-sans selection:bg-[#fbbf24] pt-24 pb-12 relative z-10 overflow-x-hidden">
       <ScrollProgress className="top-[69px]" />
       
       {/* Background Glow */}

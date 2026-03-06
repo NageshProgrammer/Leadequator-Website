@@ -181,7 +181,7 @@ const DashboardOverview = () => {
   const glassCardStyle = "bg-[#050505]/20 backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] p-6 md:p-8";
 
   return (
-    <div ref={dashboardRef} className="p-4 md:p-8 space-y-8 bg-black/10 text-white min-h-screen relative z-10 selection:bg-[#fbbf24]/30 rounded-3xl">
+    <div ref={dashboardRef} className="p-4 md:p-8 space-y-8 bg-black/10 text-white min-h-screen relative z-10 selection:bg-[#fbbf24] rounded-3xl">
       
       {/* HEADER WITH SMART CREDIT ALERT */}
       <div>

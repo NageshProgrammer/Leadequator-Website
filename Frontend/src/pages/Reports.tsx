@@ -196,7 +196,7 @@ const Reports = () => {
   const selectItemStyle = "focus:bg-[#fbbf24]/20 focus:text-[#fbbf24] cursor-pointer py-2.5";
 
   return (
-    <div className="min-h-[90vh] pt-4 pb-12 bg-black/10 rounded-3xl text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
+    <div className="min-h-[90vh] pt-4 pb-12 bg-black/10 rounded-3xl text-white selection:bg-[#fbbf24] relative overflow-hidden">
       
       {/* Subtle Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-[#fbbf24]/5 rounded-full blur-[120px] pointer-events-none -z-10" />

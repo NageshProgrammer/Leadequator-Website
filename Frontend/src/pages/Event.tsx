@@ -246,7 +246,7 @@ export default function EventsPage() {
   const labelStyle = "text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest mb-2 block ml-1";
 
   return (
-    <div className="min-h-[90vh] pt-14 pb-24 bg-black/10 text-white selection:bg-[#fbbf24]/30 relative overflow-hidden">
+    <div className="min-h-[90vh] pt-14 pb-24 bg-black/10 text-white selection:bg-[#fbbf24] relative overflow-hidden">
       
       {/* Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/[0.05] rounded-full blur-[120px] pointer-events-none -z-10" />

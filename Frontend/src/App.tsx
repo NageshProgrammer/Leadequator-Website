@@ -40,6 +40,7 @@ import ComingSoon from "./pages/comingsoon";
 import LeadGeneration from "./pages/LeadGeneration";
 import EventsPage from "./pages/Event";
 import ScrollToTop from "./[components]/scrollTop";
+import Newsletter1 from "./pages/newsletter1";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ export default function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/lead-discovery" element={<LeadDiscovery />} />
                 <Route path="/events" element={<PublicLayout><EventsPage /></PublicLayout>} />
+                <Route path="/newsletter" element={<Newsletter1 />} />
 
                 {/* ================= AUTH ROUTES ================= */}
                 <Route

@@ -7,7 +7,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 const Pricing = () => {
   return (
     // ADDED: bg-black and overflow-x-hidden to lock the layout and prevent mobile side-scrolling
-    <div className="min-h-screen  pt-24 pb-12 text-white selection:bg-[#fbbf24]/30 relative z-10 overflow-x-hidden">
+    <div className="min-h-screen  pt-24 pb-12 text-white selection:bg-[#fbbf24] relative z-10 overflow-x-hidden">
       <ScrollProgress className="top-[69px]" />
       
       {/* Background Glow */}

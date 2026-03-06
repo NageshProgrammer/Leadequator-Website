@@ -232,7 +232,7 @@ const Onboarding = () => {
   // UI - ONBOARDING FORM
   // ======================
   return (
-    <div className="min-h-screen bg-[#09090b] text-white selection:bg-[#fbbf24]/30 relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#09090b] text-white selection:bg-[#fbbf24] relative overflow-hidden flex flex-col">
       
       {/* =========================================
           ENHANCED AMBIENT GLOW BACKGROUNDS 

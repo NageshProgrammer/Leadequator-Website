@@ -20,7 +20,8 @@ import {
   platformsToMonitor,
   usersTable,
   userSubscriptions,
-  eventWaitlist, // ✅ Added this import
+  eventWaitlist,
+  newsletterSubscribers, // ✅ Added this import
 } from "./config/schema.js";
 
 const app = express();
@@ -407,6 +408,34 @@ app.post("/api/events/verify-registration", async (req, res) => {
   } catch (error: any) {
     console.error("Registration Error:", error);
     return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+});
+
+/* ===============================
+   NEWSLETTER SUBSCRIPTION
+================================ */
+app.post("/api/newsletter/subscribe", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ error: "Invalid email address" });
+    }
+
+    // Insert into DB. The 'onConflictDoNothing' prevents errors if they subscribe twice.
+    await db.insert(newsletterSubscribers)
+      .values({ email })
+      .onConflictDoNothing({ target: newsletterSubscribers.email });
+
+    console.log(`📩 New Newsletter Subscriber: ${email}`);
+    
+    // Optional: You could call your sendEmail function here to send a welcome email!
+    
+    res.json({ success: true, message: "Subscribed successfully" });
+
+  } catch (error: any) {
+    console.error("Newsletter Subscription Error:", error.message || error);
+    res.status(500).json({ error: "Failed to subscribe" });
   }
 });
 
