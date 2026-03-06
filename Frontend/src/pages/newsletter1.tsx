@@ -212,7 +212,7 @@ export default function Newsletter1() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className={`${liquidGlassStyle} rounded-[2.5rem] p-8 md:p-12 mb-20 relative overflow-hidden group`}
+          className={`${liquidGlassStyle} rounded-[2.5rem] p-8 md:p-12 mb-16 relative overflow-hidden group`}
         >
           {/* Subtle Top Border Highlight that follows the glass curve */}
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#fbbf24]/50 to-transparent opacity-50" />
@@ -222,17 +222,17 @@ export default function Newsletter1() {
               variant="outline"
               className="bg-[#fbbf24]/20 text-[#fbbf24] border-[#fbbf24]/40 uppercase tracking-widest text-[10px] font-bold mb-6 shadow-[inset_0_0_10px_rgba(251,191,36,0.2)]"
             >
-              <Sparkles className="w-3 h-3 mr-1.5 inline" /> The Official
-              Newsletter
+              <Sparkles className="w-3 h-3 mr-1.5 inline" /> The Official Newsletter
             </Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 drop-shadow-lg">
-              Beyond{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#fbbf24] to-yellow-300">
-                Marketing
-              </span>
+            
+            {/* UPDATED HEADLINE */}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 drop-shadow-lg leading-tight">
+              Understand AI, Business, and the Future — <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#fbbf24] to-yellow-300">Before Everyone Else.</span>
             </h1>
-            <p className="text-xl md:text-2xl font-medium text-white max-w-2xl mx-auto drop-shadow-md">
-              One Powerful Insight Every Week.
+            
+            {/* UPDATED SUBHEADLINE */}
+            <p className="text-lg md:text-xl font-medium text-zinc-300 max-w-3xl mx-auto drop-shadow-md leading-relaxed">
+              Beyond Marketing is a weekly newsletter breaking down AI, business strategies, market trends, career opportunities, and emerging industries in simple, practical insights.
             </p>
           </div>
 
@@ -264,15 +264,17 @@ export default function Newsletter1() {
                 >
                   <div className="relative group/input">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70 group-focus-within/input:text-[#fbbf24] transition-colors" />
+                    {/* UPDATED INPUT PLACEHOLDER */}
                     <Input
                       required
                       type="email"
-                      placeholder="Enter your best email..."
+                      placeholder="Enter your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full pl-12 h-14 bg-black/40 border-white/[0.2] text-white text-base focus-visible:ring-[#fbbf24]/60 focus-visible:border-[#fbbf24]/80 rounded-xl transition-all shadow-inner placeholder:text-white/50"
                     />
                   </div>
+                  {/* UPDATED BUTTON TEXT */}
                   <Button
                     type="submit"
                     disabled={isSubmitting}
@@ -285,14 +287,15 @@ export default function Newsletter1() {
                       </>
                     ) : (
                       <>
-                        Subscribe to Beyond Marketing{" "}
+                        Subscribe Free{" "}
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </>
                     )}
                   </Button>
+                  
+                  {/* UPDATED MICRO TEXT */}
                   <div className="flex items-center justify-center gap-2 mt-2 text-xs text-white/80 font-medium">
-                    <ShieldCheck className="w-4 h-4 text-emerald-300" /> No
-                    noise. No spam. Just clear insights.
+                    <ShieldCheck className="w-4 h-4 text-emerald-300" /> 1 powerful insight every week. No spam.
                   </div>
                 </motion.form>
               )}
@@ -358,6 +361,56 @@ export default function Newsletter1() {
         </motion.div>
 
         {/* ==========================================
+            NEW SECTION: THE PROBLEM / WHY SUBSCRIBE
+        ========================================== */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mb-20 text-center"
+        >
+           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight drop-shadow-md mb-8">
+              Why Thousands Are Reading <span className="text-[#fbbf24]">Beyond Marketing</span>
+           </h2>
+           <p className="text-xl text-zinc-300 mb-8 max-w-2xl mx-auto">
+             Because the world is changing faster than most people realize.
+           </p>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-12 text-left">
+              <div className="bg-white/[0.03] border border-white/[0.05] p-5 rounded-2xl flex items-center gap-4">
+                 <div className="w-2 h-2 rounded-full bg-[#fbbf24] animate-pulse" />
+                 <span className="font-medium text-zinc-200">AI is reshaping industries</span>
+              </div>
+              <div className="bg-white/[0.03] border border-white/[0.05] p-5 rounded-2xl flex items-center gap-4">
+                 <div className="w-2 h-2 rounded-full bg-[#fbbf24] animate-pulse" />
+                 <span className="font-medium text-zinc-200">New business models are emerging</span>
+              </div>
+              <div className="bg-white/[0.03] border border-white/[0.05] p-5 rounded-2xl flex items-center gap-4">
+                 <div className="w-2 h-2 rounded-full bg-[#fbbf24] animate-pulse" />
+                 <span className="font-medium text-zinc-200">Markets are shifting rapidly</span>
+              </div>
+              <div className="bg-white/[0.03] border border-white/[0.05] p-5 rounded-2xl flex items-center gap-4">
+                 <div className="w-2 h-2 rounded-full bg-[#fbbf24] animate-pulse" />
+                 <span className="font-medium text-zinc-200">Careers are evolving</span>
+              </div>
+           </div>
+
+           <div className={`${liquidGlassStyle} rounded-3xl p-8 max-w-3xl mx-auto relative overflow-hidden`}>
+              <div className="absolute top-0 left-0 w-2 h-full bg-red-500/80" />
+              <h3 className="text-2xl font-bold text-white mb-2">The problem?</h3>
+              <p className="text-zinc-400 text-lg mb-6">Most people hear about these shifts <span className="text-red-400 font-semibold">too late.</span></p>
+              
+              <div className="h-px w-full bg-white/[0.1] my-6" />
+
+              <h3 className="text-2xl font-bold text-[#fbbf24] mb-2 flex justify-center items-center gap-2">
+                 <Zap className="w-6 h-6" /> The Solution
+              </h3>
+              <p className="text-zinc-200 text-lg font-medium">Beyond Marketing helps you see them early.</p>
+           </div>
+        </motion.div>
+
+        {/* ==========================================
             RECENT EDITIONS (Article Archive)
         ========================================== */}
         <motion.div
@@ -365,6 +418,7 @@ export default function Newsletter1() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
+          className="mb-16"
         >
           <div className="flex items-center justify-between mb-8 px-2">
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight drop-shadow-md">
@@ -417,6 +471,26 @@ export default function Newsletter1() {
             ))}
           </div>
         </motion.div>
+
+        {/* ==========================================
+            FINAL BOTTOM CTA
+        ========================================== */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="text-center py-12"
+        >
+           <h2 className="text-3xl font-extrabold mb-4">📩 Join the Beyond Marketing Newsletter</h2>
+           <p className="text-zinc-400 mb-8 font-medium">Stay informed. Stay ahead.</p>
+           <Button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="h-14 px-8 text-base bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all active:scale-[0.98]"
+            >
+              Subscribe Free <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+        </motion.div>
+
       </main>
     </div>
   );
