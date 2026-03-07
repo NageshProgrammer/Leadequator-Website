@@ -10,12 +10,14 @@ const GLOBE_CONFIG: COBEOptions = {
   width: 800,
   height: 800,
   onRender: () => {},
-  devicePixelRatio: 2,
+  // 🔥 NUCLEAR OPTIMIZATION 1: Set to 1. Cuts GPU rendering load by 75%.
+  devicePixelRatio: 1, 
   phi: 0,
   theta: 0.3,
   dark: 0,
   diffuse: 1.2,
-  mapSamples: 16000,
+  // 🔥 NUCLEAR OPTIMIZATION 2: Reduced geometry calculation.
+  mapSamples: 8000, 
   mapBrightness: 1.2,
   baseColor: [1, 0.84, 0],
   markerColor: [251 / 255, 100 / 255, 21 / 255],
@@ -42,7 +44,7 @@ export function Globe({
   config?: COBEOptions
 }) {
   let phi = 0
-  let width = 0
+  let currentWidth = 0
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pointerInteracting = useRef<number | null>(null)
   const pointerInteractionMovement = useRef(0)
@@ -72,7 +74,7 @@ export function Globe({
   useEffect(() => {
     const onResize = () => {
       if (canvasRef.current) {
-        width = canvasRef.current.offsetWidth
+        currentWidth = canvasRef.current.offsetWidth
       }
     }
 
@@ -81,17 +83,23 @@ export function Globe({
 
     const globe = createGlobe(canvasRef.current!, {
       ...config,
-      width: width * 2,
-      height: width * 2,
+      width: currentWidth, 
+      height: currentWidth, 
       onRender: (state) => {
         if (!pointerInteracting.current) phi += 0.005
         state.phi = phi + rs.get()
-        state.width = width * 2
-        state.height = width * 2
+        
+        // 🔥 NUCLEAR OPTIMIZATION 3: Stop thrashing the canvas size 60x a second!
+        // Only update width/height if the user actually resized their browser window.
+        if (state.width !== currentWidth) {
+          state.width = currentWidth
+          state.height = currentWidth
+        }
       },
     })
 
     setTimeout(() => (canvasRef.current!.style.opacity = "1"), 0)
+    
     return () => {
       globe.destroy()
       window.removeEventListener("resize", onResize)
@@ -101,8 +109,6 @@ export function Globe({
   return (
     <div
       className={cn(
-        // FIXED: Reverted to a controlled size (max-w-[600px]) 
-        // This ensures it doesn't blow up to the full screen width by default.
         "absolute inset-0 mx-auto aspect-[1/1] w-full max-w-[600px]", 
         className
       )}
