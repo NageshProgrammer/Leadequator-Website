@@ -14,14 +14,20 @@ const GLOBE_CONFIG: COBEOptions = {
   devicePixelRatio: 1, 
   phi: 0,
   theta: 0.3,
-  dark: 0,
+  
+  // 👇 COLOR UPDATES FOR MATTE BLACK & GOLD 👇
+  dark: 1, // 1 turns the globe surface matte black
   diffuse: 1.2,
+  
   // 🔥 NUCLEAR OPTIMIZATION 2: Reduced geometry calculation.
   mapSamples: 8000, 
-  mapBrightness: 1.2,
-  baseColor: [1, 0.84, 0],
-  markerColor: [251 / 255, 100 / 255, 21 / 255],
-  glowColor: [0.5, 0.4, 0.2],
+  mapBrightness: 1.5, 
+  
+  baseColor: [1, 0.84, 0],   // Gold dots
+  markerColor: [1, 0.84, 0], // Gold markers
+  // 🔥 NEW: Changed from dark grey to a warm, soft gold for the 3D atmospheric scatter
+  glowColor: [0.6, 0.45, 0.1], 
+
   markers: [
     { location: [14.5995, 120.9842], size: 0.03 },
     { location: [19.076, 72.8777], size: 0.1 },
@@ -90,7 +96,6 @@ export function Globe({
         state.phi = phi + rs.get()
         
         // 🔥 NUCLEAR OPTIMIZATION 3: Stop thrashing the canvas size 60x a second!
-        // Only update width/height if the user actually resized their browser window.
         if (state.width !== currentWidth) {
           state.width = currentWidth
           state.height = currentWidth
@@ -98,7 +103,7 @@ export function Globe({
       },
     })
 
-    setTimeout(() => (canvasRef.current!.style.opacity = "1"), 0)
+    setTimeout(() => (canvasRef.current!.style.opacity = "0.9"), 0)
     
     return () => {
       globe.destroy()
@@ -113,9 +118,12 @@ export function Globe({
         className
       )}
     >
+      {/* 🔥 NEW: Soft Golden CSS Blur Border / Halo effect placed directly behind the canvas */}
+      <div className="absolute inset-4 rounded-full bg-[#fbbf24]/5 blur-[60px] shadow-[0_0_80px_20px_rgba(251,191,36,0.15)] pointer-events-none" />
+
       <canvas
         className={cn(
-          "size-full opacity-0 transition-opacity duration-500 [contain:layout_paint_size]"
+          "relative size-full opacity-0 transition-opacity duration-500 [contain:layout_paint_size]"
         )}
         ref={canvasRef}
         onPointerDown={(e) => {
