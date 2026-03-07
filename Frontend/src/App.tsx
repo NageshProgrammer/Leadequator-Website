@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SignedIn, SignIn, SignUp } from "@clerk/clerk-react";
+import { ReactLenis } from '@studio-freight/react-lenis';
 import Navigation from "./components/Navigation"
 import Footer from "./components/Footer";
 import { DashboardLayout } from "./components/dashboard/DashboardLayout";
@@ -57,10 +58,20 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Provider>
+          {/* ✅ Wrap the app in ReactLenis for smooth scrolling */}
+          <ReactLenis 
+            root 
+            options={{
+              lerp: 0.05, // Lower = smoother and heavier inertia
+              duration: 1.1,
+              smoothWheel: true,
+              wheelMultiplier: 0.7,
+            }}
+          >
             <Toaster />
             <Sonner />
             <BrowserRouter>
-            <ScrollToTop />
+              <ScrollToTop />
               <Routes>
                 {/* ================= PUBLIC ROUTES ================= */}
                 <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
@@ -141,6 +152,7 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+          </ReactLenis>
         </Provider>
       </TooltipProvider>
     </QueryClientProvider>
