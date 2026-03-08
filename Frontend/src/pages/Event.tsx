@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { load } from "@cashfreepayments/cashfree-js";
 
+// ✅ 1. Import the Lenis hook
+import { useLenis } from "@studio-freight/react-lenis";
+
 /* ==========================================
    MASTERCLASS DATA & CONSTANTS
 ========================================== */
@@ -87,7 +90,6 @@ const AGENDA_MODULES = [
   }
 ];
 
-// ✅ Added "Other" to profiles
 const USER_PROFILES = ["Student", "Working Professional", "Business Owner", "Other"];
 
 const INDUSTRIES = [ "Manufacturing", "Trading & Distribution", "Retail", "Construction & Real Estate", "Information Technology (IT)", "SaaS (Software as a Service)", "Digital Marketing & Advertising", "Professional Services (Consulting, Legal, CA, etc.)", "Logistics & Transportation", "E-commerce", "Healthcare", "Hospitality & Food Services", "Education & EdTech", "Agriculture & Agro Processing", "Import–Export", "Financial Services", "Media & Entertainment", "Telecom", "Infrastructure", "Other" ];
@@ -109,7 +111,6 @@ const modalVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { o
 export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // ✅ Added customUserType to capture the "Other" text input
   const [formData, setFormData] = useState({ 
     userType: "", 
     customUserType: "", 
@@ -127,11 +128,25 @@ export default function EventsPage() {
   const cashfreeRef = useRef<any>(null);
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode);
 
+  // ✅ 2. Grab the Lenis instance
+  const lenis = useLenis();
+
+  // ✅ 3. Update useEffect to properly pause/resume scrolling
   useEffect(() => {
-    if (isModalOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = 'unset';
-    return () => { document.body.style.overflow = 'unset'; }
-  }, [isModalOpen]);
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+      if (lenis) lenis.stop(); // Pause background scrolling
+    } else {
+      document.body.style.overflow = 'unset';
+      if (lenis) lenis.start(); // Resume background scrolling
+    }
+    
+    // Cleanup function
+    return () => { 
+      document.body.style.overflow = 'unset'; 
+      if (lenis) lenis.start();
+    }
+  }, [isModalOpen, lenis]);
 
   useEffect(() => {
     const initializeCashfree = async () => {
@@ -161,7 +176,6 @@ export default function EventsPage() {
       return;
     }
 
-    // ✅ Validation for "Other" field
     if (formData.userType === "Other" && !formData.customUserType.trim()) {
       alert("Please specify your profile type in the provided field.");
       return;
@@ -178,7 +192,6 @@ export default function EventsPage() {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
       const fullPhoneNumber = `${countryCode} ${formData.phone}`;
       
-      // Determine the final user type string to send to the backend
       const finalUserType = formData.userType === "Other" ? formData.customUserType : formData.userType;
       
       const paymentRes = await fetch(`${API_BASE}/api/events/create-payment`, {
@@ -217,7 +230,7 @@ export default function EventsPage() {
               formData: { 
                 ...formData, 
                 phone: fullPhoneNumber,
-                userType: finalUserType, // Include final user type just in case backend needs it
+                userType: finalUserType,
                 industry: formData.userType === "Student" ? "Student/Education" : formData.industry
               }
             })
@@ -252,7 +265,7 @@ export default function EventsPage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#fbbf24]/[0.05] rounded-full blur-[120px] pointer-events-none -z-10" />
       <div className="absolute top-[40%] -left-[10%] w-[500px] h-[500px] bg-red-600/[0.03] rounded-full blur-[120px] pointer-events-none -z-10" />
 
-      <div className="container mx-auto px-4 max-w-[1200px] relative z-10 pt-8 md:pt-12">
+      <div className="container mx-auto px-4 max-w-[1200px] relative z-10 pt-8 md:pt-12 ">
         
         {/* HERO SECTION */}
         <motion.div 
@@ -405,6 +418,8 @@ export default function EventsPage() {
               initial="hidden"
               animate="visible"
               exit="exit"
+              // ✅ 4. Add data-lenis-prevent to allow scrolling inside the modal
+              data-lenis-prevent="true" 
               className="relative w-full max-w-xl bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2.5rem] overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
               onClick={(e) => e.stopPropagation()} 
             >
