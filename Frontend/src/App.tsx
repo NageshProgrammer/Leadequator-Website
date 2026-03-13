@@ -65,7 +65,7 @@ export default function App() {
               lerp: 0.05, // Lower = smoother and heavier inertia
               duration: 1.1,
               smoothWheel: true,
-              wheelMultiplier: 0.7,
+              wheelMultiplier: 1.0,
             }}
           >
             <Toaster />

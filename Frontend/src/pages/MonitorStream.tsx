@@ -36,6 +36,9 @@ import Loader from "@/[components]/loader";
 // 👇 IMPORT THE CREDIT CONTEXT HOOK
 import { useCredits } from "@/context/CreditContext";
 
+// ✅ 1. IMPORT LENIS
+import { useLenis } from "@studio-freight/react-lenis";
+
 /* ================= TYPES ================= */
 type Thread = {
   id: string;
@@ -64,6 +67,9 @@ const MonitorStream = () => {
   // 👇 EXTRACT refreshCredits
   const { refreshCredits } = useCredits();
 
+  // ✅ 2. INIT LENIS
+  const lenis = useLenis();
+
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -77,6 +83,21 @@ const MonitorStream = () => {
   const [sentimentFilter, setSentimentFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [minIntent, setMinIntent] = useState("0");
+
+  // ✅ 3. PAUSE/RESUME SCROLLING WHEN MODAL OPENS
+  useEffect(() => {
+    if (selected) {
+      document.body.style.overflow = 'hidden';
+      if (lenis) lenis.stop(); // Pause background smooth scroll
+    } else {
+      document.body.style.overflow = 'unset';
+      if (lenis) lenis.start(); // Resume
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      if (lenis) lenis.start();
+    };
+  }, [selected, lenis]);
 
   /* ================= FETCH POSTS ================= */
   const loadPosts = useCallback(async () => {
@@ -528,14 +549,18 @@ const MonitorStream = () => {
         {/* DETAIL OVERLAY (MODAL) */}
         {selected && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            className="fixed inset-0 z-200 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
             onClick={() => setSelected(null)} 
           >
             <div 
               className="w-full max-w-4xl max-h-[90vh] bg-[#09090b]/95 backdrop-blur-3xl rounded-[2rem] border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()} 
             >
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
+              {/* ✅ 4. ADD DATA-LENIS-PREVENT HERE */}
+              <div 
+                className="flex-1 overflow-y-auto custom-scrollbar" 
+                data-lenis-prevent="true"
+              >
                 <DetailPane
                   comment={{
                     ...selected,

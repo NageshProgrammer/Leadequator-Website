@@ -124,7 +124,10 @@ const Home = () => {
       {/* =========================================================
           HERO SECTION
       ========================================================= */}
-      <section className="bg-black text-white relative w-full overflow-hidden flex flex-col items-center justify-start pt-28 pb-16 md:pt-32 md:pb-0 md:h-screen md:min-h-[800px]">
+      {/* FIX: Removed min-h-[100vh] entirely. Shifted h-screen from lg: to xl: 
+          Now, tablets will naturally wrap the content with padding (pb-56) instead of stretching.
+      */}
+      <section className="bg-black text-white relative w-full overflow-hidden flex flex-col items-center justify-start pt-28 pb-40 md:pt-32 md:pb-56 xl:pt-32 xl:pb-0 xl:h-screen xl:min-h-[800px]">
         
         {/* --- LAYER 1: BACKGROUND GRADIENT --- */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] md:w-[800px] h-[400px] md:h-[500px] bg-amber-500/10 rounded-full blur-[100px] md:blur-[120px] pointer-events-none z-0"></div>
@@ -140,15 +143,14 @@ const Home = () => {
             times: [0, 0.2, 0.8, 1], 
             ease: "easeInOut" 
           }}
-          className="absolute top-[30%] md:top-1/2 left-1/2 text-[16vw] md:text-[12vw] font-black bg-gradient-to-br from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
+          className="absolute top-[30%] md:top-[40%] xl:top-1/2 left-1/2 text-[16vw] md:text-[12vw] font-black bg-gradient-to-br from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
         >
           LEADEQUATOR
         </motion.div>
 
         {/* --- LAYER 3: THE GLOBE --- 
-            FIX: Positioned from the top on mobile so it stays visually in the exact same spot 
-            without forcing the container to be 800px tall and creating a gap. 
-            On desktop (md:), it reverts back to your exact original settings.
+            FIX: Adjusted widths and top offsets so the globe's curve stays consistently 
+            right under the buttons across all sizes: mobile, tablet, and desktop.
         */}
         <motion.div
           initial={{ x: "-50%", y: "100%", opacity: 0, filter: "blur(0px)", scale: 1.2 }}
@@ -165,7 +167,7 @@ const Home = () => {
             scale: { delay: 3.5, duration: 1.0 }, 
             filter: { delay: 3.5, duration: 1.0 } 
           }}
-          className="absolute top-[45%] md:top-auto md:bottom-[-85%] left-1/2 w-[180%] md:w-full aspect-square z-10 pointer-events-none"
+          className="absolute top-[45%] md:top-[50%] lg:top-[55%] xl:top-auto xl:bottom-[-85%] left-1/2 w-[180%] md:w-[130%] lg:w-[100%] aspect-square z-10 pointer-events-none"
         >
           <Globe className="w-full h-full max-w-none" /> 
         </motion.div>
