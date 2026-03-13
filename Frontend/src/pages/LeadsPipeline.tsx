@@ -42,6 +42,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Loader from "@/[components]/loader";
 
+// ✅ 1. IMPORT LENIS
+import { useLenis } from "@studio-freight/react-lenis";
+
 /* -------------------- Types -------------------- */
 type Lead = {
   _id: string;
@@ -87,6 +90,9 @@ const LeadsPipeline = () => {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
 
+  // ✅ 2. INIT LENIS
+  const lenis = useLenis();
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -98,6 +104,18 @@ const LeadsPipeline = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [minIntent, setMinIntent] = useState("0");
 
+  // ✅ 3. PAUSE/RESUME SCROLLING WHEN MODAL OPENS
+  useEffect(() => {
+    if (selectedLead) {
+      if (lenis) lenis.stop(); // Pause background smooth scroll
+    } else {
+      if (lenis) lenis.start(); // Resume
+    }
+    return () => {
+      if (lenis) lenis.start();
+    };
+  }, [selectedLead, lenis]);
+
   /* ================= FETCH DATA ================= */
   const fetchLiveLeads = useCallback(async () => {
     if (!isLoaded || !user?.id) return;
@@ -106,7 +124,6 @@ const LeadsPipeline = () => {
     try {
       const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/lead-discovery`;
 
-      // ✅ Added Cache-Control headers to ensure we fetch fresh data from the DB
       const headers = {
         "Cache-Control": "no-cache, no-store, must-revalidate",
         Pragma: "no-cache",
@@ -146,7 +163,6 @@ const LeadsPipeline = () => {
           name: p.author ?? p.userId ?? "Unknown User",
           platform: formattedPlatform,
           intent: 50 + (idx % 40),
-          // ✅ Ensures we use the DB's pipelineStage, fallback to "New"
           status: p.pipelineStage || "New",
           url: p.url || "#",
           createdAt: p.createdAt || new Date().toISOString(),
@@ -178,16 +194,11 @@ const LeadsPipeline = () => {
 
   /* ================= DB UPDATE FUNCTION ================= */
   const updateStatus = async (id: string, platform: string, status: string) => {
-    // ✅ Store previous state for rollback
     const previousLeads = [...leads];
 
-    // 1. Optimistic UI update
     setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, status } : l)));
 
-    // 2. Background DB Update
-    // 2. Background DB Update
     try {
-      // Strip any accidental trailing slashes from the env variable
       const baseUrl =
         import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
       const UPDATE_URL = `${baseUrl}/api/pipeline/update-stage`;
@@ -743,7 +754,11 @@ const LeadsPipeline = () => {
           open={!!selectedLead}
           onOpenChange={() => setSelectedLead(null)}
         >
-          <DialogContent className="max-w-md bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] p-6 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem]">
+          {/* ✅ 4. ADD DATA-LENIS-PREVENT HERE */}
+          <DialogContent 
+            className="max-w-md bg-[#09090b]/95 backdrop-blur-3xl border border-white/[0.1] p-6 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] z-[999]"
+            data-lenis-prevent="true"
+          >
             <DialogHeader className="mb-6">
               <DialogTitle className="flex items-center justify-between text-white">
                 <span className="text-2xl font-extrabold tracking-tight">
@@ -786,7 +801,11 @@ const LeadsPipeline = () => {
                     Post Context
                   </span>
                   <div className="relative p-5 rounded-2xl bg-black/40 border border-white/[0.05] shadow-inner">
-                    <div className="text-sm italic text-zinc-300 leading-relaxed max-h-[140px] overflow-y-auto pr-2 custom-scrollbar font-medium">
+                    {/* ✅ 5. ADD DATA-LENIS-PREVENT TO THE SPECIFIC SCROLLING BOX */}
+                    <div 
+                      className="text-sm italic text-zinc-300 leading-relaxed max-h-[140px] overflow-y-auto pr-2 custom-scrollbar font-medium"
+                      data-lenis-prevent="true"
+                    >
                       "{selectedLead.postTitle}"
                     </div>
                   </div>

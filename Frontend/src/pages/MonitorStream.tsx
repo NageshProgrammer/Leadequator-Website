@@ -549,14 +549,14 @@ const MonitorStream = () => {
         {/* DETAIL OVERLAY (MODAL) */}
         {selected && (
           <div 
-            className="fixed inset-0 z-200 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            // 👇 THIS IS THE FIX: CHANGED z-100 to z-[999]
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
             onClick={() => setSelected(null)} 
           >
             <div 
               className="w-full max-w-4xl max-h-[90vh] bg-[#09090b]/95 backdrop-blur-3xl rounded-[2rem] border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()} 
             >
-              {/* ✅ 4. ADD DATA-LENIS-PREVENT HERE */}
               <div 
                 className="flex-1 overflow-y-auto custom-scrollbar" 
                 data-lenis-prevent="true"
