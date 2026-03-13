@@ -124,10 +124,10 @@ const Home = () => {
       {/* =========================================================
           HERO SECTION
       ========================================================= */}
-      <section className="bg-black text-white relative w-full h-screen min-h-[800px] overflow-hidden flex flex-col items-center justify-start pt-32">
+      <section className="bg-black text-white relative w-full overflow-hidden flex flex-col items-center justify-start pt-28 pb-16 md:pt-32 md:pb-0 md:h-screen md:min-h-[800px]">
         
         {/* --- LAYER 1: BACKGROUND GRADIENT --- */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] md:w-[800px] h-[400px] md:h-[500px] bg-amber-500/10 rounded-full blur-[100px] md:blur-[120px] pointer-events-none z-0"></div>
 
         {/* --- LAYER 2: GIANT TEXT ("LEAD EQUATOR") --- */}
         <motion.div 
@@ -140,12 +140,16 @@ const Home = () => {
             times: [0, 0.2, 0.8, 1], 
             ease: "easeInOut" 
           }}
-          className="absolute top-1/2 left-1/2 text-[12vw] font-black bg-gradient-to-br from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
+          className="absolute top-[30%] md:top-1/2 left-1/2 text-[16vw] md:text-[12vw] font-black bg-gradient-to-br from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
         >
           LEADEQUATOR
         </motion.div>
 
-        {/* --- LAYER 3: THE GLOBE --- */}
+        {/* --- LAYER 3: THE GLOBE --- 
+            FIX: Positioned from the top on mobile so it stays visually in the exact same spot 
+            without forcing the container to be 800px tall and creating a gap. 
+            On desktop (md:), it reverts back to your exact original settings.
+        */}
         <motion.div
           initial={{ x: "-50%", y: "100%", opacity: 0, filter: "blur(0px)", scale: 1.2 }}
           animate={{ 
@@ -161,7 +165,7 @@ const Home = () => {
             scale: { delay: 3.5, duration: 1.0 }, 
             filter: { delay: 3.5, duration: 1.0 } 
           }}
-          className="absolute bottom-[-75%] md:bottom-[-85%] left-1/2 w-full aspect-square z-10 pointer-events-none"
+          className="absolute top-[45%] md:top-auto md:bottom-[-85%] left-1/2 w-[180%] md:w-full aspect-square z-10 pointer-events-none"
         >
           <Globe className="w-full h-full max-w-none" /> 
         </motion.div>
@@ -171,68 +175,65 @@ const Home = () => {
           initial={{ opacity: 0, y: -50 }} 
           animate={{ opacity: 1, y: 0 }}   
           transition={{ delay: 3.8, duration: 0.8, ease: "easeOut" }} 
-          className="max-w-5xl mx-auto text-center relative z-30 px-4"
+          className="max-w-5xl mx-auto text-center relative z-30 px-4 w-full"
         >
           {/* Introducing Label */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 backdrop-blur-md mb-8">
-            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-            <span className="text-zinc-300 text-sm font-medium">
+          <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-zinc-900/80 border border-zinc-800 backdrop-blur-md mb-6 md:mb-8">
+            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-amber-500"></div>
+            <span className="text-zinc-300 text-xs md:text-sm font-medium">
               Introducing Organic Engagement Intelligence
             </span>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 sm:flex items-center justify-center gap-4 drop-shadow-2xl">
-            Lead without{" "}
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-center gap-1 md:gap-4 drop-shadow-2xl">
+            <span>Lead without</span>
             <SparklesText>
-              {" "}
-              <AuroraText> Ads.</AuroraText>
+              <AuroraText>Ads.</AuroraText>
             </SparklesText>
           </h1>
 
           {/* Subheadline */}
-          <div className="text-xl md:text-2xl text-zinc-200 mb-8 max-w-3xl mx-auto drop-shadow-md">
+          <div className="text-base md:text-2xl text-zinc-200 mb-8 md:mb-8 max-w-3xl mx-auto drop-shadow-md px-2">
             <TextGenerateEffectDemo />
           </div>
 
           {/* Feature Bullet Points */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-12 text-sm">
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
-              <CheckCircle className="w-4 h-4 text-amber-500" />
+          <div className="flex flex-wrap justify-center gap-3 md:gap-8 mb-10 md:mb-12 text-xs md:text-sm">
+            <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
+              <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               Detect buying intent
             </div>
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
-              <MousePointerClick className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
+              <MousePointerClick className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               Engage early
             </div>
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
-              <ShieldAlert className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
+              <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               100% compliant
             </div>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-20">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14 md:mb-20">
             <Link to="/pricing">
-            <InteractiveHoverButton>
-              <button>
-              Start Finding Buyers Organically
-              </button>
-            </InteractiveHoverButton>
+              <InteractiveHoverButton className="justify-center">
+                <span>Start Finding Buyers Organically</span>
+              </InteractiveHoverButton>
             </Link>
             <Link to="/working">
-              <button className="bg-black/20 backdrop-blur-md text-white border border-zinc-700/50 px-8 py-4 rounded-full font-bold text-lg hover:border-amber-500 hover:text-amber-300 hover:bg-black/40 transition-all">
+              <button className="bg-black/20 backdrop-blur-md text-white border border-zinc-700/50 px-8 py-3.5 md:py-4 rounded-full font-bold text-base md:text-lg hover:border-amber-500 hover:text-amber-300 hover:bg-black/40 transition-all">
                 See How It Works
               </button>
             </Link>
           </div>
 
           {/* Trusted By Section */}
-          <div className="border-t border-white/10 pt-8 pb-4 relative z-10 bg-black/30 backdrop-blur-md rounded-xl max-w-4xl mx-auto">
-            <p className="text-white/70 text-sm mb-6 uppercase tracking-widest font-bold">
+          <div className="border-t border-white/10 pt-6 md:pt-8 pb-4 relative z-10 bg-black/30 backdrop-blur-md rounded-xl max-w-4xl mx-auto">
+            <p className="text-white/70 text-xs md:text-sm mb-4 md:mb-6 uppercase tracking-widest font-bold">
               Trusted by growth teams at
             </p>
-            <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-white font-bold text-lg">
+            <div className="flex flex-wrap justify-center gap-6 md:gap-16 text-white font-bold text-sm md:text-lg">
               <span>Startups</span>
               <span>Agencies</span>
               <span>SaaS Companies</span>
