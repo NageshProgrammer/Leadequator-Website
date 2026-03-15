@@ -28,20 +28,59 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+/* ==========================================
+   ANIMATION VARIANTS (MULTI-DIRECTIONAL)
+========================================== */
+const smoothEase = [0.22, 1, 0.36, 1];
+
+const VARIANTS = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.1 } }
+  },
+  fadeUp: {
+    hidden: { opacity: 0, y: 50 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: smoothEase } }
+  },
+  fadeDown: {
+    hidden: { opacity: 0, y: -50 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: smoothEase } }
+  },
+  slideFromLeft: {
+    hidden: { opacity: 0, x: -50 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: smoothEase } }
+  },
+  slideFromRight: {
+    hidden: { opacity: 0, x: 50 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: smoothEase } }
+  },
+  zoomIn: {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: smoothEase } }
+  }
+};
+
 const Home = () => {
-  // State for the Events Popup
   const [showEventPopup, setShowEventPopup] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
-  // Trigger the popup slightly after the page loads for a better UX
+  // Trigger the popup and manage the first-load delay
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const popupTimer = setTimeout(() => {
       setShowEventPopup(true);
-    }, 2500); // 2.5 seconds delay
+    }, 2500); 
 
-    return () => clearTimeout(timer);
+    // After 4 seconds, the first load sequence (Giant text) is done
+    const loadTimer = setTimeout(() => {
+      setIsFirstLoad(false);
+    }, 4000);
+
+    return () => {
+      clearTimeout(popupTimer);
+      clearTimeout(loadTimer);
+    };
   }, []);
 
-  // Data for Value Section
   const valueItems = [
     {
       icon: <TrendingUp className="w-6 h-6 text-amber-500" />,
@@ -72,7 +111,6 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-black overflow-x-hidden relative">
       <ScrollProgress className="top-[69px]" />
-      
       
       <motion.a
         initial={{ opacity: 0, scale: 0, rotate: -45 }}
@@ -108,7 +146,6 @@ const Home = () => {
             className="fixed bottom-6 right-6 z-50 w-[calc(100%-3rem)] md:w-full max-w-sm"
           >
             <div className="relative p-6 bg-[#050505]/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl overflow-hidden group">
-              {/* Subtle animated glow inside the popup */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-colors duration-500" />
               
               <Button 
@@ -146,9 +183,6 @@ const Home = () => {
       {/* =========================================================
           HERO SECTION
       ========================================================= */}
-      {/* FIX: Removed min-h-[100vh] entirely. Shifted h-screen from lg: to xl: 
-          Now, tablets will naturally wrap the content with padding (pb-56) instead of stretching.
-      */}
       <section className="bg-black text-white relative w-full overflow-hidden flex flex-col items-center justify-start pt-28 pb-40 md:pt-32 md:pb-56 xl:pt-32 xl:pb-0 xl:h-screen xl:min-h-[800px]">
         
         {/* --- LAYER 1: BACKGROUND GRADIENT --- */}
@@ -170,10 +204,7 @@ const Home = () => {
           LEADEQUATOR
         </motion.div>
 
-        {/* --- LAYER 3: THE GLOBE --- 
-            FIX: Adjusted widths and top offsets so the globe's curve stays consistently 
-            right under the buttons across all sizes: mobile, tablet, and desktop.
-        */}
+        {/* --- LAYER 3: THE GLOBE (UNTOUCHED) --- */}
         <motion.div
           initial={{ x: "-50%", y: "100%", opacity: 0, filter: "blur(0px)", scale: 1.2 }}
           animate={{ 
@@ -196,34 +227,45 @@ const Home = () => {
         
         {/* --- LAYER 4: MAIN CONTENT (Front) --- */}
         <motion.div 
-          initial={{ opacity: 0, y: -50 }} 
-          animate={{ opacity: 1, y: 0 }}   
-          transition={{ delay: 3.8, duration: 0.8, ease: "easeOut" }} 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, margin: "-50px" }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { 
+              opacity: 1, 
+              transition: { 
+                staggerChildren: 0.15, 
+                // ✅ Wait 3.8s ONLY on the first load for the giant text. Otherwise, load instantly.
+                delayChildren: isFirstLoad ? 3.8 : 0.1 
+              } 
+            }
+          }}
           className="max-w-5xl mx-auto text-center relative z-30 px-4 w-full"
         >
           {/* Introducing Label */}
-          <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-zinc-900/80 border border-zinc-800 backdrop-blur-md mb-6 md:mb-8">
+          <motion.div variants={VARIANTS.fadeDown} className="inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-zinc-900/80 border border-zinc-800 backdrop-blur-md mb-6 md:mb-8">
             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-amber-500"></div>
             <span className="text-zinc-300 text-xs md:text-sm font-medium">
               Introducing Organic Engagement Intelligence
             </span>
-          </div>
+          </motion.div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-center gap-1 md:gap-4 drop-shadow-2xl">
+          <motion.h1 variants={VARIANTS.zoomIn} className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-center gap-1 md:gap-4 drop-shadow-2xl">
             <span>Lead without</span>
             <SparklesText>
               <AuroraText>Ads.</AuroraText>
             </SparklesText>
-          </h1>
+          </motion.h1>
 
           {/* Subheadline */}
-          <div className="text-base md:text-2xl text-zinc-200 mb-8 md:mb-8 max-w-3xl mx-auto drop-shadow-md px-2">
+          <motion.div variants={VARIANTS.fadeUp} className="text-base md:text-2xl text-zinc-200 mb-8 md:mb-8 max-w-3xl mx-auto drop-shadow-md px-2">
             <TextGenerateEffectDemo />
-          </div>
+          </motion.div>
 
           {/* Feature Bullet Points */}
-          <div className="flex flex-wrap justify-center gap-3 md:gap-8 mb-10 md:mb-12 text-xs md:text-sm">
+          <motion.div variants={VARIANTS.fadeUp} className="flex flex-wrap justify-center gap-3 md:gap-8 mb-10 md:mb-12 text-xs md:text-sm">
             <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
               <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               Detect buying intent
@@ -236,10 +278,10 @@ const Home = () => {
               <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               100% compliant
             </div>
-          </div>
+          </motion.div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14 md:mb-20">
+          <motion.div variants={VARIANTS.fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14 md:mb-20">
             <Link to="/pricing">
               <InteractiveHoverButton className="justify-center">
                 <span>Start Finding Buyers Organically</span>
@@ -250,10 +292,10 @@ const Home = () => {
                 See How It Works
               </button>
             </Link>
-          </div>
+          </motion.div>
 
           {/* Trusted By Section */}
-          <div className="border-t border-white/10 pt-6 md:pt-8 pb-4 relative z-10 bg-black/30 backdrop-blur-md rounded-xl max-w-4xl mx-auto">
+          <motion.div variants={VARIANTS.fadeUp} className="border-t border-white/10 pt-6 md:pt-8 pb-4 relative z-10 bg-black/30 backdrop-blur-md rounded-xl max-w-4xl mx-auto">
             <p className="text-white/70 text-xs md:text-sm mb-4 md:mb-6 uppercase tracking-widest font-bold">
               Trusted by growth teams at
             </p>
@@ -263,34 +305,46 @@ const Home = () => {
               <span>SaaS Companies</span>
               <span>Consultants</span>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
 
       {/* Value Props Section */}
-      <section className="py-16 bg-card relative z-30">
-        <div className="container mx-auto px-4 ">
-          <h2 className="text-4xl font-bold text-center md:flex mb-10 md:mb-4 justify-center gap-2">
+      <section className="py-16 bg-card relative z-30 overflow-hidden">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, margin: "-50px" }}
+          variants={VARIANTS.container}
+          className="container mx-auto px-4 "
+        >
+          <motion.h2 variants={VARIANTS.fadeDown} className="text-4xl font-bold text-center md:flex mb-10 md:mb-4 justify-center gap-2">
             Turn Conversations Into{" "}
             <span className="text-primary">
               <MorphingText texts={["Revenue", "Sales", "Deals", "Profit"]} />
             </span>
-          </h2>
-          <div className="flex">
+          </motion.h2>
+          <motion.div variants={VARIANTS.fadeUp} className="flex">
             <CardHoverEffectDemo />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Process Section */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-16 flex items-center justify-center gap-4">
+      <section className="py-24 relative z-30 bg-black overflow-hidden">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, margin: "-50px" }}
+          variants={VARIANTS.container}
+          className="container mx-auto px-4"
+        >
+          <motion.h2 variants={VARIANTS.slideFromLeft} className="text-4xl font-bold text-center mb-16 flex flex-wrap items-center justify-center gap-4">
             From Noise to{" "}
             <span className="text-primary">
               <HyperText>Qualified Leads</HyperText>
             </span>
-          </h2>
+          </motion.h2>
           <div className="grid md:grid-cols-4 gap-6">
             {[
               {
@@ -314,86 +368,92 @@ const Home = () => {
                 desc: "Qualified leads sync to CRM, track ROI and attribution",
               },
             ].map((item) => (
-              <Card
-                key={item.step}
-                className="p-6 bg-card border-border relative overflow-hidden group"
-              >
-                <ShineBorder
-                  shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]}
-                />
-                <div className="text-6xl font-bold text-primary/20 mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm">{item.desc}</p>
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform" />
-              </Card>
+              <motion.div key={item.step} variants={VARIANTS.fadeUp}>
+                <Card className="p-6 bg-card border-border relative overflow-hidden group h-full">
+                  <ShineBorder shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]} />
+                  <div className="text-6xl font-bold text-primary/20 mb-4">
+                    {item.step}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground text-sm">{item.desc}</p>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform" />
+                </Card>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* =========================================
           SECTION 2: THE VALUE (STATS) - UPDATED
       ========================================= */}
-      <section className="py-24 px-4 md:px-8 bg-zinc-900/20 border-t border-zinc-800">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+      <section className="py-24 px-4 md:px-8 bg-zinc-900/20 border-t border-zinc-800 relative z-30 overflow-hidden">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, margin: "-50px" }}
+          variants={VARIANTS.container}
+          className="max-w-7xl mx-auto"
+        >
+          <motion.div variants={VARIANTS.fadeDown} className="text-center mb-16">
             <span className="text-amber-500 font-bold tracking-widest text-xs uppercase mb-4 block">
               The Value
             </span>
             <PointerHighlightDemo />
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {valueItems.map((item, index) => (
-              <Card
-                key={index}
-                className="relative overflow-hidden p-8 bg-zinc-900/40 text-center hover:bg-zinc-900/60 transition-all border-zinc-800"
-              >
-                {/* Shine Border Added Here */}
-                <ShineBorder
-                  shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]}
-                />
+              <motion.div key={index} variants={VARIANTS.fadeUp}>
+                <Card className="relative overflow-hidden p-8 bg-zinc-900/40 text-center hover:bg-zinc-900/60 transition-all border-zinc-800 h-full">
+                  <ShineBorder shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]} />
 
-                <div className="flex justify-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                    {item.icon}
+                  <div className="flex justify-center mb-6">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+                      {item.icon}
+                    </div>
                   </div>
-                </div>
-                <div className="text-4xl md:text-5xl font-bold text-amber-500 mb-2">
-                  {item.bigText}
-                </div>
-                <div className="text-white font-bold mb-4">{item.subText}</div>
-                <p className="text-zinc-500 text-xs leading-relaxed px-2">
-                  {item.desc}
-                </p>
-              </Card>
+                  <div className="text-4xl md:text-5xl font-bold text-amber-500 mb-2">
+                    {item.bigText}
+                  </div>
+                  <div className="text-white font-bold mb-4">{item.subText}</div>
+                  <p className="text-zinc-500 text-xs leading-relaxed px-2">
+                    {item.desc}
+                  </p>
+                </Card>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-primary/10 to-primary/5">
-        <div className="container mx-auto px-4 text-center">
-          <Shield className="w-16 h-16 text-primary mx-auto mb-6" />
-          <h2 className="text-4xl font-bold mb-6">
+      <section className="py-24 bg-gradient-to-r from-primary/10 to-primary/5 relative z-30 overflow-hidden">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, margin: "-50px" }}
+          variants={VARIANTS.container}
+          className="container mx-auto px-4 text-center"
+        >
+          <motion.div variants={VARIANTS.zoomIn}>
+            <Shield className="w-16 h-16 text-primary mx-auto mb-6" />
+          </motion.div>
+          <motion.h2 variants={VARIANTS.slideFromRight} className="text-4xl font-bold mb-6">
             Ready to Transform Your Lead Generation?
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p variants={VARIANTS.slideFromLeft} className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join enterprise brands already using Leadequator to turn social
             conversations into measurable pipeline.
-          </p>
-          <Link to="/contact">
-          <Button
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30"
-          >
-            Request Pilot Program
-          </Button>
-          </Link>
-        </div>
+          </motion.p>
+          <motion.div variants={VARIANTS.fadeUp}>
+            <Link to="/contact">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30">
+                Request Pilot Program
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.div>
       </section>
     </div>
   );

@@ -16,7 +16,6 @@ import {
   Filter as FilterIcon,
   Sparkles,
   Loader2,
-  Bot,
   X,
   Target,
   MessageSquare,
@@ -128,7 +127,7 @@ const MonitorStream = () => {
         return {
           id: String(p.id),
           platform: formattedPlatform,
-          user: p.userId ?? "Unknown",
+          user: p.author || p.userId || "Unknown", // ✅ FIX 2: Added p.author so it doesn't default to your Clerk ID
           intent,
           sentiment: intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
           timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString() : "—",

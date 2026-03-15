@@ -325,6 +325,7 @@ router.get("/quora/posts", async (req: Request, res: Response) => {
       .select({
         id: quoraPosts.id,
         userId: quoraPosts.userId,
+        platform: quoraPosts.platform, // ✅ FIX 1: Explicitly added platform to the select query
         author: quoraPosts.author,
         question: quoraPosts.question,
         url: quoraPosts.url,

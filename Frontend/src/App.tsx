@@ -42,6 +42,7 @@ import LeadGeneration from "./pages/LeadGeneration";
 import EventsPage from "./pages/Event";
 import ScrollToTop from "./[components]/scrollTop";
 import Newsletter1 from "./pages/newsletter1";
+import LiquidIntelligence from "./pages/LiquiqIntelligence";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ export default function App() {
                 <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
                 <Route path="/shipping" element={<PublicLayout><ShippingPolicy /></PublicLayout>} />
                 <Route path="/refund" element={<PublicLayout><RefundPolicy /></PublicLayout>} />
+                <Route path="/liquid_intelligence" element={<PublicLayout><LiquidIntelligence /></PublicLayout>} />
 
                 <Route path="/coming-soon" element={<ComingSoon />} />
                 <Route path="/onboarding" element={<Onboarding />} />
