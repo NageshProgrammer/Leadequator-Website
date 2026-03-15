@@ -118,6 +118,14 @@ const MonitorStream = () => {
 
       const combined = [...(redditData.posts || []), ...(quoraData.posts || [])];
 
+      // ✅ FIX: Sort by date descending so Reddit and Quora posts interleave properly. 
+      // This prevents Quora posts from getting buried underneath all the Reddit ones.
+      combined.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+
       const mapped: Thread[] = combined.map((p: any, idx: number) => {
         const intent = 50 + (idx % 40);
         
@@ -127,7 +135,7 @@ const MonitorStream = () => {
         return {
           id: String(p.id),
           platform: formattedPlatform,
-          user: p.author || p.userId || "Unknown", // ✅ FIX 2: Added p.author so it doesn't default to your Clerk ID
+          user: p.author || p.userId || "Unknown",
           intent,
           sentiment: intent >= 80 ? "Positive" : intent >= 60 ? "Neutral" : "Negative",
           timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString() : "—",
@@ -548,7 +556,6 @@ const MonitorStream = () => {
         {/* DETAIL OVERLAY (MODAL) */}
         {selected && (
           <div 
-            // 👇 THIS IS THE FIX: CHANGED z-100 to z-[999]
             className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
             onClick={() => setSelected(null)} 
           >

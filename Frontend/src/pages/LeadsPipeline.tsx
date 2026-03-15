@@ -151,6 +151,13 @@ const LeadsPipeline = () => {
         ...(quoraData.posts || []),
       ];
 
+      // ✅ FIX: Sort chronologically to interleave Reddit and Quora posts
+      combined.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+
       const mapped: Lead[] = combined.map((p: any, idx: number) => {
         const rawPlatform = p.platform || (p.question ? "Quora" : "Reddit");
         const formattedPlatform =
