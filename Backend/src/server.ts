@@ -38,15 +38,10 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("CORS blocked by policy"));
-    },
+    origin: allowedOrigins,
     credentials: true,
   })
 );
-
 app.use(express.json());
 
 /* ===============================
@@ -55,7 +50,7 @@ app.use(express.json());
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, 
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -145,7 +140,7 @@ app.post("/api/verify-paypal", async (req, res) => {
     const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderID}`, {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
     });
-    
+
     const orderDetails = await response.json();
 
     if (orderDetails.status === "COMPLETED") {
@@ -171,7 +166,7 @@ app.post("/api/verify-paypal", async (req, res) => {
         paymentGateway: "PAYPAL",
         paypalOrderId: orderID,
         paypalCaptureId: captureId,
-        rawResponse: orderDetails, 
+        rawResponse: orderDetails,
       });
 
       let creditBoost = 0;
@@ -180,11 +175,11 @@ app.post("/api/verify-paypal", async (req, res) => {
       else if (planName === "ENTERPRISE") creditBoost = 20000;
 
       await db.update(usersTable)
-        .set({ 
-          plan: planName, 
-          planCycle: billingCycle, 
-          credits: sql`${usersTable.credits} + ${creditBoost}`, 
-          updatedAt: new Date() 
+        .set({
+          plan: planName,
+          planCycle: billingCycle,
+          credits: sql`${usersTable.credits} + ${creditBoost}`,
+          updatedAt: new Date()
         })
         .where(eq(usersTable.id, userId));
 
@@ -226,7 +221,7 @@ app.post("/api/create-cashfree-order", async (req, res) => {
       body: JSON.stringify({
         order_id: orderId,
         order_amount: amount,
-        order_currency: currency, 
+        order_currency: currency,
         customer_details: {
           customer_id: userId || "guest",
           customer_phone: userPhone || "9999999999",
@@ -267,10 +262,10 @@ app.post("/api/verify-cashfree", async (req, res) => {
 
     if (orderDetails.order_status === "PAID") {
       const amountPaid = orderDetails.order_amount;
-      
+
       const startDate = new Date();
       const endDate = new Date(startDate);
-      
+
       if (billingCycle === "MONTHLY") {
         endDate.setMonth(endDate.getMonth() + 1);
       } else {
@@ -288,7 +283,7 @@ app.post("/api/verify-cashfree", async (req, res) => {
         endDate: endDate,
         paymentGateway: "CASHFREE",
         cashfreeOrderId: order_id,
-        rawResponse: orderDetails, 
+        rawResponse: orderDetails,
       });
 
       let creditBoost = 0;
@@ -301,7 +296,7 @@ app.post("/api/verify-cashfree", async (req, res) => {
         .set({
           plan: planName,
           planCycle: billingCycle,
-          credits: sql`${usersTable.credits} + ${creditBoost}`, 
+          credits: sql`${usersTable.credits} + ${creditBoost}`,
           updatedAt: new Date(),
         })
         .where(eq(usersTable.id, userId));
@@ -326,7 +321,7 @@ app.post("/api/verify-cashfree", async (req, res) => {
 app.post("/api/events/create-payment", async (req, res) => {
   try {
     const { name, email, phone } = req.body;
-    
+
     const orderId = `evt_${crypto.randomBytes(4).toString("hex")}`;
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
     const finalPhone = cleanPhone.length === 10 ? cleanPhone : "9999999999";
@@ -385,13 +380,13 @@ app.post("/api/events/verify-registration", async (req, res) => {
 
     // B. If Paid, Save Data
     if (orderDetails.order_status === "PAID") {
-      
+
       await db.insert(eventWaitlist).values({
-        id: crypto.randomUUID(), 
+        id: crypto.randomUUID(),
         eventId: eventId,
         name: formData.name,
         email: formData.email,
-        phoneNumber: formData.phone, 
+        phoneNumber: formData.phone,
         company: formData.company,
         industry: formData.industry,
       });
@@ -428,9 +423,9 @@ app.post("/api/newsletter/subscribe", async (req, res) => {
       .onConflictDoNothing({ target: newsletterSubscribers.email });
 
     console.log(`📩 New Newsletter Subscriber: ${email}`);
-    
+
     // Optional: You could call your sendEmail function here to send a welcome email!
-    
+
     res.json({ success: true, message: "Subscribed successfully" });
 
   } catch (error: any) {
@@ -476,7 +471,7 @@ app.post("/api/onboarding", async (req, res) => {
       businessEmail: companyData.businessEmail || null, phoneNumber: companyData.phoneNumber || null,
       industry: industryData.industry || null, industryOther: industryData.industryOther || null, productDescription: industryData.productDescription || null,
     }).onConflictDoUpdate({
-      target: companyDetails.userId, set: { 
+      target: companyDetails.userId, set: {
         companyName: companyData.companyName || "Unknown Company", websiteUrl: companyData.websiteUrl || null,
         businessEmail: companyData.businessEmail || null, phoneNumber: companyData.phoneNumber || null,
         industry: industryData.industry || null, industryOther: industryData.industryOther || null, productDescription: industryData.productDescription || null,
