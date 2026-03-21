@@ -21,7 +21,7 @@ const API_BASE = import.meta.env.MODE === "development"
   ? "http://localhost:5000" 
   : "https://api.leadequator.live";
 
-// ✅ UPDATED PLANS ARRAY WITH NEW DESCRIPTIONS & FEATURES
+// ✅ UPDATED PLANS ARRAY
 const plans = [
   {
     name: "PILOT",
@@ -42,7 +42,6 @@ const plans = [
   },
   {
     name: "SCALE",
-    // 👇 Updated USD monthly to 199 as requested
     pricing: { USD: { monthly: 199, yearly: 75 }, INR: { monthly: 11999, yearly: 5999 } },
     period: "per month",
     features: [
@@ -178,28 +177,34 @@ export default function CongestedPricing() {
   return (
     <div className="container py-12">
       <div className="text-center mb-16 animate-fade-in">
-        <h1 className="text-5xl font-bold mb-6">Transparent <span className="text-primary">Pricing</span></h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">All plans include AI-powered engagement, real-time monitoring, and intent scoring.</p>
+        <h1 className="text-5xl font-bold mb-6 text-zinc-900 dark:text-white transition-colors">
+          Transparent <span className="text-[#fbbf24]">Pricing</span>
+        </h1>
+        <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto transition-colors">
+          All plans include AI-powered engagement, real-time monitoring, and intent scoring.
+        </p>
       </div>
 
       <div className="flex flex-col items-center gap-6 mb-12">
-        <div className="bg-zinc-900 p-1 rounded-lg inline-flex">
-            <button onClick={() => setCurrency("USD")} className={cn("px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2", currency === "USD" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white")}>
+        {/* Currency Switcher */}
+        <div className="bg-zinc-100 dark:bg-zinc-900/60 backdrop-blur-md p-1 rounded-lg inline-flex border border-black/5 dark:border-white/5 transition-colors">
+            <button onClick={() => setCurrency("USD")} className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2", currency === "USD" ? "bg-[#fbbf24] text-black shadow-md" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white")}>
                 <DollarSign className="w-4 h-4" /> USD ($)
             </button>
-            <button onClick={() => setCurrency("INR")} className={cn("px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2", currency === "INR" ? "bg-primary text-black shadow-lg" : "text-zinc-400 hover:text-white")}>
+            <button onClick={() => setCurrency("INR")} className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2", currency === "INR" ? "bg-[#fbbf24] text-black shadow-md" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white")}>
                 <IndianRupee className="w-4 h-4" /> INR (₹)
             </button>
         </div>
 
+        {/* Billing Switcher */}
         <div className="flex justify-center items-center gap-4">
-            <Label htmlFor="billing-toggle" className="font-semibold text-white">Monthly</Label>
+            <Label htmlFor="billing-toggle" className="font-semibold text-zinc-900 dark:text-white transition-colors">Monthly</Label>
             <Switch id="billing-toggle" ref={switchRef as any} checked={!isMonthly} onCheckedChange={handleToggle}/>
-            <Label htmlFor="billing-toggle" className="font-semibold text-white">Annual <span className="text-primary">(Save 50%)</span></Label>
+            <Label htmlFor="billing-toggle" className="font-semibold text-zinc-900 dark:text-white transition-colors">Annual <span className="text-[#fbbf24]">(Save 50%)</span></Label>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0 perspective-1000">
         {plans.map((plan, index) => {
           const currentPrice = isMonthly ? plan.pricing[currency].monthly : plan.pricing[currency].yearly;
           const isCustom = currentPrice === "Custom";
@@ -212,32 +217,40 @@ export default function CongestedPricing() {
               whileInView={isDesktop ? { y: plan.isPopular ? -20 : 0, opacity: 1, x: index === 2 ? -30 : index === 0 ? 30 : 0, scale: index === 0 || index === 2 ? 0.94 : 1.0 } : {}}
               viewport={{ once: true }}
               transition={{ duration: 1.6, type: "spring", stiffness: 100, damping: 30, delay: 0.4, opacity: { duration: 0.5 } }}
-              className={cn(`bg-background relative rounded-2xl border-[1px] p-6 text-center lg:flex lg:flex-col lg:justify-center`, plan.isPopular ? "border-primary border-2" : "border-border", "flex flex-col", !plan.isPopular && "mt-5", index === 0 || index === 2 ? "z-0 translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg] transform" : "z-10", index === 0 && "origin-right", index === 2 && "origin-left")}
+              className={cn(
+                `relative rounded-2xl p-6 text-center lg:flex lg:flex-col lg:justify-center backdrop-blur-2xl transition-colors duration-500`, 
+                plan.isPopular ? "border-[#fbbf24] border-2 bg-white/95 dark:bg-[#050505]/80 shadow-xl dark:shadow-[0_0_40px_rgba(251,191,36,0.1)]" : "border-black/10 dark:border-white/[0.08] border-[1px] bg-white/80 dark:bg-[#050505]/60 shadow-lg dark:shadow-none", 
+                "flex flex-col", 
+                !plan.isPopular && "mt-5", 
+                index === 0 || index === 2 ? "z-0 translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg] transform" : "z-10", 
+                index === 0 && "origin-right", 
+                index === 2 && "origin-left"
+              )}
             >
               {plan.isPopular && (
-                <div className="bg-primary absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 flex items-center gap-1">
-                  <Star className="text-primary-foreground h-3 w-3 fill-current" />
-                  <span className="text-primary-foreground text-xs font-bold uppercase">Popular</span>
+                <div className="bg-[#fbbf24] absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 flex items-center gap-1 shadow-md">
+                  <Star className="text-black h-3 w-3 fill-current" />
+                  <span className="text-black text-xs font-bold uppercase">Popular</span>
                 </div>
               )}
 
               <div className="flex-1">
-                <p className="text-zinc-500 font-bold tracking-wider">{plan.name}</p>
+                <p className="text-zinc-600 dark:text-zinc-400 font-extrabold tracking-widest text-xs uppercase transition-colors">{plan.name}</p>
                 <div className="mt-4 flex items-baseline gap-1 justify-center">
                   {isCustom ? (
-                    <span className="text-4xl font-bold text-white">Custom</span>
+                    <span className="text-4xl font-black text-zinc-900 dark:text-white transition-colors">Custom</span>
                   ) : (
                     <>
-                      <span className="text-5xl font-bold text-white flex items-center justify-center gap-1">
-                          <span>{currency === "USD" ? "$" : "₹"}</span>
+                      <span className="text-5xl font-black text-zinc-900 dark:text-white flex items-center justify-center gap-1 transition-colors">
+                          <span className="text-3xl">{currency === "USD" ? "$" : "₹"}</span>
                           <NumberFlow value={Number(billedPrice)} format={{ style: "decimal", minimumFractionDigits: 0 }} />
                       </span>
-                      <span className="text-zinc-500 text-sm">/{isMonthly ? "mo" : "yr"}</span>
+                      <span className="text-zinc-500 font-bold text-sm transition-colors">/{isMonthly ? "mo" : "yr"}</span>
                     </>
                   )}
                 </div>
                 
-                <p className="text-zinc-500 text-xs mt-1 mb-8">
+                <p className="text-zinc-500 font-medium text-xs mt-2 mb-8 transition-colors">
                   {isCustom 
                     ? "Tailored for enterprises" 
                     : isMonthly 
@@ -247,29 +260,29 @@ export default function CongestedPricing() {
 
                 <ul className="space-y-4 mb-8 lg:pl-7">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-sm text-zinc-300">
-                      <Check className="text-primary h-5 w-5 shrink-0" />
+                    <li key={idx} className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300 font-medium transition-colors">
+                      <Check className="text-[#fbbf24] h-5 w-5 shrink-0 stroke-[3]" />
                       <span className="text-left">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="mt-auto pt-6 border-t border-zinc-900">
+              <div className="mt-auto pt-6 border-t border-black/10 dark:border-white/10 transition-colors">
                 {isCustom ? (
-                  <Link to="/contact" className={cn(buttonVariants({ variant: "outline" }), "w-full py-6 text-lg border-zinc-700 hover:border-primary text-white")}>
+                  <Link to="/contact" className={cn(buttonVariants({ variant: "outline" }), "w-full py-6 text-lg border-black/20 dark:border-white/20 hover:border-[#fbbf24] text-white dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors")}>
                     Contact Sales
                   </Link>
                 ) : !isSignedIn ? (
-                    <Link to="/sign-in" className={cn(buttonVariants({ variant: "default" }), "w-full py-6 text-lg bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2")}>
+                    <Link to="/sign-in" className={cn(buttonVariants({ variant: "default" }), "w-full py-6 text-lg bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 flex items-center justify-center gap-2 font-bold transition-colors")}>
                       <LogIn className="w-5 h-5" />
                       {plan.name === "PILOT" ? "Start 14-Day Free Trial" : "Subscribe To Get Started"}
                     </Link>
                 ) : (
                   <div className="z-0 min-h-[50px]">
                     {!isLoaded || !user?.id ? (
-                      <div className="flex items-center justify-center w-full py-4 text-zinc-500">
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      <div className="flex items-center justify-center w-full py-4 text-zinc-500 font-bold">
+                        <Loader2 className="w-5 h-5 animate-spin mr-2 text-[#fbbf24]" />
                         Loading Payment...
                       </div>
                     ) : currency === "USD" ? (
@@ -322,7 +335,7 @@ export default function CongestedPricing() {
                        <Button 
                          disabled={isCashfreeLoading}
                          onClick={() => handleCashfreePayment(plan.name, billedPrice)}
-                         className="w-full h-[45px] text-lg bg-primary hover:bg-primary/90 text-black font-semibold flex items-center justify-center gap-2 rounded-md transition-all"
+                         className="w-full h-[45px] text-lg bg-[#fbbf24] hover:bg-[#fbbf24]/90 text-black font-bold flex items-center justify-center gap-2 rounded-md transition-all shadow-[0_0_15px_rgba(251,191,36,0.3)]"
                        >
                          {isCashfreeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
                          Proceed to Checkout
@@ -330,7 +343,7 @@ export default function CongestedPricing() {
                     )}
                   </div>
                 )}
-                <p className="text-center text-xs text-zinc-500 mt-4">
+                <p className="text-center text-xs font-medium text-zinc-500 mt-4 transition-colors">
                   {plan.description}
                 </p>
               </div>

@@ -6,22 +6,22 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const Pricing = () => {
   return (
-    // ADDED: bg-black and overflow-x-hidden to lock the layout and prevent mobile side-scrolling
-    <div className="min-h-screen  pt-24 pb-12 text-white selection:bg-[#fbbf24] relative z-10 overflow-x-hidden">
+    // ✅ RULE APPLIED: bg-white in light mode, bg-background in dark mode
+    <div className="min-h-screen pt-24 pb-12 bg-white dark:bg-background text-zinc-900 dark:text-white selection:bg-[#fbbf24] relative z-10 overflow-x-hidden transition-colors duration-500">
       <ScrollProgress className="top-[69px]" />
       
-      {/* Background Glow */}
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
+      {/* ✅ RULE APPLIED: Soft yellow glow in light mode, subtle gold in dark mode */}
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#fbbf24]/15 dark:bg-[#fbbf24]/5 rounded-full blur-[120px] -z-10 pointer-events-none transition-colors duration-500" />
 
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
-        {/* Pricing Cards Component */}
-        <CongestedPricing/>
+        {/* Pricing Cards Component (Assumes it handles its own light/dark mode internally) */}
+        <CongestedPricing />
 
         {/* FAQ Section */}
         <div className="mt-32">
           <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] text-[#fbbf24] font-bold tracking-widest text-xs uppercase mb-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/[0.05] text-amber-600 dark:text-[#fbbf24] font-bold tracking-widest text-xs uppercase mb-6 shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] transition-colors">
               FAQ
             </span>
             <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">
@@ -50,28 +50,29 @@ const Pricing = () => {
             ].map((faq, index) => (
               <div 
                 key={index} 
-                className="p-8 bg-[#050505]/60 backdrop-blur-xl border border-white/[0.05] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] hover:border-white/[0.1] transition-colors"
+                className="p-8 bg-white/60 dark:bg-[#050505]/60 backdrop-blur-xl border border-black/5 dark:border-white/[0.05] shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[2rem] hover:border-black/10 dark:hover:border-white/[0.1] transition-colors duration-300"
               >
-                <h3 className="text-xl font-bold mb-3 text-zinc-100">{faq.q}</h3>
-                <p className="text-zinc-400 leading-relaxed">{faq.a}</p>
+                <h3 className="text-xl font-bold mb-3 text-zinc-900 dark:text-zinc-100 transition-colors">{faq.q}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed transition-colors">{faq.a}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-24 text-center bg-[#050505]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[3rem] p-16 relative overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-[#fbbf24]/10 to-transparent opacity-50 pointer-events-none" />
+        <div className="mt-24 text-center bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border border-black/10 dark:border-white/[0.08] shadow-xl dark:shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-[3rem] p-16 relative overflow-hidden transition-colors duration-500">
+          {/* Subtle gradient wash inside the CTA box */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-[#fbbf24]/20 dark:from-[#fbbf24]/10 to-transparent opacity-50 pointer-events-none transition-colors duration-500" />
           
-          <h2 className="text-4xl font-bold mb-4 text-white relative z-10">
+          <h2 className="text-4xl font-bold mb-4 text-zinc-900 dark:text-white relative z-10 transition-colors">
             Ready to See ROI in 30 Days?
           </h2>
-          <p className="text-zinc-400 text-xl mb-10 max-w-2xl mx-auto relative z-10">
+          <p className="text-zinc-600 dark:text-zinc-400 text-xl mb-10 max-w-2xl mx-auto relative z-10 transition-colors">
             Start with a Pilot program and scale when you see results.
           </p>
           <Link to="/sign-up" className="relative z-10">
             <Button
-              className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-2xl px-10 h-14 text-lg shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:scale-105 transition-all duration-300"
+              className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 font-bold rounded-2xl px-10 h-14 text-lg shadow-[0_0_20px_rgba(251,191,36,0.3)] dark:shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:scale-105 transition-all duration-300"
             >
               Request Pilot Program
             </Button>

@@ -109,7 +109,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black overflow-x-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-black overflow-x-hidden relative transition-colors duration-500">
       <ScrollProgress className="top-[69px]" />
       
       <motion.a
@@ -145,27 +145,27 @@ const Home = () => {
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="fixed bottom-6 right-6 z-50 w-[calc(100%-3rem)] md:w-full max-w-sm"
           >
-            <div className="relative p-6 bg-[#050505]/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl overflow-hidden group">
+            <div className="relative p-6 bg-white/90 dark:bg-[#050505]/80 backdrop-blur-2xl border border-black/5 dark:border-white/[0.08] shadow-2xl dark:shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-colors duration-500" />
               
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setShowEventPopup(false)}
-                className="absolute top-3 right-3 h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/[0.1] rounded-full z-10"
+                className="absolute top-3 right-3 h-6 w-6 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/[0.1] rounded-full z-10"
               >
                 <X className="h-3 w-3" />
               </Button>
 
               <div className="flex items-start gap-4 relative z-10">
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)] shrink-0">
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(251,191,36,0.2)] shrink-0">
                   <Calendar className="w-5 h-5 text-amber-500" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-base mb-1 tracking-tight">
+                  <h3 className="text-zinc-900 dark:text-white font-bold text-base mb-1 tracking-tight">
                     Upcoming Live Events
                   </h3>
-                  <p className="text-zinc-400 text-xs leading-relaxed mb-4">
+                  <p className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed mb-4">
                     Join our upcoming events to learn how top teams use AI to scale organic outbound.
                   </p>
                   <Link to="/events" onClick={() => setShowEventPopup(false)}>
@@ -183,7 +183,7 @@ const Home = () => {
       {/* =========================================================
           HERO SECTION
       ========================================================= */}
-      <section className="bg-black text-white relative w-full overflow-hidden flex flex-col items-center justify-start pt-28 pb-40 md:pt-32 md:pb-56 xl:pt-32 xl:pb-0 xl:h-screen xl:min-h-[800px]">
+      <section className="bg-white dark:bg-black text-black dark:text-white relative w-full overflow-hidden flex flex-col items-center justify-start pt-28 pb-40 md:pt-32 md:pb-56 xl:pt-32 xl:pb-0 xl:h-screen xl:min-h-[800px] transition-colors duration-500">
         
         {/* --- LAYER 1: BACKGROUND GRADIENT --- */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] md:w-[800px] h-[400px] md:h-[500px] bg-amber-500/10 rounded-full blur-[100px] md:blur-[120px] pointer-events-none z-0"></div>
@@ -199,12 +199,12 @@ const Home = () => {
             times: [0, 0.2, 0.8, 1], 
             ease: "easeInOut" 
           }}
-          className="absolute top-[30%] md:top-[40%] xl:top-1/2 left-1/2 text-[16vw] md:text-[12vw] font-black bg-gradient-to-br from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
+          className="absolute top-[30%] md:top-[40%] xl:top-1/2 left-1/2 text-[16vw] md:text-[12vw] font-black bg-gradient-to-br from-zinc-300 via-zinc-400 to-zinc-500 dark:from-white dark:via-zinc-300 dark:to-zinc-400 bg-clip-text text-transparent whitespace-nowrap z-20 pointer-events-none select-none tracking-tighter"
         >
           LEADEQUATOR
         </motion.div>
 
-        {/* --- LAYER 3: THE GLOBE (UNTOUCHED) --- */}
+        {/* --- LAYER 3: THE GLOBE --- */}
         <motion.div
           initial={{ x: "-50%", y: "100%", opacity: 0, filter: "blur(0px)", scale: 1.2 }}
           animate={{ 
@@ -236,7 +236,7 @@ const Home = () => {
               opacity: 1, 
               transition: { 
                 staggerChildren: 0.15, 
-                // ✅ Wait 3.8s ONLY on the first load for the giant text. Otherwise, load instantly.
+                // Wait 3.8s ONLY on the first load for the giant text. Otherwise, load instantly.
                 delayChildren: isFirstLoad ? 3.8 : 0.1 
               } 
             }
@@ -244,37 +244,37 @@ const Home = () => {
           className="max-w-5xl mx-auto text-center relative z-30 px-4 w-full"
         >
           {/* Introducing Label */}
-          <motion.div variants={VARIANTS.fadeDown} className="inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-zinc-900/80 border border-zinc-800 backdrop-blur-md mb-6 md:mb-8">
+          <motion.div variants={VARIANTS.fadeDown} className="inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 backdrop-blur-md mb-6 md:mb-8 shadow-sm">
             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-amber-500"></div>
-            <span className="text-zinc-300 text-xs md:text-sm font-medium">
+            <span className="text-zinc-600 dark:text-zinc-300 text-xs md:text-sm font-medium">
               Introducing Organic Engagement Intelligence
             </span>
           </motion.div>
 
           {/* Main Headline */}
-          <motion.h1 variants={VARIANTS.zoomIn} className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-center gap-1 md:gap-4 drop-shadow-2xl">
-            <span>Lead without</span>
+          <motion.h1 variants={VARIANTS.zoomIn} className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-center gap-1 md:gap-4 drop-shadow-sm dark:drop-shadow-2xl">
+            <span className="text-zinc-900 dark:text-white">Lead without</span>
             <SparklesText>
               <AuroraText>Ads.</AuroraText>
             </SparklesText>
           </motion.h1>
 
           {/* Subheadline */}
-          <motion.div variants={VARIANTS.fadeUp} className="text-base md:text-2xl text-zinc-200 mb-8 md:mb-8 max-w-3xl mx-auto drop-shadow-md px-2">
+          <motion.div variants={VARIANTS.fadeUp} className="text-base md:text-2xl text-zinc-600 dark:text-zinc-200 mb-8 md:mb-8 max-w-3xl mx-auto drop-shadow-sm px-2">
             <TextGenerateEffectDemo />
           </motion.div>
 
           {/* Feature Bullet Points */}
           <motion.div variants={VARIANTS.fadeUp} className="flex flex-wrap justify-center gap-3 md:gap-8 mb-10 md:mb-12 text-xs md:text-sm">
-            <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
+            <div className="flex items-center gap-1.5 md:gap-2 bg-white/80 dark:bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-black/5 dark:border-white/5 text-zinc-700 dark:text-white shadow-sm">
               <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               Detect buying intent
             </div>
-            <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
+            <div className="flex items-center gap-1.5 md:gap-2 bg-white/80 dark:bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-black/5 dark:border-white/5 text-zinc-700 dark:text-white shadow-sm">
               <MousePointerClick className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               Engage early
             </div>
-            <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-white/5">
+            <div className="flex items-center gap-1.5 md:gap-2 bg-white/80 dark:bg-black/40 px-3 py-1.5 md:py-1 rounded-full backdrop-blur-sm border border-black/5 dark:border-white/5 text-zinc-700 dark:text-white shadow-sm">
               <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               100% compliant
             </div>
@@ -284,22 +284,22 @@ const Home = () => {
           <motion.div variants={VARIANTS.fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14 md:mb-20">
             <Link to="/pricing">
               <InteractiveHoverButton className="justify-center">
-                <span>Start Finding Buyers Organically</span>
+                <span className="text-white">Start Finding Buyers Organically</span>
               </InteractiveHoverButton>
             </Link>
             <Link to="/working">
-              <button className="bg-black/20 backdrop-blur-md text-white border border-zinc-700/50 px-8 py-3.5 md:py-4 rounded-full font-bold text-base md:text-lg hover:border-amber-500 hover:text-amber-300 hover:bg-black/40 transition-all">
+              <button className="bg-white/50 dark:bg-black/20 backdrop-blur-md text-zinc-800 dark:text-white border border-zinc-200 dark:border-zinc-700/50 px-8 py-3.5 md:py-4 rounded-full font-bold text-base md:text-lg hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-zinc-50 dark:hover:bg-black/40 shadow-sm transition-all">
                 See How It Works
               </button>
             </Link>
           </motion.div>
 
           {/* Trusted By Section */}
-          <motion.div variants={VARIANTS.fadeUp} className="border-t border-white/10 pt-6 md:pt-8 pb-4 relative z-10 bg-black/30 backdrop-blur-md rounded-xl max-w-4xl mx-auto">
-            <p className="text-white/70 text-xs md:text-sm mb-4 md:mb-6 uppercase tracking-widest font-bold">
+          <motion.div variants={VARIANTS.fadeUp} className="border-t border-black/10 dark:border-white/10 pt-6 md:pt-8 pb-4 relative z-10 bg-zinc-50/80 dark:bg-black/30 backdrop-blur-md rounded-xl max-w-4xl mx-auto shadow-sm dark:shadow-none">
+            <p className="text-zinc-500 dark:text-white/70 text-xs md:text-sm mb-4 md:mb-6 uppercase tracking-widest font-bold">
               Trusted by growth teams at
             </p>
-            <div className="flex flex-wrap justify-center gap-6 md:gap-16 text-white font-bold text-sm md:text-lg">
+            <div className="flex flex-wrap justify-center gap-6 md:gap-16 text-zinc-800 dark:text-white font-bold text-sm md:text-lg">
               <span>Startups</span>
               <span>Agencies</span>
               <span>SaaS Companies</span>
@@ -310,7 +310,7 @@ const Home = () => {
       </section>
 
       {/* Value Props Section */}
-      <section className="py-16 bg-card relative z-30 overflow-hidden">
+      <section className="py-16 bg-zinc-50 dark:bg-card relative z-30 overflow-hidden transition-colors duration-500">
         <motion.div 
           initial="hidden"
           whileInView="visible"
@@ -318,9 +318,9 @@ const Home = () => {
           variants={VARIANTS.container}
           className="container mx-auto px-4 "
         >
-          <motion.h2 variants={VARIANTS.fadeDown} className="text-4xl font-bold text-center md:flex mb-10 md:mb-4 justify-center gap-2">
+          <motion.h2 variants={VARIANTS.fadeDown} className="text-4xl font-bold text-center md:flex mb-10 md:mb-4 justify-center gap-2 text-zinc-900 dark:text-white">
             Turn Conversations Into{" "}
-            <span className="text-primary">
+            <span className="text-[#fbbf24]">
               <MorphingText texts={["Revenue", "Sales", "Deals", "Profit"]} />
             </span>
           </motion.h2>
@@ -331,7 +331,7 @@ const Home = () => {
       </section>
 
       {/* Process Section */}
-      <section className="py-24 relative z-30 bg-black overflow-hidden">
+      <section className="py-24 relative z-30 bg-white dark:bg-black overflow-hidden transition-colors duration-500">
         <motion.div 
           initial="hidden"
           whileInView="visible"
@@ -339,9 +339,9 @@ const Home = () => {
           variants={VARIANTS.container}
           className="container mx-auto px-4"
         >
-          <motion.h2 variants={VARIANTS.slideFromLeft} className="text-4xl font-bold text-center mb-16 flex flex-wrap items-center justify-center gap-4">
+          <motion.h2 variants={VARIANTS.slideFromLeft} className="text-4xl font-bold text-center mb-16 flex flex-wrap items-center justify-center gap-4 text-zinc-900 dark:text-white">
             From Noise to{" "}
-            <span className="text-primary">
+            <span className="text-[#fbbf24]">
               <HyperText>Qualified Leads</HyperText>
             </span>
           </motion.h2>
@@ -369,14 +369,14 @@ const Home = () => {
               },
             ].map((item) => (
               <motion.div key={item.step} variants={VARIANTS.fadeUp}>
-                <Card className="p-6 bg-card border-border relative overflow-hidden group h-full">
+                <Card className="p-6 bg-zinc-50 dark:bg-card border-black/5 dark:border-border relative overflow-hidden group h-full shadow-sm dark:shadow-none">
                   <ShineBorder shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]} />
-                  <div className="text-6xl font-bold text-primary/20 mb-4">
+                  <div className="text-6xl font-bold text-[#fbbf24]/20 mb-4">
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm">{item.desc}</p>
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform" />
+                  <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">{item.title}</h3>
+                  <p className="text-zinc-600 dark:text-muted-foreground text-sm">{item.desc}</p>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-[#fbbf24] transform scale-x-0 group-hover:scale-x-100 transition-transform" />
                 </Card>
               </motion.div>
             ))}
@@ -387,7 +387,7 @@ const Home = () => {
       {/* =========================================
           SECTION 2: THE VALUE (STATS) - UPDATED
       ========================================= */}
-      <section className="py-24 px-4 md:px-8 bg-zinc-900/20 border-t border-zinc-800 relative z-30 overflow-hidden">
+      <section className="py-24 px-4 md:px-8 bg-zinc-100/50 dark:bg-zinc-900/20 border-t border-black/5 dark:border-zinc-800 relative z-30 overflow-hidden transition-colors duration-500">
         <motion.div 
           initial="hidden"
           whileInView="visible"
@@ -405,7 +405,7 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {valueItems.map((item, index) => (
               <motion.div key={index} variants={VARIANTS.fadeUp}>
-                <Card className="relative overflow-hidden p-8 bg-zinc-900/40 text-center hover:bg-zinc-900/60 transition-all border-zinc-800 h-full">
+                <Card className="relative overflow-hidden p-8 bg-white dark:bg-zinc-900/40 text-center hover:bg-zinc-50 dark:hover:bg-zinc-900/60 transition-all border-black/5 dark:border-zinc-800 h-full shadow-sm dark:shadow-none">
                   <ShineBorder shineColor={["#b45309", "#fbbf24", "#fde68a", "#d97706"]} />
 
                   <div className="flex justify-center mb-6">
@@ -416,7 +416,7 @@ const Home = () => {
                   <div className="text-4xl md:text-5xl font-bold text-amber-500 mb-2">
                     {item.bigText}
                   </div>
-                  <div className="text-white font-bold mb-4">{item.subText}</div>
+                  <div className="text-zinc-900 dark:text-white font-bold mb-4">{item.subText}</div>
                   <p className="text-zinc-500 text-xs leading-relaxed px-2">
                     {item.desc}
                   </p>
@@ -428,7 +428,7 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-primary/10 to-primary/5 relative z-30 overflow-hidden">
+      <section className="py-24 bg-gradient-to-r from-amber-500/10 to-amber-500/5 relative z-30 overflow-hidden">
         <motion.div 
           initial="hidden"
           whileInView="visible"
@@ -437,18 +437,18 @@ const Home = () => {
           className="container mx-auto px-4 text-center"
         >
           <motion.div variants={VARIANTS.zoomIn}>
-            <Shield className="w-16 h-16 text-primary mx-auto mb-6" />
+            <Shield className="w-16 h-16 text-[#fbbf24] mx-auto mb-6" />
           </motion.div>
-          <motion.h2 variants={VARIANTS.slideFromRight} className="text-4xl font-bold mb-6">
+          <motion.h2 variants={VARIANTS.slideFromRight} className="text-4xl font-bold mb-6 text-zinc-900 dark:text-white">
             Ready to Transform Your Lead Generation?
           </motion.h2>
-          <motion.p variants={VARIANTS.slideFromLeft} className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <motion.p variants={VARIANTS.slideFromLeft} className="text-xl text-zinc-600 dark:text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join enterprise brands already using Leadequator to turn social
             conversations into measurable pipeline.
           </motion.p>
           <motion.div variants={VARIANTS.fadeUp}>
             <Link to="/contact">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30">
+              <Button size="lg" className="bg-[#fbbf24] text-black hover:bg-[#fbbf24]/90 shadow-lg shadow-[#fbbf24]/30 font-bold">
                 Request Pilot Program
               </Button>
             </Link>

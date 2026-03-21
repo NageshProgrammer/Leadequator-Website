@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { ClerkProvider } from "@clerk/clerk-react";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 // Read keys from Vite env
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -19,13 +20,15 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     {PUBLISHABLE_KEY ? (
-      <ClerkProvider 
+      <ClerkProvider
         publishableKey={PUBLISHABLE_KEY}
         // Force global redirects to the onboarding flow
         afterSignUpUrl="/onboarding"
         afterSignInUrl="/onboarding"
       >
-        <App />
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <App />
+        </ThemeProvider>
       </ClerkProvider>
     ) : (
       <div
@@ -33,15 +36,15 @@ createRoot(rootElement).render(
           padding: "40px",
           fontFamily: "sans-serif",
           color: "red",
-          textAlign: "center"
+          textAlign: "center",
         }}
       >
         <h2>Clerk Publishable Key Missing</h2>
         <p>
-          Please add <b>VITE_CLERK_PUBLISHABLE_KEY</b> to your{" "}
-          <code>.env</code> file and restart the dev server.
+          Please add <b>VITE_CLERK_PUBLISHABLE_KEY</b> to your <code>.env</code>{" "}
+          file and restart the dev server.
         </p>
       </div>
     )}
-  </StrictMode>
+  </StrictMode>,
 );

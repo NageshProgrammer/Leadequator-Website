@@ -6,7 +6,7 @@ export function FlipWordsDemo() {
 
   return (
     <div className="h-[7vh] flex justify-center items-center px-4">
-      <div className="text-4xl mx-auto font-normal  text-neutral-200">
+      <div className="text-4xl mx-auto font-normal text-neutral-800  dark:text-neutral-200">
         Paid marketing is
         <FlipWords words={words} /> <br />
         
