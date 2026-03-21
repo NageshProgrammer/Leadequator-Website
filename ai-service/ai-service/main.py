@@ -1,11 +1,12 @@
 from api import app
 
-# ADD THESE IMPORTS
+# 🔥 ADD THESE IMPORTS
 from intent_engine.app.routes import lead_routes, search_routes
 
-# REGISTER ROUTES
+# 🔥 REGISTER ROUTES
 app.include_router(lead_routes.router, prefix="/intent")
 app.include_router(search_routes.router, prefix="/intent")
+
 
 if __name__ == "__main__":
     import os

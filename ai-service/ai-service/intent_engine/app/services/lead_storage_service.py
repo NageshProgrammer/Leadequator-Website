@@ -2,10 +2,12 @@ from supabase import create_client
 from urllib.parse import urlparse
 import os
 
-supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = None
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def extract_domain(url):
     return urlparse(url).netloc.replace("www.", "")
@@ -13,6 +15,9 @@ def extract_domain(url):
 def save_lead(lead):
 
     try:
+        if supabase is None:
+            return
+
         data = {
             "title": lead.get("title"),
             "link": lead.get("link"),
@@ -29,5 +34,11 @@ def save_lead(lead):
         pass
 
 def lead_exists(link):
-    response = supabase.table("leads").select("id").eq("link", link).execute()
-    return len(response.data) > 0
+    if supabase is None:
+        return False
+
+    try:
+        response = supabase.table("leads").select("id").eq("link", link).execute()
+        return len(response.data) > 0
+    except Exception:
+        return False

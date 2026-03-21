@@ -2,6 +2,9 @@ import requests
 from intent_engine.app.config import SERPER_API_KEY
 
 def search_web(query):
+    if not SERPER_API_KEY:
+        return []
+
     url = "https://google.serper.dev/search"
 
     headers = {
@@ -14,7 +17,8 @@ def search_web(query):
         "num": 5
     }
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.post(url, headers=headers, json=payload, timeout=15)
+    response.raise_for_status()
     data = response.json()
 
     results = []
