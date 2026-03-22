@@ -121,7 +121,7 @@ STEP 1 → INTENT SEARCH
 addLog("Connecting to AI Engine...", "SYS");
 
 const intentRes = await fetch(
-`${AI_SERVICE}/intent/search`,
+`${AI_SERVICE}/intent/search/`,
 {
 method: "POST",
 headers: { "Content-Type": "application/json" },
@@ -143,7 +143,7 @@ addLog("Intent signals analyzed.", "AI");
 STEP 2 → FETCH LEADS
 ================================ */
 
-const leadsRes = await fetch(`${AI_SERVICE}/intent/leads`);
+const leadsRes = await fetch(`${AI_SERVICE}/intent/leads/`);
 
 if (!leadsRes.ok) throw new Error("Lead search failed");
 
