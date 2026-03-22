@@ -143,7 +143,17 @@ addLog("Intent signals analyzed.", "AI");
 STEP 2 → FETCH LEADS
 ================================ */
 
-const leadsRes = await fetch(`${AI_SERVICE}/intent/leads/`);
+const leadsRes = await fetch(`${AI_SERVICE}/intent/leads/`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    industry,
+    location: geography,
+    buying_signals: String(buyingSignals)
+  })
+});
 
 if (!leadsRes.ok) throw new Error("Lead search failed");
 
@@ -152,16 +162,16 @@ const leadsData = await leadsRes.json();
 const totalResults = leadsData?.results?.length || 0;
 
 const highIntent =
-leadsData?.highIntentCount || Math.floor(totalResults * 0.3);
+  leadsData?.highIntentCount || Math.floor(totalResults * 0.3);
 
 addLog(`Indexed ${totalResults} potential leads`, "DB");
 addLog(`Detected ${highIntent} high-intent prospects`, "AI");
 
 setStats(prev => ({
-totalIndex: prev.totalIndex + totalResults,
-highIntent: prev.highIntent + highIntent,
-cacheHits: prev.cacheHits + 1,
-aiTokens: `${Math.floor(Math.random()*5)+3}k`
+  totalIndex: prev.totalIndex + totalResults,
+  highIntent: prev.highIntent + highIntent,
+  cacheHits: prev.cacheHits + 1,
+  aiTokens: `${Math.floor(Math.random()*5)+3}k`
 }));
 
 addLog("Deep Search Completed Successfully");
