@@ -143,17 +143,15 @@ addLog("Intent signals analyzed.", "AI");
 STEP 2 → FETCH LEADS
 ================================ */
 
-const leadsRes = await fetch(`${AI_SERVICE}/intent/leads/`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    industry,
-    location: geography,
-    buying_signals: String(buyingSignals)
-  })
+const queryParams = new URLSearchParams({
+  industry,
+  location: geography,
+  buying_signals: String(buyingSignals)
 });
+
+const leadsRes = await fetch(
+  `${AI_SERVICE}/intent/leads/?${queryParams.toString()}`
+);
 
 if (!leadsRes.ok) throw new Error("Lead search failed");
 
