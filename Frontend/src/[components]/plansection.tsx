@@ -175,118 +175,122 @@ export default function CongestedPricing() {
   };
 
   return (
-    <div className="container py-12">
-      <div className="text-center mb-16 animate-fade-in">
-        <h1 className="text-5xl font-bold mb-6 text-zinc-900 dark:text-white transition-colors">
-          Transparent <span className="text-[#fbbf24]">Pricing</span>
-        </h1>
-        <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto transition-colors">
-          All plans include AI-powered engagement, real-time monitoring, and intent scoring.
-        </p>
-      </div>
-
-      <div className="flex flex-col items-center gap-6 mb-12">
-        {/* Currency Switcher */}
-        <div className="bg-zinc-100 dark:bg-zinc-900/60 backdrop-blur-md p-1 rounded-lg inline-flex border border-black/5 dark:border-white/5 transition-colors">
-            <button onClick={() => setCurrency("USD")} className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2", currency === "USD" ? "bg-[#fbbf24] text-black shadow-md" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white")}>
-                <DollarSign className="w-4 h-4" /> USD ($)
-            </button>
-            <button onClick={() => setCurrency("INR")} className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2", currency === "INR" ? "bg-[#fbbf24] text-black shadow-md" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white")}>
-                <IndianRupee className="w-4 h-4" /> INR (₹)
-            </button>
+    // 👇 FIX: The entire component is now wrapped in ONE PayPalScriptProvider
+    <PayPalScriptProvider options={{ clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", currency: "USD", intent: "capture" }}>
+      <div className="container py-12">
+        <div className="text-center mb-16 animate-fade-in">
+          <h1 className="text-5xl font-bold mb-6 text-zinc-900 dark:text-white transition-colors">
+            Transparent <span className="text-[#fbbf24]">Pricing</span>
+          </h1>
+          <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto transition-colors">
+            All plans include AI-powered engagement, real-time monitoring, and intent scoring.
+          </p>
         </div>
 
-        {/* Billing Switcher */}
-        <div className="flex justify-center items-center gap-4">
-            <Label htmlFor="billing-toggle" className="font-semibold text-zinc-900 dark:text-white transition-colors">Monthly</Label>
-            <Switch id="billing-toggle" ref={switchRef as any} checked={!isMonthly} onCheckedChange={handleToggle}/>
-            <Label htmlFor="billing-toggle" className="font-semibold text-zinc-900 dark:text-white transition-colors">Annual <span className="text-[#fbbf24]">(Save 50%)</span></Label>
+        <div className="flex flex-col items-center gap-6 mb-12">
+          {/* Currency Switcher */}
+          <div className="bg-zinc-100 dark:bg-zinc-900/60 backdrop-blur-md p-1 rounded-lg inline-flex border border-black/5 dark:border-white/5 transition-colors">
+              <button onClick={() => setCurrency("USD")} className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2", currency === "USD" ? "bg-[#fbbf24] text-black shadow-md" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white")}>
+                  <DollarSign className="w-4 h-4" /> USD ($)
+              </button>
+              <button onClick={() => setCurrency("INR")} className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2", currency === "INR" ? "bg-[#fbbf24] text-black shadow-md" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white")}>
+                  <IndianRupee className="w-4 h-4" /> INR (₹)
+              </button>
+          </div>
+
+          {/* Billing Switcher */}
+          <div className="flex justify-center items-center gap-4">
+              <Label htmlFor="billing-toggle" className="font-semibold text-zinc-900 dark:text-white transition-colors">Monthly</Label>
+              <Switch id="billing-toggle" ref={switchRef as any} checked={!isMonthly} onCheckedChange={handleToggle}/>
+              <Label htmlFor="billing-toggle" className="font-semibold text-zinc-900 dark:text-white transition-colors">Annual <span className="text-[#fbbf24]">(Save 50%)</span></Label>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0 perspective-1000">
-        {plans.map((plan, index) => {
-          const currentPrice = isMonthly ? plan.pricing[currency].monthly : plan.pricing[currency].yearly;
-          const isCustom = currentPrice === "Custom";
-          
-          const billedPrice = isCustom ? "Custom" : (isMonthly ? currentPrice : Number(currentPrice) * 12);
+        {/* 👇 Restored the grid layout safely */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:gap-0 lg:gap-0 perspective-1000">
+          {plans.map((plan, index) => {
+            const currentPrice = isMonthly ? plan.pricing[currency].monthly : plan.pricing[currency].yearly;
+            const isCustom = currentPrice === "Custom";
+            
+            const billedPrice = isCustom ? "Custom" : (isMonthly ? currentPrice : Number(currentPrice) * 12);
 
-          return (
-            <motion.div key={index} 
-              initial={{ y: 50, opacity: 1 }}
-              whileInView={isDesktop ? { y: plan.isPopular ? -20 : 0, opacity: 1, x: index === 2 ? -30 : index === 0 ? 30 : 0, scale: index === 0 || index === 2 ? 0.94 : 1.0 } : {}}
-              viewport={{ once: true }}
-              transition={{ duration: 1.6, type: "spring", stiffness: 100, damping: 30, delay: 0.4, opacity: { duration: 0.5 } }}
-              className={cn(
-                `relative rounded-2xl p-6 text-center lg:flex lg:flex-col lg:justify-center backdrop-blur-2xl transition-colors duration-500`, 
-                plan.isPopular ? "border-[#fbbf24] border-2 bg-white/95 dark:bg-[#050505]/80 shadow-xl dark:shadow-[0_0_40px_rgba(251,191,36,0.1)]" : "border-black/10 dark:border-white/[0.08] border-[1px] bg-white/80 dark:bg-[#050505]/60 shadow-lg dark:shadow-none", 
-                "flex flex-col", 
-                !plan.isPopular && "mt-5", 
-                index === 0 || index === 2 ? "z-0 translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg] transform" : "z-10", 
-                index === 0 && "origin-right", 
-                index === 2 && "origin-left"
-              )}
-            >
-              {plan.isPopular && (
-                <div className="bg-[#fbbf24] absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 flex items-center gap-1 shadow-md">
-                  <Star className="text-black h-3 w-3 fill-current" />
-                  <span className="text-black text-xs font-bold uppercase">Popular</span>
+            return (
+              <motion.div key={index} 
+                initial={{ y: 50, opacity: 1 }}
+                whileInView={isDesktop ? { y: plan.isPopular ? -20 : 0, opacity: 1, x: index === 2 ? -30 : index === 0 ? 30 : 0, scale: index === 0 || index === 2 ? 0.94 : 1.0 } : {}}
+                viewport={{ once: true }}
+                transition={{ duration: 1.6, type: "spring", stiffness: 100, damping: 30, delay: 0.4, opacity: { duration: 0.5 } }}
+                className={cn(
+                  `relative rounded-2xl p-6 text-center lg:flex lg:flex-col lg:justify-center backdrop-blur-2xl transition-colors duration-500`, 
+                  plan.isPopular ? "border-[#fbbf24] border-2 bg-white/95 dark:bg-[#050505]/80 shadow-xl dark:shadow-[0_0_40px_rgba(251,191,36,0.1)] z-20" : "border-black/10 dark:border-white/[0.08] border-[1px] bg-white/80 dark:bg-[#050505]/60 shadow-lg z-10", 
+                  "flex flex-col", 
+                  !plan.isPopular && "mt-5", 
+                  index === 0 || index === 2 ? "translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg] transform" : "", 
+                  index === 0 && "origin-right", 
+                  index === 2 && "origin-left"
+                )}
+              >
+                {plan.isPopular && (
+                  <div className="bg-[#fbbf24] absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 flex items-center gap-1 shadow-md">
+                    <Star className="text-black h-3 w-3 fill-current" />
+                    <span className="text-black text-xs font-bold uppercase">Popular</span>
+                  </div>
+                )}
+
+                <div className="flex-1">
+                  <p className="text-zinc-600 dark:text-zinc-400 font-extrabold tracking-widest text-xs uppercase transition-colors">{plan.name}</p>
+                  <div className="mt-4 flex items-baseline gap-1 justify-center">
+                    {isCustom ? (
+                      <span className="text-4xl font-black text-zinc-900 dark:text-white transition-colors">Custom</span>
+                    ) : (
+                      <>
+                        <span className="text-5xl font-black text-zinc-900 dark:text-white flex items-center justify-center gap-1 transition-colors">
+                            <span className="text-3xl">{currency === "USD" ? "$" : "₹"}</span>
+                            <NumberFlow value={Number(billedPrice)} format={{ style: "decimal", minimumFractionDigits: 0 }} />
+                        </span>
+                        <span className="text-zinc-500 font-bold text-sm transition-colors">/{isMonthly ? "mo" : "yr"}</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  <p className="text-zinc-500 font-medium text-xs mt-2 mb-8 transition-colors">
+                    {isCustom 
+                      ? "Tailored for enterprises" 
+                      : isMonthly 
+                        ? "billed monthly" 
+                        : `billed annually ( ${currency === 'USD' ? '$' : '₹'}${currentPrice}/mo )`}
+                  </p>
+
+                  <ul className="space-y-4 mb-8 lg:pl-7">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300 font-medium transition-colors">
+                        <Check className="text-[#fbbf24] h-5 w-5 shrink-0 stroke-[3]" />
+                        <span className="text-left">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              )}
 
-              <div className="flex-1">
-                <p className="text-zinc-600 dark:text-zinc-400 font-extrabold tracking-widest text-xs uppercase transition-colors">{plan.name}</p>
-                <div className="mt-4 flex items-baseline gap-1 justify-center">
+                <div className="mt-auto pt-6 border-t border-black/10 dark:border-white/10 transition-colors">
                   {isCustom ? (
-                    <span className="text-4xl font-black text-zinc-900 dark:text-white transition-colors">Custom</span>
-                  ) : (
-                    <>
-                      <span className="text-5xl font-black text-zinc-900 dark:text-white flex items-center justify-center gap-1 transition-colors">
-                          <span className="text-3xl">{currency === "USD" ? "$" : "₹"}</span>
-                          <NumberFlow value={Number(billedPrice)} format={{ style: "decimal", minimumFractionDigits: 0 }} />
-                      </span>
-                      <span className="text-zinc-500 font-bold text-sm transition-colors">/{isMonthly ? "mo" : "yr"}</span>
-                    </>
-                  )}
-                </div>
-                
-                <p className="text-zinc-500 font-medium text-xs mt-2 mb-8 transition-colors">
-                  {isCustom 
-                    ? "Tailored for enterprises" 
-                    : isMonthly 
-                      ? "billed monthly" 
-                      : `billed annually ( ${currency === 'USD' ? '$' : '₹'}${currentPrice}/mo )`}
-                </p>
-
-                <ul className="space-y-4 mb-8 lg:pl-7">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300 font-medium transition-colors">
-                      <Check className="text-[#fbbf24] h-5 w-5 shrink-0 stroke-[3]" />
-                      <span className="text-left">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-auto pt-6 border-t border-black/10 dark:border-white/10 transition-colors">
-                {isCustom ? (
-                  <Link to="/contact" className={cn(buttonVariants({ variant: "outline" }), "w-full py-6 text-lg border-black/20 dark:border-white/20 hover:border-[#fbbf24] text-white dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors")}>
-                    Contact Sales
-                  </Link>
-                ) : !isSignedIn ? (
-                    <Link to="/sign-in" className={cn(buttonVariants({ variant: "default" }), "w-full py-6 text-lg bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 flex items-center justify-center gap-2 font-bold transition-colors")}>
-                      <LogIn className="w-5 h-5" />
-                      {plan.name === "PILOT" ? "Start 14-Day Free Trial" : "Subscribe To Get Started"}
+                    <Link to="/contact" className={cn(buttonVariants({ variant: "outline" }), "w-full py-6 text-lg border-black/20 dark:border-white/20 hover:border-[#fbbf24] text-white dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors")}>
+                      Contact Sales
                     </Link>
-                ) : (
-                  <div className="z-0 min-h-[50px]">
-                    {!isLoaded || !user?.id ? (
-                      <div className="flex items-center justify-center w-full py-4 text-zinc-500 font-bold">
-                        <Loader2 className="w-5 h-5 animate-spin mr-2 text-[#fbbf24]" />
-                        Loading Payment...
-                      </div>
-                    ) : currency === "USD" ? (
-                      <PayPalScriptProvider options={{ clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "test", currency: "USD", intent: "capture" }}>
+                  ) : !isSignedIn ? (
+                      <Link to="/sign-in" className={cn(buttonVariants({ variant: "default" }), "w-full py-6 text-lg bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 flex items-center justify-center gap-2 font-bold transition-colors")}>
+                        <LogIn className="w-5 h-5" />
+                        {plan.name === "PILOT" ? "Start 14-Day Free Trial" : "Subscribe To Get Started"}
+                      </Link>
+                  ) : (
+                    // 👇 FIX: Added pointer-events-auto and z-50 to guarantee clickability
+                    <div className="relative z-50 min-h-[50px] pointer-events-auto">
+                      {!isLoaded || !user?.id ? (
+                        <div className="flex items-center justify-center w-full py-4 text-zinc-500 font-bold">
+                          <Loader2 className="w-5 h-5 animate-spin mr-2 text-[#fbbf24]" />
+                          Loading Payment...
+                        </div>
+                      ) : currency === "USD" ? (
+                        // 👇 FIX: PayPalButtons is now rendered WITHOUT re-initializing the Provider!
                         <PayPalButtons
                           fundingSource={FUNDING.PAYPAL}
                           style={{ layout: "vertical", label: "buynow", height: 45, tagline: false }}
@@ -330,27 +334,27 @@ export default function CongestedPricing() {
                             }
                           }}
                         />
-                      </PayPalScriptProvider>
-                    ) : (
-                       <Button 
-                         disabled={isCashfreeLoading}
-                         onClick={() => handleCashfreePayment(plan.name, billedPrice)}
-                         className="w-full h-[45px] text-lg bg-[#fbbf24] hover:bg-[#fbbf24]/90 text-black font-bold flex items-center justify-center gap-2 rounded-md transition-all shadow-[0_0_15px_rgba(251,191,36,0.3)]"
-                       >
-                         {isCashfreeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
-                         Proceed to Checkout
-                       </Button>
-                    )}
-                  </div>
-                )}
-                <p className="text-center text-xs font-medium text-zinc-500 mt-4 transition-colors">
-                  {plan.description}
-                </p>
-              </div>
-            </motion.div>
-          );
-        })}
+                      ) : (
+                         <Button 
+                           disabled={isCashfreeLoading}
+                           onClick={() => handleCashfreePayment(plan.name, billedPrice)}
+                           className="w-full h-[45px] text-lg bg-[#fbbf24] hover:bg-[#fbbf24]/90 text-black font-bold flex items-center justify-center gap-2 rounded-md transition-all shadow-[0_0_15px_rgba(251,191,36,0.3)]"
+                         >
+                           {isCashfreeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+                           Proceed to Checkout
+                         </Button>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-center text-xs font-medium text-zinc-500 mt-4 transition-colors">
+                    {plan.description}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </PayPalScriptProvider>
   );
 }
