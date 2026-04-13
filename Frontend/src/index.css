@@ -148,7 +148,6 @@ All colors MUST be HSL.
 }
 
 html {
-  
   scroll-padding-top: 8rem; 
 }
 
@@ -170,9 +169,7 @@ html.lenis, html.lenis body {
   overflow: hidden;
 }
 
-.lenis.lenis-smooth iframe {
-  pointer-events: none;
-}
+/* 👇 FIX: Deleted the .lenis.lenis-smooth iframe { pointer-events: none; } block that was breaking PayPal */
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -180,8 +177,6 @@ html.lenis, html.lenis body {
 }
 
 @layer base {
-  /* ... existing code ... */
-
   ::selection {
     background-color: hsl(var(--primary)/0.9);
     color: hsl(var(--primary-foreground));
