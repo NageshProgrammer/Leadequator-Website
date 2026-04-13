@@ -116,7 +116,6 @@ export const DetailPane = ({
   const textAreaStyle = "w-full bg-black/40 border border-white/[0.08] text-zinc-200 focus:border-[#fbbf24]/50 focus:ring-1 focus:ring-[#fbbf24]/30 rounded-xl p-4 text-sm md:text-base leading-relaxed transition-all resize-none custom-scrollbar";
 
   return (
-    // ✅ FIXED: Changed to overflow-hidden so the internal body dictates the scrolling
     <div className="flex flex-col h-full max-h-full w-full bg-transparent text-white overflow-hidden">
       
       {/* Header (Fixed Height) */}
@@ -210,10 +209,11 @@ export const DetailPane = ({
                 placeholder="Write your response here..."
               />
               <div className="flex flex-col sm:flex-row justify-end gap-2 p-2 pt-0 mt-2">
+                {/* ✅ FIX 1: Added hover:text-white */}
                 <Button
                   size="sm"
                   variant="outline"
-                  className="w-full sm:w-auto bg-white/[0.03] border-white/[0.1] text-white hover:bg-white/[0.1] rounded-xl h-10"
+                  className="w-full sm:w-auto bg-white/[0.03] border-white/[0.1] text-white hover:text-white hover:bg-white/[0.1] rounded-xl h-10"
                   onClick={() => handleCopy(replyText)}
                 >
                   <Copy className="h-4 w-4 mr-2 text-zinc-400" /> Copy Text
@@ -294,9 +294,10 @@ export const DetailPane = ({
 
       {/* Footer (Fixed Height) */}
       <div className="shrink-0 p-4 md:px-6 md:py-5 border-t border-white/[0.08] flex flex-col sm:flex-row gap-3 bg-black/20 z-20">
+        {/* ✅ FIX 2: Added hover:text-white */}
         <Button 
           variant="outline" 
-          className="flex-1 bg-transparent border-white/[0.1] text-white hover:bg-white/[0.05] rounded-xl h-12" 
+          className="flex-1 bg-transparent border-white/[0.1] text-white hover:text-white hover:bg-white/[0.05] rounded-xl h-12" 
           onClick={onClose}
         >
           Close Detail
@@ -304,9 +305,8 @@ export const DetailPane = ({
 
         {comment.url && (
           <Button
-            className="flex-1 bg-white/[0.05] text-white hover:bg-white/[0.1] border border-white/[0.1] rounded-xl h-12 transition-all"
-            onClick={() => window.open(comment.url, "_blank")}
-          >
+            className="flex-1 bg-white/[0.05] text-white hover:text-white hover:bg-white/[0.1] border border-white/[0.1] rounded-xl h-12 transition-all"
+            onClick={() => window.open(comment.url, "_blank")}>
             <ExternalLink className="mr-2 h-4 w-4 text-zinc-400" />
             View Original Source
           </Button>
