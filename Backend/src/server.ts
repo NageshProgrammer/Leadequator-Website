@@ -6,7 +6,6 @@ import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
 import nodemailer from "nodemailer"; // ✅ Added for sending emails
-import { contacts } from './db/schema.js';
 import { db } from "./db.js";
 // ✅ Routes
 import leadDiscoveryRoutes from "./routes/leadDiscovery.js";
@@ -22,6 +21,7 @@ import {
   userSubscriptions,
   eventWaitlist,
   newsletterSubscribers, // ✅ Added this import
+  contacts, // ✅ Add this here
 } from "./config/schema.js";
 
 const app = express();
