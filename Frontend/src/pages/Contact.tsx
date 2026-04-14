@@ -2,6 +2,7 @@ import { useState } from "react";
 // import { useNavigate } from "react-router-dom"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import emailjs from '@emailjs/browser'; // Add this at the top
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -39,47 +40,50 @@ const Contact = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+ import emailjs from '@emailjs/browser'; // Add this at the top
 
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+
+  // 1. Prepare data for EmailJS
+  const templateParams = {
+    from_name: `${formData.firstName} ${formData.lastName}`,
+    from_email: formData.email,
+    company: formData.company,
+    role: formData.role,
+    interest: formData.interest,
+    message: formData.message,
+  };
+
+  try {
+    // 2. Send Email via EmailJS (Bypasses Render's SMTP block)
+    await emailjs.send(
+      import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      templateParams,
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    );
+
+    // 3. Save to your NeonDB via Render Backend
     const apiUrl = import.meta.env.VITE_API_BASE_URL;
-    
-    if (!apiUrl) {
-      alert("❌ Configuration Error: VITE_API_BASE_URL is missing in .env file");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${apiUrl}/api/contact`, {
+    if (apiUrl) {
+      await fetch(`${apiUrl}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Failed to send message");
-
-      alert("✅ Message sent successfully! We will contact you soon.");
-
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        company: "",
-        role: "",
-        interest: "",
-        message: "",
-      });
-    } catch (err) {
-      console.error(err);
-      alert("❌ Submission failed. Please try again later.");
-    } finally {
-      setLoading(false);
     }
-  };
+
+    alert("✅ Message sent successfully! We will contact you soon.");
+    setFormData({ firstName: "", lastName: "", email: "", company: "", role: "", interest: "", message: "" });
+  } catch (err) {
+    console.error("EmailJS or DB Error:", err);
+    alert("❌ Submission failed. Please try again later.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Reusable classes for form inputs to ensure they match the glass theme perfectly
   const inputStyles = "bg-black/5 dark:bg-white/[0.03] border-black/10 dark:border-white/[0.08] text-zinc-900 dark:text-white focus-visible:ring-[#fbbf24]/30 focus-visible:border-[#fbbf24]/50 rounded-xl h-12 transition-colors";
