@@ -57,12 +57,13 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   try {
     // 2. Send Email via EmailJS (Bypasses Render's SMTP block)
-    await emailjs.send(
-      import.meta.env.VITE_EMAILJS_SERVICE_ID,
-      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-      templateParams,
-      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-    );
+    // Line 46 in your current file
+await emailjs.send(
+  import.meta.env.VITE_EMAILJS_SERVICE_ID as string,
+  import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string,
+  templateParams,
+  import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string
+);
 
     // 3. Save to your NeonDB via Render Backend
     const apiUrl = import.meta.env.VITE_API_BASE_URL;
