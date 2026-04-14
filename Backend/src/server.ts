@@ -578,35 +578,26 @@ app.post("/api/users/sync", async (req, res) => {
 /* =============================== CONTACT FORM ================================ */
 app.post("/api/contact", async (req, res) => {
   try {
-    const { firstName, lastName, email, company, role, interest, message } = req.body;
+    // 1. Always save to the database first
+    await db.insert(contacts).values(req.body);
 
-    // 1. Save to NeonDB (This will still work!)
-    await db.insert(contacts).values({
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      company,
-      role,
-      interest,
-      message
-    });
-
-    // 2. Attempt to send email, but don't crash if it fails
+    // 2. Wrap the email in a try-catch so it doesn't crash the request
     try {
       await transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: "leadequatorofficial@gmail.com",
-        subject: `New Contact Form: ${interest}`,
-        text: `Name: ${firstName} ${lastName}\nEmail: ${email}\nMessage: ${message}`,
+        from: process.env.SMTP_USER,
+        to: process.env.RECEIVER_EMAIL,
+        subject: "New Website Contact",
+        text: `Message from ${req.body.firstName}: ${req.body.message}`,
       });
     } catch (mailError) {
-      console.log("Email failed due to Render Free Tier restrictions, but data was saved to DB.");
+      // Just log it, don't throw an error to the user
+      console.log("SMTP blocked on Render Free Tier, skipping backend email.");
     }
 
-    res.status(200).json({ success: true, message: "Request received and saved!" });
-  } catch (error) {
-    console.error("Database Error:", error);
-    res.status(500).json({ error: "Failed to save message" });
+    res.status(200).json({ message: "Data saved successfully" });
+  } catch (dbError) {
+    console.error(dbError);
+    res.status(500).json({ message: "Database error" });
   }
 });
 /* ===============================
