@@ -574,6 +574,29 @@ app.post("/api/users/sync", async (req, res) => {
   }
 });
 
+
+/* =============================== CONTACT FORM ================================ */
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { firstName, lastName, email, company, role, interest, message } = req.body;
+
+    // 1. (Optional) Save to Database
+    // await db.insert(contactLeads).values({ ... });
+
+    // 2. Send an internal notification email
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: "leadequatorofficial@gmail.com", // Your support email
+      subject: `New Contact Form Submission: ${interest}`,
+      text: `Name: ${firstName} ${lastName}\nEmail: ${email}\nCompany: ${company}\nMessage: ${message}`,
+    });
+
+    res.status(200).json({ success: true, message: "Request received!" });
+  } catch (error) {
+    console.error("Contact Form Error:", error);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
 /* ===============================
    START SERVER
 ================================ */
