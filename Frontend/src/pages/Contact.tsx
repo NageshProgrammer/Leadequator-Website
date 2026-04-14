@@ -40,7 +40,6 @@ const Contact = () => {
     setFormData({ ...formData, [field]: value });
   };
 
- import emailjs from '@emailjs/browser'; // Add this at the top
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
