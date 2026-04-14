@@ -6,6 +6,7 @@ import { eq, and, lte, sql } from "drizzle-orm";
 import cron from "node-cron";
 import crypto from "crypto";
 import nodemailer from "nodemailer"; // ✅ Added for sending emails
+import { contacts } from './db/schema'; // Adjust this path to where your schema lives
 
 import { db } from "./db.js";
 // ✅ Routes
