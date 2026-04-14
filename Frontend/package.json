@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@cashfreepayments/cashfree-js": "^1.0.6",
     "@clerk/nextjs": "^6.36.7",
     "@clerk/themes": "^2.4.55",
