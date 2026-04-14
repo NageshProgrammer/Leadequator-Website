@@ -212,3 +212,16 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   email: varchar("email", { length: 255 }).notNull().unique(), // Unique prevents double-subscribing
   subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
 });
+
+/* ========================= CONTACT FORM ========================= */
+export const contacts = pgTable("contacts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  firstName: varchar("first_name", { length: 255 }).notNull(),
+  lastName: varchar("last_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  company: varchar("company", { length: 255 }),
+  role: varchar("role", { length: 100 }),
+  interest: varchar("interest", { length: 100 }),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
